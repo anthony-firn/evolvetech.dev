@@ -6,7 +6,7 @@
   "bunny_storage_zone": 2007936,
   "bunny_storage_region": "la",
   "bunny_target": "evolvetech-dev.b-cdn.net",
-  "netlify_site": "667bc0eb-2708-4b34-8d91-310c69dce76c",
+  "netlify_site": "47757318-5e8d-493d-9d35-8a5caf132c64",
   "netlify_target": "evolvetech-dev.netlify.app",
   "certificate_bucket": "evolvetech-dev-certificates-727196131369",
   "certificate_role": "arn:aws:iam::727196131369:role/evolvetech-dev-github",
