@@ -28,17 +28,18 @@ In **Workers & Pages → Create application → Continue to Pages → Import an 
 | Root directory | Leave blank |
 
 Deploy and test the `.pages.dev` URL before connecting the custom domain.
-The planned canonical hostname is **www.evolvetech.dev**, because Pages supports external DNS on a subdomain.
-Keep the domain registered at Namecheap and authoritative DNS at Bunny. Do not move nameservers to Cloudflare.
-Add `www.evolvetech.dev` in the Pages custom-domain settings before adding the DNS CNAME pointing to the actual project address.
-The bare domain needs its own HTTPS-capable redirect to `www`; DNS alone cannot perform an HTTP redirect.
+The canonical hostname is **evolvetech.dev**, without `www`. Keep the domain registered at Namecheap and authoritative DNS at Bunny.
+Cloudflare Pages requires Cloudflare nameservers for an apex custom domain, so use the existing `.pages.dev` address as an independent mirror.
+Do not move nameservers to Cloudflare to activate the bare domain. Use Netlify as the primary apex host, as described below.
+This is not automatic same-domain failover: an apex-capable fallback or additional routing still needs separate design and validation.
 
 ## Netlify
 
 Import this repository. `netlify.toml` selects `public/`; no build command is needed.
-Deploy the identical commit to both providers. Configure and validate hostname ownership and TLS on both providers before failover.
-Health-based routing is not configured by this repository. Test failure and recovery before relying on it.
-Cloudflare Pages documents domain-reactivation behavior after DNS is switched away and back; verify it for the intended setup.
+Deploy the identical commit to both providers. Add `evolvetech.dev` under Netlify Domain management and follow its external-DNS verification instructions in Bunny.
+Netlify supports apex domains with external DNS; use the DNS record target shown for the actual site and verify TLS before calling it live.
+Health-based routing is not configured by this repository. A working provider-address mirror does not guarantee automatic failover on the bare domain.
+Cloudflare Pages also documents domain-reactivation behavior after DNS is switched away and back.
 
 No hosting credentials or DNS automation keys belong in Git. A public source repository does not by itself mean the site is live.
 
@@ -52,4 +53,5 @@ Do not add invented projects as placeholders. Keep personal data, market-data ca
 
 - [Cloudflare Pages Git integration](https://developers.cloudflare.com/pages/get-started/git-integration/)
 - [Pages custom domains and reactivation limitations](https://developers.cloudflare.com/pages/configuration/custom-domains/)
+- [Netlify external DNS and apex domains](https://docs.netlify.com/manage/domains/configure-domains/configure-external-dns/)
 - [Namecheap nameservers](https://www.namecheap.com/support/knowledgebase/article.aspx/767/10/how-to-change-dns-for-a-domain/)

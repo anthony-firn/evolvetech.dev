@@ -14,7 +14,7 @@ class Page(HTMLParser):
         a = dict(attrs)
         self.title |= tag == "title"
         self.description |= tag == "meta" and a.get("name") == "description" and bool(a.get("content"))
-        self.canonical |= tag == "link" and a.get("rel") == "canonical" and a.get("href", "").startswith("https://www.evolvetech.dev/")
+        self.canonical |= tag == "link" and a.get("rel") == "canonical" and a.get("href", "").startswith("https://evolvetech.dev/")
         self.h1 += tag == "h1"
         for key in ("href", "src"):
             href = a.get(key, ""); url = urlsplit(href)
