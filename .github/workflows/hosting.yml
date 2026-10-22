@@ -2,7 +2,7 @@ name: Deploy and monitor hosting
 on:
   push:
     branches: [main]
-    paths: ['public/**', 'tools/**', 'hosting.json', '.github/workflows/hosting.yml']
+    paths: ['public/**', 'tools/**', 'hosting.json']
   schedule:
     - cron: '2-59/5 * * * *'
     - cron: '17 9 * * *'
@@ -56,7 +56,7 @@ jobs:
           curl -fsSL https://github.com/go-acme/lego/releases/download/v5.5.2/lego_v5.5.2_linux_amd64.tar.gz -o /tmp/lego.tar.gz
           curl -fsSL https://github.com/go-acme/lego/releases/download/v5.5.2/lego_5.5.2_checksums.txt -o /tmp/checksums.txt
           cd /tmp
-          grep 'lego_v5.5.2_linux_amd64.tar.gz' checksums.txt | sed 's/lego_v5.5.2_linux_amd64.tar.gz/lego.tar.gz/' | sha256sum -c -
+          awk '$2 == "lego_v5.5.2_linux_amd64.tar.gz" {print $1 "  lego.tar.gz"}' checksums.txt | sha256sum -c -
           tar -xzf lego.tar.gz lego
       - run: python3 tools/renew_certificates.py
         env:
