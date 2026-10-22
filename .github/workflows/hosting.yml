@@ -1,0 +1,66 @@
+name: Deploy and monitor hosting
+on:
+  push:
+    branches: [main]
+    paths: ['public/**', 'tools/**', 'hosting.json', '.github/workflows/hosting.yml']
+  schedule:
+    - cron: '2-59/5 * * * *'
+    - cron: '17 9 * * *'
+  workflow_dispatch:
+    inputs:
+      task:
+        type: choice
+        options: [deploy, monitor, certificates]
+        default: monitor
+permissions:
+  contents: read
+concurrency:
+  group: production-hosting
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.event_name == 'push' || inputs.task == 'deploy'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/test_monitor.py
+      - run: python3 tools/deploy.py
+        env:
+          BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+  monitor:
+    if: (github.event_name == 'schedule' && github.event.schedule == '2-59/5 * * * *') || inputs.task == 'monitor'
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/monitor.py --apply
+        env:
+          BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}
+  certificates:
+    if: (github.event_name == 'schedule' && github.event.schedule == '17 9 * * *') || inputs.task == 'certificates'
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::727196131369:role/evolvetech-dev-github
+          aws-region: us-east-1
+      - name: Install ACME client
+        run: |
+          curl -fsSL https://github.com/go-acme/lego/releases/download/v5.5.2/lego_v5.5.2_linux_amd64.tar.gz -o /tmp/lego.tar.gz
+          curl -fsSL https://github.com/go-acme/lego/releases/download/v5.5.2/lego_5.5.2_checksums.txt -o /tmp/checksums.txt
+          cd /tmp
+          grep 'lego_v5.5.2_linux_amd64.tar.gz' checksums.txt | sed 's/lego_v5.5.2_linux_amd64.tar.gz/lego.tar.gz/' | sha256sum -c -
+          tar -xzf lego.tar.gz lego
+      - run: python3 tools/renew_certificates.py
+        env:
+          BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
+          LEGO_BINARY: /tmp/lego

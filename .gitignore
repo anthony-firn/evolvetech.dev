@@ -4,6 +4,10 @@
 !.env.example
 .netlify/
 .wrangler/
+.bunny/
+.lego/
+*.key
+*.pem
 node_modules/
 __pycache__/
 *.pyc

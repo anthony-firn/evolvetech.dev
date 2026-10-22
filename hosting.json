@@ -1,0 +1,14 @@
+{
+  "hostname": "www.evolvetech.dev",
+  "dns_zone": 938795,
+  "dns_name": "www",
+  "bunny_pull_zone": 6845704,
+  "bunny_storage_zone": 2007936,
+  "bunny_storage_region": "la",
+  "bunny_target": "evolvetech-dev.b-cdn.net",
+  "netlify_site": "667bc0eb-2708-4b34-8d91-310c69dce76c",
+  "netlify_target": "evolvetech-dev.netlify.app",
+  "certificate_bucket": "evolvetech-dev-certificates-727196131369",
+  "certificate_role": "arn:aws:iam::727196131369:role/evolvetech-dev-github",
+  "recovery_seconds": 600
+}

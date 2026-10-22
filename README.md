@@ -15,33 +15,56 @@ python3 -m http.server 8080 --directory public
 
 Open http://localhost:8080. Public assets are all under `public/`.
 
-## Cloudflare Pages
+## Hosting and recovery
 
-In **Workers & Pages → Create application → Continue to Pages → Import an existing Git repository**, select this repository.
+The canonical website is **https://www.evolvetech.dev**. The bare domain redirects to it on both providers, preserving paths and query strings.
 
-| Setting | Value |
-| --- | --- |
-| Production branch | `main` |
-| Framework preset | None |
-| Build command | Leave blank |
-| Build output directory | `public` |
-| Root directory | Leave blank |
+- **Namecheap** remains the registrar; **Bunny** is authoritative DNS.
+- **Netlify** is the primary CDN with its own deployed files, on the Free plan (credit limits apply).
+- **Bunny CDN + Bunny Storage** holds an independently uploaded copy.
+- `hosting.json` contains resource identifiers and DNS targets, never credentials.
+- **Cloudflare Pages** remains an optional provider-address mirror; it is outside the failover path.
 
-Deploy and test the `.pages.dev` URL before connecting the custom domain.
-The canonical hostname is **evolvetech.dev**, without `www`. Keep the domain registered at Namecheap and authoritative DNS at Bunny.
-Cloudflare Pages requires Cloudflare nameservers for an apex custom domain, so use the existing `.pages.dev` address as an independent mirror.
-Do not move nameservers to Cloudflare to activate the bare domain. Use Netlify as the primary apex host, as described below.
-This is not automatic same-domain failover: an apex-capable fallback or additional routing still needs separate design and validation.
+Pushes to `main` run `tools/deploy.py`, uploading the same static directory to both providers. No Node dependencies or application build are needed.
+GitHub Actions holds encrypted provider credentials. Pull request checks do not receive them. A failed deployment is visible in Actions; uploads to two different providers are not atomic.
+The Bunny storage origin is independent of Netlify. Private household applications and retirement APIs are outside this static hosting setup.
 
-## Netlify
+### Automatic failover
 
-Import this repository. `netlify.toml` selects `public/`; no build command is needed.
-Deploy the identical commit to both providers. Add `evolvetech.dev` under Netlify Domain management and follow its external-DNS verification instructions in Bunny.
-Netlify supports apex domains with external DNS; use the DNS record target shown for the actual site and verify TLS before calling it live.
-Health-based routing is not configured by this repository. A working provider-address mirror does not guarantee automatic failover on the bare domain.
-Cloudflare Pages also documents domain-reactivation behavior after DNS is switched away and back.
+The hosting workflow schedules `tools/monitor.py --apply` approximately every five minutes. It checks both CDN endpoints directly using the real website hostname for TLS/SNI validation, plus the homepage and an uncached health file. It never follows public DNS to accidentally check only the active provider.
 
-No hosting credentials or DNS automation keys belong in Git. A public source repository does not by itself mean the site is live.
+Three primary failures within a run cause a switch to Bunny only if Bunny passes its checks. Both failures preserve the last DNS target and fail the workflow. Recovery requires ten minutes of observed primary health; a failure resets that period. A monitoring gap longer than fifteen minutes also resets recovery. A failed backup permits immediate return to a healthy primary.
+
+Only the `www` CNAME changes; the apex CNAME follows it through Bunny's flattening. TTL is 60 seconds. A compact recovery timestamp is stored in the record comment so the monitor needs no server or database. Unknown/manual DNS targets are preserved.
+
+**Timing limits:** GitHub scheduled jobs can be delayed or dropped, and some resolvers retain DNS answers beyond TTL. GitHub also automatically disables scheduled workflows in public repositories after 60 days without repository activity; this must be checked if the project becomes inactive. Switching is automatic while the workflow is enabled, but has no guaranteed recovery time. This low-cost arrangement can leave visitors affected for minutes. The monitor runs from one GitHub runner location; it is not multi-region consensus monitoring. For unattended operation on an inactive repository or a strict recovery target, replace the schedule with a dedicated independent monitoring service.
+
+Bunny DNS remains a shared dependency. The monitor needs Bunny's API to update DNS. Adding a second authoritative DNS provider is a separate project, requiring synchronized zones and a tested routing policy; adding unrelated nameservers alone does not provide that.
+
+### HTTPS renewal while on standby
+
+Both CDNs receive custom Let's Encrypt certificates issued through **DNS-01**, independently of traffic routing. The daily certificate job uses the pinned Lego ACME client, keeps the account and private keys in a private, encrypted S3 object, renews when due, then installs on both providers. Private keys are never uploaded as GitHub artifacts or caches or placed in website storage.
+
+AWS is used only for this small private certificate-state object. GitHub assumes a role restricted to this repository's `main` branch using OIDC; no long-lived AWS keys are stored in GitHub. CloudFront account verification blocked the original hosting design, so CloudFront and its unused resources were removed.
+
+The private state bucket is not a website origin and is not exposed by either CDN. An AWS or GitHub outage can delay renewal, though an already installed unexpired certificate continues working. Check failed daily jobs and certificate expiration alerts. DNS-01 validation and provider installation have been exercised; future unattended renewal still needs continued observation.
+
+### Checks and operations
+
+```sh
+python3 tools/check_site.py
+python3 tools/test_monitor.py
+# Credentials supplied through environment, not command-line arguments:
+python3 tools/monitor.py                       # read-only probe and decision
+python3 tools/monitor.py --apply               # persist routing decision
+python3 tools/monitor.py --simulate-primary-failure --apply  # controlled drill
+```
+
+The controlled drill sends real visitors to the backup and resets recovery. Run only when both copies pass HTTPS checks. Later normal monitor runs restore the primary after the recovery interval. Disable the hosting workflow before a manual DNS override that must remain in place.
+
+Deploy, monitor, and certificate jobs can also be run from **GitHub Actions → Deploy and monitor hosting → Run workflow**. GitHub workflow notifications report failed checks; configure your account's notification preferences to receive them. No independent paging service is configured.
+
+To reproduce this hosting arrangement in another account, create a Netlify site, Bunny Storage/Pull Zone and DNS zone; add both hostnames to both CDNs; issue DNS-validated certificates; configure the equivalent redirect, security header, HTTPS and health-cache rules; update `hosting.json`; set `BUNNY_API_KEY`, `NETLIFY_AUTH_TOKEN`, and `ACME_EMAIL` as GitHub secrets; create a private S3 certificate-state object and repository-restricted OIDC role. Update the role in the certificate workflow. Bootstrap certificates before changing website DNS.
 
 ## Add a project
 
@@ -51,7 +74,9 @@ Do not add invented projects as placeholders. Keep personal data, market-data ca
 
 ## References
 
-- [Cloudflare Pages Git integration](https://developers.cloudflare.com/pages/get-started/git-integration/)
-- [Pages custom domains and reactivation limitations](https://developers.cloudflare.com/pages/configuration/custom-domains/)
-- [Netlify external DNS and apex domains](https://docs.netlify.com/manage/domains/configure-domains/configure-external-dns/)
-- [Namecheap nameservers](https://www.namecheap.com/support/knowledgebase/article.aspx/767/10/how-to-change-dns-for-a-domain/)
+- [Bunny DNS records and apex flattening](https://bunny.net/docs/dns/records)
+- [Bunny custom certificates](https://bunny.net/docs/cdn/ssl-setup)
+- [Netlify HTTPS and custom certificates](https://docs.netlify.com/manage/domains/secure-domains-with-https/https-ssl/)
+- [Lego Bunny DNS validation](https://go-acme.github.io/lego/dns/bunny/)
+- [GitHub scheduled-workflow limitations](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
+- [Cloudflare Pages custom-domain reactivation limitations](https://developers.cloudflare.com/pages/configuration/custom-domains/)
