@@ -104,13 +104,15 @@ PAGES = [
          media=video("emberwake", "evolvetech.dev/play/emberwake", "Emberwake gameplay: the hero fights through procedurally generated crypt rooms."),
          status="Playable prototype", license="MIT", stack="Godot 4, Blender, GDScript",
          sections=[
-             section("How to play", bullets=["WASD or arrow keys to move, the mouse to aim, and a left click or J to strike.", "Space to dash, E to use a shrine, Esc to pause, and 1–3 to choose a blessing.", "Needs a keyboard, a mouse and WebGL 2; about 40 MB downloads the first time."]),
+             section("How to play", bullets=["Click the game to capture the mouse. Moving it turns the camera and the hero together.", "W and S move forward and back, A and D step sideways, a left click or J strikes, and Space dashes.", "E uses a shrine, Esc pauses, and 1–3 choose a blessing. Needs a keyboard, a mouse and WebGL 2; about 40 MB downloads the first time."]),
              section("What I built", bullets=[
                  "Procedural rooms, lighting, combat particles and synthesized sound effects, all generated at runtime from a seed.",
+                 "A third-person chase camera with mouse look and controls relative to the hero; it pulls in when a wall would block the view.",
+                 "Characters animated in code: each model's parts are grouped under joint pivots at spawn, then posed every frame for walk cycles, a streaming cloak, sword slashes, claw lunges and overhead slams. Enemy attacks wind up before they land, so they can be dodged.",
                  "Low-poly characters and props built by a Python script in Blender, so every asset is reproducible from source.",
                  "An agent bridge: an AI model can observe and play the game over TCP, which doubles as an automated test harness.",
                  "A web export pipeline: single-threaded WebAssembly with its start-up script moved out of the page so it runs under a strict Content-Security-Policy."]),
-             section("A bug the web build caught", "Testing the browser build showed the start button never responded: an empty overlay layer was invisible but still took every click, on desktop too. The smoke test called the start function directly, so it had missed it. One line fixed it, and the video above was rendered frame by frame with Godot's movie writer driving that same agent bridge."),
+             section("A bug the web build caught", "Testing the browser build showed the start button never responded: an empty overlay layer was invisible but still took every click, on desktop too. The smoke test called the start function directly, so it had missed it. One line fixed it. A second pass caught every character facing backwards: the models face glTF's +Z forward while the code assumed Godot's −Z. The video above is rendered frame by frame with Godot's movie writer, driving the hero through the same agent interface an AI model uses."),
          ]),
     dict(slug="symmetry-forge", title="Symmetry Forge", poster="symmetry-poster.webp",
          label="Research tools · Python · Pyodide",
