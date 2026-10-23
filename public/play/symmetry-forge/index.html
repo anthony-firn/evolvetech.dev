@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Symmetry Lab — EvolveTech</title>
+<meta name="description" content="Draw a small graph and compute its symmetry group in your browser with Symmetry Forge, running in Python via WebAssembly.">
+<link rel="canonical" href="https://www.evolvetech.dev/play/symmetry-forge/">
+<link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="lab.css">
+<script type="module" src="lab.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="shell masthead">
+  <a class="brand" href="/"><span class="mark" aria-hidden="true">E</span>EvolveTech</a>
+  <nav aria-label="Primary"><a href="/#projects">Projects</a><a href="/projects/symmetry-forge/">About this lab</a></nav>
+</header>
+<main id="main" class="shell lab">
+  <p class="eyebrow">Live demo · Symmetry Forge</p>
+  <h1>Symmetry Lab<span>.</span></h1>
+  <p class="lede">Pick a graph or draw your own. Symmetry Forge searches every way to relabel the nodes that keeps the same connections, then colors nodes that the symmetries can swap.</p>
+
+  <div class="lab-grid">
+    <section class="board" aria-label="Graph editor">
+      <div class="presets" role="group" aria-label="Example graphs"></div>
+      <svg id="graph" viewBox="-1.25 -1.25 2.5 2.5" role="img" aria-labelledby="graph-title"><title id="graph-title">The current graph</title></svg>
+      <p class="hint">Click one node, then another, to add or remove the edge between them.</p>
+      <div class="tools">
+        <button type="button" id="add">Add node</button>
+        <button type="button" id="remove">Remove last node</button>
+        <button type="button" id="clear">Clear edges</button>
+      </div>
+    </section>
+
+    <section class="results" aria-live="polite" aria-label="Symmetry results">
+      <p class="status" id="status">Loading Python in your browser (about 14 MB, once)…</p>
+      <dl class="stats">
+        <div><dt>Symmetries</dt><dd id="order">—</dd></div>
+        <div><dt>Orbits</dt><dd id="orbits">—</dd></div>
+        <div><dt>Nodes · edges</dt><dd id="size">—</dd></div>
+      </dl>
+      <h2>Node orbits</h2>
+      <ul class="orbit-list" id="orbit-list"></ul>
+      <h2>Example symmetries</h2>
+      <ul class="perm-list" id="examples"></ul>
+      <p class="small">Each symmetry is written as cycles: (0 1 2) sends node 0 to 1, 1 to 2 and 2 back to 0. Nodes not listed stay put.</p>
+    </section>
+  </div>
+
+  <section class="notice">
+    <h2>What runs here</h2>
+    <p>The real <a href="https://github.com/anthony-firn/symmetry-forge">Symmetry Forge</a> Python package, unmodified, running on <a href="https://pyodide.org/">Pyodide</a> in a background thread. Nothing is sent to a server. The search is exhaustive, so it is limited to 14 nodes; very symmetric graphs near that size are stopped after a few seconds.</p>
+  </section>
+</main>
+<footer class="shell footer">
+  <a class="brand" href="/"><span class="mark" aria-hidden="true">E</span>EvolveTech</a>
+  <span id="build-note">Educational demo. Results are computed, not proved.</span>
+</footer>
+</body>
+</html>

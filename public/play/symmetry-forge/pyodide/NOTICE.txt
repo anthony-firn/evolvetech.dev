@@ -1,0 +1,2 @@
+Pyodide 314.0.7 core files, unmodified, from the npm package 'pyodide'.
+Licensed under the Mozilla Public License 2.0: https://github.com/pyodide/pyodide/blob/main/LICENSE

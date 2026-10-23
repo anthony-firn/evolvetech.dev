@@ -1,9 +1,10 @@
 # evolvetech.dev
 
 The public EvolveTech project hub. Different projects share a front door, not a codebase or a deployment.
-Retirement Research is the first project overview; its private household tooling and research datasets are not in this repository.
+Each project page links to its own public repository; live demos are under `/play/`.
 
-Buildless HTML and CSS. No package installation, framework, runtime backend, analytics or external fonts.
+The site itself is buildless HTML and CSS: no framework, runtime backend, analytics or external fonts.
+Demos are prebuilt static files committed under `public/play/`, so deploys never depend on a project build.
 Original website code and copy use Apache-2.0. Individual projects document their own licenses.
 
 ## Preview and check
@@ -65,6 +66,20 @@ The controlled drill sends real visitors to the backup and resets recovery. Run 
 Deploy, monitor, and certificate jobs can also be run from **GitHub Actions → Deploy and monitor hosting → Run workflow**. GitHub workflow notifications report failed checks; configure your account's notification preferences to receive them. No independent paging service is configured.
 
 To reproduce this hosting arrangement in another account, create a Netlify site, Bunny Storage/Pull Zone and DNS zone; add both hostnames to both CDNs; issue DNS-validated certificates; configure the equivalent redirect, security header, HTTPS and health-cache rules; update `hosting.json`; set `BUNNY_API_KEY`, `NETLIFY_AUTH_TOKEN`, and `ACME_EMAIL` as GitHub secrets; create a private S3 certificate-state object and repository-restricted OIDC role. Update the role in the certificate workflow. Bootstrap certificates before changing website DNS.
+
+## Browser demos
+
+| Path | Source | Built with |
+|---|---|---|
+| `/play/retirement/` | retirement-research `results/printer_validate.json` | `demos/retirement/` + extracted `data.json` |
+| `/play/emberwake/` | emberwake | Godot 4.7.2 web export, no threads |
+| `/play/pulse-pop/` | pulse-pop | Expo web export |
+| `/play/symmetry-forge/` | symmetry-forge `src/symforge` | `demos/symmetry-forge/` + Pyodide 314.0.7 |
+
+`python3 tools/build_demos.py [name ...]` clones each project's current `main`, builds it, and records the commit in
+`public/play/<name>/BUILD.json`. It needs git, Node.js and `godot4` with the web export templates.
+`/play/*` gets its own Content-Security-Policy (WebAssembly and inline styles) in `public/_headers` and in a matching
+Bunny edge rule; the rest of the site keeps the strict policy. Change both together.
 
 ## Add a project
 

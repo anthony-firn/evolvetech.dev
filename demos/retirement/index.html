@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retirement Income Explorer — EvolveTech</title>
+<meta name="description" content="Compare tested retirement withdrawal strategies by spendable monthly income and break risk, across thousands of reshuffled market histories and stress cases.">
+<link rel="canonical" href="https://www.evolvetech.dev/play/retirement/">
+<link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="explorer.css">
+<script type="module" src="explorer.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="shell masthead">
+  <a class="brand" href="/"><span class="mark" aria-hidden="true">E</span>EvolveTech</a>
+  <nav aria-label="Primary"><a href="/#projects">Projects</a><a href="/projects/retirement/">About the research</a></nav>
+</header>
+<main id="main" class="shell explorer">
+  <p class="eyebrow">Live demo · Retirement Research</p>
+  <h1>Retirement Income Explorer<span>.</span></h1>
+  <p class="lede">How much could savings pay each month, and how often would a plan break? Compare the withdrawal strategies the research tested, on 2,000 reshuffled 40-year market histories and seven stress cases.</p>
+
+  <aside class="caution" aria-label="Before you use these numbers">
+    <strong>Research, not advice.</strong> These are simulations on partly reconstructed market history (1972–2026). Several strategies hold leveraged funds (TQQQ, TYD, UGL, TMF) that can lose most of their value quickly. Taxes assume a low-bracket California retiree with a taxable account unless you pick the middle-bracket case. Past and simulated results do not predict future income. Check any plan with a fee-only fiduciary and a tax preparer.
+  </aside>
+
+  <section class="controls" aria-label="Explorer settings">
+    <label class="field">Starting savings
+      <span class="money"><span aria-hidden="true">$</span><input id="amount" type="number" inputmode="numeric" min="10000" max="5000000" step="10000" value="250000"></span>
+      <input id="amount-range" type="range" min="10000" max="2000000" step="10000" value="250000" aria-label="Starting savings slider">
+    </label>
+    <label class="field">Market case
+      <select id="scenario"></select>
+    </label>
+    <label class="field">Sort by
+      <select id="sort">
+        <option value="print_typical">Typical monthly income</option>
+        <option value="print_bad">Income in bad histories</option>
+        <option value="lose_value">Lowest chance of losing value</option>
+        <option value="deep_dip">Lowest chance of a deep dip</option>
+      </select>
+    </label>
+  </section>
+
+  <div class="filters" role="group" aria-label="Strategy families" id="filters"></div>
+
+  <div class="table-wrap">
+    <table id="table">
+      <caption>Spendable income per month after tax, in today's dollars, and break risk over 40 years. Select a row for details.</caption>
+      <thead><tr>
+        <th scope="col">Strategy</th>
+        <th scope="col" class="num">Typical<span>per month</span></th>
+        <th scope="col" class="num">Bad history<span>1 in 10</span></th>
+        <th scope="col" class="bar-col">Income range<span>dark: bad history · light: typical</span></th>
+        <th scope="col" class="num">Ends below start<span>real value</span></th>
+        <th scope="col" class="num">Dips below 70%<span>at any point</span></th>
+        <th scope="col" class="num">Runs dry</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <section class="detail" id="detail" aria-live="polite"></section>
+
+  <section class="notice">
+    <h2>How each strategy pays</h2>
+    <p><strong>Base pay:</strong> a fixed share of the starting value each year, paid monthly and raised with inflation. <strong>Bonus pay:</strong> at each year-end, gains above a threshold move into a T-bill bucket that pays out over several years. <strong>Guardrail:</strong> if the account falls below a set share of its inflation-adjusted start, base pay is cut until it recovers. The strategies differ in their funds and in those settings; the reference rows use the same rules at a 4% base.</p>
+    <p>Source: <a href="https://github.com/anthony-firn/retirement-research">anthony-firn/retirement-research</a>, <code>results/printer_validate.json</code>, from <code>printer/validate.py</code>. <a href="/projects/retirement/">Read about the method and its limits.</a></p>
+  </section>
+</main>
+<footer class="shell footer">
+  <a class="brand" href="/"><span class="mark" aria-hidden="true">E</span>EvolveTech</a>
+  <span id="build-note">Research model. Not financial, tax or legal advice.</span>
+</footer>
+</body>
+</html>

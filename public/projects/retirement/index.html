@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Retirement Research — An EvolveTech project</title>
-  <meta name="description" content="Open retirement research in development: income strategies, reproducible experiments, costs, taxes, and the limits of historical simulations.">
+  <meta name="description" content="Open retirement research: withdrawal strategies compared by spendable income after tax and break risk, with reproducible code and stated limits.">
   <link rel="canonical" href="https://www.evolvetech.dev/projects/retirement/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Retirement Research — An EvolveTech project">
@@ -15,18 +15,21 @@
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
-  <header class="shell masthead"><a class="brand" href="/"><span class="mark" aria-hidden="true">E</span>EvolveTech</a><nav aria-label="Main"><a href="/#projects">All projects</a><a href="https://github.com/anthony-firn/evolvetech.dev">GitHub ↗</a></nav></header>
+  <header class="shell masthead"><a class="brand" href="/"><span class="mark" aria-hidden="true">E</span>EvolveTech</a><nav aria-label="Main"><a href="/#projects">All projects</a><a href="https://github.com/anthony-firn/retirement-research">Source ↗</a></nav></header>
   <main id="main" class="shell article">
     <a class="back" href="/#projects">← All projects</a>
-    <p class="eyebrow">Project 01 · In development</p>
+    <p class="eyebrow">Project 01 · Investing · Open source</p>
     <h1>Retirement<br><span>Research.</span></h1>
-    <p class="lede">Help people prepare for retirement and understand how savings could support spending—with the assumptions and trade-offs in view.</p>
-    <section class="notice" aria-labelledby="status"><h2 id="status">Research first. Public tools next.</h2><p>The project currently runs as a local research and household-planning system. Its public account service and signed mobile releases are not available yet. This page is an overview, not an interactive financial planner.</p></section>
+    <p class="lede">Help people prepare for retirement and understand how savings could support spending, with the assumptions and trade-offs in view.</p>
+    <div class="actions"><a class="button" href="/play/retirement/">Open the income explorer</a><a class="button secondary" href="https://github.com/anthony-firn/retirement-research">Read the code and results ↗</a></div>
+    <img class="shot" src="/assets/shots/retirement.webp" width="1120" height="1177" alt="The income explorer table comparing withdrawal strategies by typical and bad-history monthly income and by break risk." loading="lazy">
+    <p class="caption">The income explorer compares 15 strategies, including 60/40 and all-stock baselines.</p>
+    <section class="notice" aria-labelledby="status"><h2 id="status">Research, not advice.</h2><p>The explorer shows simulations on partly reconstructed market history. Some tested strategies hold leveraged funds. The tax model is a simplified US/California retiree. Use it to understand trade-offs and to ask better questions, then check any plan with a fee-only fiduciary and a tax preparer.</p></section>
     <section class="article-section"><h2>The questions</h2><ul><li>How do income, costs, taxes, inflation and spending flexibility interact?</li><li>What changes in bad markets or when the future differs from the past?</li><li>When does added complexity provide enough benefit to justify its cost?</li><li>How can other people reproduce the work and challenge the assumptions?</li></ul></section>
-    <section class="article-section"><h2>The approach</h2><p>Compare strategies using spendable income and adverse outcomes, rather than historical returns alone. Keep the failed ideas, document reconstructed histories, and distinguish observed results from simulations.</p><p>The code and evidence belong to a separate research project. Its public repository and release links will be added here when available.</p></section>
-    <section class="article-section"><h2>What to keep in mind</h2><p>Backtests and simulations do not guarantee future income. Some fund histories are reconstructed, and the current US/California tax and benefit assumptions are simplified. Results from one model or household do not establish suitability for everyone.</p></section>
-    <a class="button" href="/#projects">Back to projects</a>
+    <section class="article-section"><h2>The approach</h2><p>Strategies are judged by the money a retiree can actually spend each month after tax, in today's dollars, and by how often the plan breaks: ending below its starting value, dipping below 70% of it, or running dry. Each strategy is re-run on 2,000 fresh 40-year histories and in stress cases where trend-following or gold earns less, only recent history repeats, or taxes are higher.</p><p>Failed ideas stay in the record. Reconstructed fund histories are documented, and observed results are kept separate from simulations. The repository includes the simulator, the searches, the data pipeline and a local planning app.</p></section>
+    <section class="article-section"><h2>What to keep in mind</h2><p>Backtests and simulations do not guarantee future income. Some fund histories are reconstructed from proxies, and leveraged funds behave differently in markets that have not happened before. Results from one model do not establish suitability for any particular person.</p></section>
+    <dl class="facts"><div><dt>Status</dt><dd>Research release</dd></div><div><dt>License</dt><dd>Apache 2.0</dd></div><div><dt>Built with</dt><dd>Python, NumPy, PyTorch</dd></div></dl>
   </main>
-  <footer class="shell footer"><a class="brand" href="/">EvolveTech</a><p>Retirement Research is one project, not the whole company.</p></footer>
+  <footer class="shell footer"><a class="brand" href="/">EvolveTech</a><p>Research model. Not financial, tax or legal advice.</p></footer>
 </body>
 </html>
