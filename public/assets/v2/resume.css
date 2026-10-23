@@ -1,0 +1,43 @@
+.resume{max-width:920px;padding:130px 0 90px}
+.cv-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px 40px;padding-bottom:26px;border-bottom:1px solid var(--line-2)}
+.cv-head h1{font-size:clamp(2.4rem,5vw,3.6rem)}
+.cv-title{margin-top:8px;color:var(--ember);font-weight:600}
+.cv-contact{list-style:none;padding:0;display:grid;gap:4px;font:500 .82rem var(--mono);color:var(--muted);text-align:right}
+.cv-contact a{text-decoration:none}.cv-contact a:hover{color:var(--ember)}
+.cv-section{padding:26px 0;border-bottom:1px solid var(--line)}
+.cv-section h2{font:600 .78rem var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ember);margin-bottom:14px}
+.cv-note{color:var(--dim);letter-spacing:.04em;text-transform:none;margin-left:8px}
+.cv-section p{color:var(--text-2)}
+.cv-job+.cv-job{margin-top:18px}
+.cv-job-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 20px;align-items:baseline}
+.cv-job h3{font-size:1.12rem;letter-spacing:-.01em}
+.cv-job-head span{font:500 .78rem var(--mono);color:var(--dim)}
+.cv-job ul{margin-top:8px;padding-left:18px;display:grid;gap:5px;color:var(--text-2);font-size:.95rem}
+.cv-job ul li::marker{color:var(--ember)}
+.cv-job p{margin-top:6px;font-size:.95rem}
+.cv-two{display:grid;grid-template-columns:1.6fr 1fr;gap:40px;border-bottom:0}
+.cv-skills{display:grid;gap:8px;margin:0}
+.cv-skills div{display:grid;grid-template-columns:130px 1fr;gap:12px;font-size:.92rem}
+.cv-skills dt{color:var(--dim);font:500 .76rem var(--mono);padding-top:2px}
+.cv-skills dd{margin:0;color:var(--text-2)}
+@media(max-width:720px){.cv-contact{text-align:left}.cv-two{grid-template-columns:1fr}.cv-skills div{grid-template-columns:1fr;gap:2px}}
+
+/* Print / PDF: one clean light page set. */
+@media print{
+  @page{size:Letter;margin:.42in .5in}
+  :root,:root[data-theme]{--text:#111;--text-2:#222;--muted:#333;--dim:#555;--line:#ddd;--line-2:#bbb;--ember:#c4501a}
+  html,body{background:#fff;color:#111;font-size:9.6pt;line-height:1.36}
+  .site-header,.skip{display:none}
+  .resume{padding:0;max-width:none;width:100%}
+  .cv-head{padding-bottom:10pt}
+  .cv-head h1{font-size:24pt}
+  .cv-contact{font-size:8.5pt}
+  .cv-section{padding:7pt 0}.cv-job,.cv-skills div{break-inside:avoid}
+  .cv-section h2{margin-bottom:6pt;font-size:8pt}
+  .cv-section p,.cv-job ul,.cv-skills dd{color:#222}
+  .cv-job+.cv-job{margin-top:7pt}
+  .cv-job h3{font-size:10.5pt}
+  .cv-job ul{font-size:9.5pt;gap:2pt;margin-top:3pt}
+  .cv-skills{gap:3pt}.cv-skills div{grid-template-columns:95pt 1fr;gap:8pt;font-size:8.8pt}.cv-two{gap:20pt;grid-template-columns:2.5fr 1fr}
+  a{color:inherit;text-decoration:none}
+}

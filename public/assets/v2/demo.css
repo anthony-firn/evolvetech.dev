@@ -1,0 +1,14 @@
+/* Shared chrome for the /play/ demo pages, layered on style.css. */
+.demo-header{border-bottom:1px solid var(--line);background:var(--glass)}
+.demo-header .shell{display:flex;align-items:center;justify-content:space-between;gap:20px;height:68px}
+.demo-main{padding:56px 0 80px}
+.demo-main h1{font-size:clamp(2.3rem,5.6vw,4.2rem);margin:16px 0 18px}
+.demo-main h1 span{color:var(--ember)}
+.demo-main .lede{color:var(--muted);font-size:clamp(1.02rem,1.6vw,1.2rem);max-width:720px}
+.notice{margin-top:40px;padding:22px 24px;border-radius:14px;border:1px solid var(--line);background:var(--surface)}
+.notice h2{font-size:1.15rem;margin-bottom:10px;letter-spacing:-.01em}
+.notice p{color:var(--muted);font-size:.94rem}.notice p+p{margin-top:10px}
+.notice code{font-family:var(--mono);font-size:.85em;color:var(--text-2)}
+.demo-footer{border-top:1px solid var(--line);padding:26px 0 36px;font-size:.84rem;color:var(--dim)}
+.demo-footer .shell{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+.small{font-size:.8rem;color:var(--dim)}

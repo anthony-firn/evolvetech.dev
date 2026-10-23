@@ -1,6 +1,6 @@
 const MAX_NODES = 14;
 const TIME_LIMIT_MS = 6000;
-const COLORS = ["#0072b2", "#e69f00", "#009e73", "#cc79a7", "#56b4e9", "#d55e00", "#6a3d9a", "#7f7f7f"];
+const COLORS = ["#ff9b4a", "#5fd4e8", "#a78bfa", "#59d499", "#f2c46d", "#ff6b6b", "#7aa2ff", "#94a0b4"];
 const NS = "http://www.w3.org/2000/svg";
 
 const ring = (n, r = 1, turn = 0) =>
@@ -73,7 +73,7 @@ function draw() {
     node.setAttribute("aria-label", `Node ${i}`);
     const circle = document.createElementNS(NS, "circle");
     circle.setAttribute("cx", x); circle.setAttribute("cy", y); circle.setAttribute("r", 0.09);
-    circle.setAttribute("fill", state.orbitOf[i] === undefined ? "#53616e" : COLORS[state.orbitOf[i] % COLORS.length]);
+    circle.setAttribute("fill", state.orbitOf[i] === undefined ? "#94a0b4" : COLORS[state.orbitOf[i] % COLORS.length]);
     const label = document.createElementNS(NS, "text");
     label.setAttribute("x", x); label.setAttribute("y", y); label.textContent = i;
     node.append(circle, label);

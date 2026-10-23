@@ -1,33 +1,48 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Symmetry Forge — An EvolveTech project</title>
-  <meta name="description" content="Symmetry Forge is an experimental Python toolkit for graph automorphisms and combinatorial designs. Try it live in the Symmetry Lab.">
+  <title>Symmetry Forge — Anthony Firn</title>
+  <meta name="description" content="Symmetry Forge is an experimental Python toolkit for graph automorphisms and combinatorial designs, running live in the browser.">
   <link rel="canonical" href="https://www.evolvetech.dev/projects/symmetry-forge/">
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Symmetry Forge — An EvolveTech project">
-  <meta property="og:description" content="Compute the symmetries of a graph in your browser.">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Symmetry Forge — Anthony Firn">
+  <meta property="og:description" content="Symmetry Forge is an experimental Python toolkit for graph automorphisms and combinatorial designs, running live in the browser.">
   <meta property="og:url" content="https://www.evolvetech.dev/projects/symmetry-forge/">
+  <meta property="og:image" content="https://www.evolvetech.dev/assets/media/symmetry-poster.webp">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#06080d">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f6fa">
   <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/assets/site.css">
+  <link rel="preload" href="/assets/fonts/space-grotesk.woff2" as="font" type="font/woff2" crossorigin>
+  <script src="/assets/v2/theme.js"></script>
+  <link rel="stylesheet" href="/assets/v2/style.css">
+  <script type="module" src="/assets/v2/main.js"></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
-  <header class="shell masthead"><a class="brand" href="/"><span class="mark" aria-hidden="true">E</span>EvolveTech</a><nav aria-label="Main"><a href="/#projects">All projects</a><a href="https://github.com/anthony-firn/symmetry-forge">Source ↗</a></nav></header>
-  <main id="main" class="shell article">
-    <a class="back" href="/#projects">← All projects</a>
-    <p class="eyebrow">Project 04 · Research tools · Prototype</p>
-    <h1>Symmetry<br><span>Forge.</span></h1>
-    <p class="lede">An experimental Python toolkit for generating small combinatorial structures, computing their symmetries, and comparing simple measures of how unusual they are.</p>
-    <div class="actions"><a class="button" href="/play/symmetry-forge/">Open the symmetry lab</a><a class="button secondary" href="https://github.com/anthony-firn/symmetry-forge">Source code ↗</a></div>
-    <img class="shot" src="/assets/shots/symmetry-forge.webp" width="1120" height="769" alt="The Symmetry Lab showing the Heawood graph with 336 symmetries, its single node orbit, and example symmetries in cycle notation." loading="lazy">
-    <p class="caption">The Heawood graph has 336 symmetries, and every node can be moved to every other.</p>
-    <section class="article-section"><h2>What it does</h2><ul><li>Builds graphs, Steiner systems and relational structures, and computes their automorphism groups and canonical labels.</li><li>Uses its own refinement search by default, with optional nauty and SAT back ends for larger cases.</li><li>Runs logged experiments, from the Fano plane to a bounded attempt at constructions inspired by codes and the Monster group.</li></ul></section>
-    <section class="article-section"><h2>What it is not</h2><p>The toolkit is for reproducible exploration and teaching. Its samples are starting points, not validated discoveries, and computing something is not the same as proving it.</p></section>
-    <dl class="facts"><div><dt>Status</dt><dd>Research prototype</dd></div><div><dt>License</dt><dd>MIT</dd></div><div><dt>Built with</dt><dd>Python, Pyodide</dd></div></dl>
+  <header class="site-header">
+    <div class="shell">
+      <a class="brand" href="/" aria-label="Anthony Firn, home"><span class="monogram" aria-hidden="true">AF</span><span><strong>Anthony Firn</strong><small>EvolveTech</small></span></a>
+      <nav class="nav" aria-label="Main"><a href="/#work">Work</a><a href="/#engineering">Engineering</a><a href="/#experience">Experience</a><a href="/resume/">Résumé</a><a class="nav-cta" href="/#contact">Contact</a><button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></nav>
+    </div>
+  </header>
+  <main id="main" class="shell">
+    <section class="page-hero">
+      <a class="crumb" href="/#work">← All work</a>
+      <p class="label">Research tools · Python · Pyodide</p>
+      <h1>Symmetry Forge</h1>
+      <p class="lede">An experimental Python toolkit for generating small combinatorial structures, computing their symmetries and comparing how unusual they are.</p>
+      <div class="btn-row"><a class="btn primary" href="/play/symmetry-forge/">Open the symmetry lab <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="https://github.com/anthony-firn/symmetry-forge">Source on GitHub ↗</a></div>
+    </section>
+    <figure class="case-media reveal"><div class="browser"><div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/symmetry-forge</span></div><video data-autoplay muted loop playsinline preload="metadata" poster="/assets/media/symmetry-poster.webp" width="1280" height="800" aria-label="The Symmetry Lab computing symmetry groups as graphs are chosen and edited."><source src="/assets/media/symmetry.webm" type="video/webm"><source src="/assets/media/symmetry.mp4" type="video/mp4"></video></div></figure>
+    <div class="prose">
+      <section><h2>What it does</h2><ul><li>Builds graphs, Steiner systems and relational structures, and computes automorphism groups and canonical labels by partition refinement and search.</li><li>Optional nauty and SAT back ends for larger cases, with a pure-Python default that runs anywhere.</li><li>Logged experiments from the Fano plane to a bounded attempt at constructions inspired by codes and the Monster group.</li></ul></section>
+      <section><h2>Bringing Python to the browser</h2><p>The lab loads the unmodified package into Pyodide (CPython compiled to WebAssembly) inside a Web Worker. The page stays responsive, a search that runs too long is cancelled by replacing the worker, and nothing leaves the visitor's machine. The rotating hypercube on the homepage uses the same result: 384 symmetries, which the library computes in milliseconds.</p></section>
+      <section><h2>What it is not</h2><p>It is for reproducible exploration and teaching. Computing something is not proving it, and the samples are starting points rather than discoveries.</p></section>
+      <dl class="facts"><div><dt>Status</dt><dd>Research prototype</dd></div><div><dt>License</dt><dd>MIT</dd></div><div><dt>Built with</dt><dd>Python, Pyodide, Web Workers</dd></div></dl>
+    </div>
   </main>
-  <footer class="shell footer"><a class="brand" href="/">EvolveTech</a><p>Useful work. Open questions.</p></footer>
+  <footer class="site-footer"><div class="shell"><span>© 2026 Anthony Firn · EvolveTech</span><nav aria-label="Footer"><a href="/">Home</a><a href="/resume/">Résumé</a><a href="https://github.com/anthony-firn">GitHub</a></nav></div></footer>
 </body>
 </html>

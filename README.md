@@ -1,11 +1,18 @@
 # evolvetech.dev
 
-The public EvolveTech project hub. Different projects share a front door, not a codebase or a deployment.
-Each project page links to its own public repository; live demos are under `/play/`.
+Anthony Firn's portfolio and the home of EvolveTech, his open-source studio. Each project page links to its own public
+repository; live demos are under `/play/`.
 
-The site itself is buildless HTML and CSS: no framework, runtime backend, analytics or external fonts.
+The site itself is buildless HTML, CSS and a little JavaScript: no framework, runtime backend, analytics or external fonts.
 Demos are prebuilt static files committed under `public/play/`, so deploys never depend on a project build.
-Original website code and copy use Apache-2.0. Individual projects document their own licenses.
+
+- `public/assets/v2/` holds the design system (`style.css`), the hero hypercube (`hero.js`), page behaviour (`main.js`),
+  the light/dark theme switch (`theme.js`, loaded blocking so a saved choice applies before first paint; otherwise the
+  device setting decides), and the résumé print layout.
+- `public/assets/media/` holds demo videos (WebM + MP4), posters and the social-share image.
+- `tools/build_pages.py` generates the project case-study pages; edit it rather than the generated HTML.
+- The résumé PDF is printed from `/resume/` in Chrome with print media emulation.
+- Fonts are self-hosted (OFL); see `public/assets/fonts/LICENSES.txt`.
 
 ## Preview and check
 
