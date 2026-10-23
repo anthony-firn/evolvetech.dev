@@ -80,6 +80,8 @@ To reproduce this hosting arrangement in another account, create a Netlify site,
 `public/play/<name>/BUILD.json`. It needs git, Node.js and `godot4` with the web export templates.
 `/play/*` gets its own Content-Security-Policy (WebAssembly and inline styles) in `public/_headers` and in a matching
 Bunny edge rule; the rest of the site keeps the strict policy. Change both together.
+Bunny Storage serves unknown extensions as `application/octet-stream`, so a further edge rule sets `text/javascript` for
+`*.mjs` (Pyodide's modules); browsers refuse to run module scripts with any other type.
 
 ## Add a project
 
