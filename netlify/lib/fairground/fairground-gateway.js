@@ -1,6 +1,5 @@
-import { c as e, f as t, l as n, m as r, o as i, p as a, s as o } from "./pq-BbiwCKUY.js";
-import { E as s, F as c, T as l } from "./utils-Bw_p9nq9.js";
-import "./pricing-ehjRYWD6.js";
+import { _ as e, d as t, f as n, m as r, o as i, p as a, s as o, u as s, v as c, y as l } from "./pq-DdqIFRtl.js";
+import "./pricing-QI6yADPU.js";
 // node_modules/nostr-tools/node_modules/@scure/base/index.js
 function u(e) {
 	return e instanceof Uint8Array || ArrayBuffer.isView(e) && e.constructor.name === "Uint8Array";
@@ -217,7 +216,7 @@ function ee(e) {
 			return {
 				type: "nprofile",
 				data: {
-					pubkey: a(e[0][0]),
+					pubkey: c(e[0][0]),
 					relays: e[1] ? e[1].map((e) => I.decode(e)) : []
 				}
 			};
@@ -231,10 +230,10 @@ function ee(e) {
 			return {
 				type: "nevent",
 				data: {
-					id: a(e[0][0]),
+					id: c(e[0][0]),
 					relays: e[1] ? e[1].map((e) => I.decode(e)) : [],
-					author: e[2]?.[0] ? a(e[2][0]) : void 0,
-					kind: e[3]?.[0] ? parseInt(a(e[3][0]), 16) : void 0
+					author: e[2]?.[0] ? c(e[2][0]) : void 0,
+					kind: e[3]?.[0] ? parseInt(c(e[3][0]), 16) : void 0
 				}
 			};
 		}
@@ -249,8 +248,8 @@ function ee(e) {
 				type: "naddr",
 				data: {
 					identifier: I.decode(e[0][0]),
-					pubkey: a(e[2][0]),
-					kind: parseInt(a(e[3][0]), 16),
+					pubkey: c(e[2][0]),
+					kind: parseInt(c(e[3][0]), 16),
 					relays: e[1] ? e[1].map((e) => I.decode(e)) : []
 				}
 			};
@@ -262,7 +261,7 @@ function ee(e) {
 		case "npub":
 		case "note": return {
 			type: t,
-			data: a(r)
+			data: c(r)
 		};
 		default: throw Error(`unknown prefix ${t}`);
 	}
@@ -278,7 +277,7 @@ function R(e) {
 	return t;
 }
 function z(e) {
-	return ne("npub", r(e));
+	return ne("npub", l(e));
 }
 function te(e, t) {
 	let n = F.toWords(t);
@@ -288,29 +287,29 @@ function ne(e, t) {
 	return te(e, t);
 }
 // src/mp3.ts
-var re = (e, t) => e.version === t.version && e.sampleRate === t.sampleRate && e.channels === t.channels, B = (e, t) => `${n.show}:${e}:${t}`;
-function ie(t) {
-	let r = e(t, "d"), i = e(t, "title"), a = e(t, "image"), [, s, c] = o(t, "category") ?? [], l = e(t, "guid");
-	if (t.kind !== n.show || !r || !i || !a || !s || !l) return;
-	let [, u, d] = o(t, "owner") ?? [], f = e(t, "type");
+var re = (e, t) => e.version === t.version && e.sampleRate === t.sampleRate && e.channels === t.channels, B = (e, t) => `${r.show}:${e}:${t}`;
+function ie(e) {
+	let i = n(e, "d"), a = n(e, "title"), o = n(e, "image"), [, s, c] = t(e, "category") ?? [], l = n(e, "guid");
+	if (e.kind !== r.show || !i || !a || !o || !s || !l) return;
+	let [, u, d] = t(e, "owner") ?? [], f = n(e, "type");
 	return {
-		event: t,
-		creator: t.pubkey,
-		address: B(t.pubkey, r),
-		slug: r,
-		title: i,
-		description: t.content,
-		image: a,
-		author: e(t, "author") ?? i,
+		event: e,
+		creator: e.pubkey,
+		address: B(e.pubkey, i),
+		slug: i,
+		title: a,
+		description: e.content,
+		image: o,
+		author: n(e, "author") ?? a,
 		category: s,
 		subcategory: c || void 0,
-		explicit: e(t, "explicit") === "true",
-		language: e(t, "language") ?? "en",
+		explicit: n(e, "explicit") === "true",
+		language: n(e, "language") ?? "en",
 		type: f === "serial" ? "serial" : "episodic",
 		ownerName: u || void 0,
 		ownerEmail: d || void 0,
-		link: e(t, "r"),
-		copyright: e(t, "copyright"),
+		link: n(e, "r"),
+		copyright: n(e, "copyright"),
 		guid: l
 	};
 }
@@ -341,36 +340,36 @@ function oe(e) {
 	})).filter((e) => Number.isFinite(e.at) && e.at > 0 && (e.byteOffset === void 0 || Number.isSafeInteger(e.byteOffset))).sort((e, t) => e.at - t.at);
 }
 var V = (e) => e && /^\d+(\.\d+)?$/.test(e) && Number(e) > 0 ? Number(e) : void 0;
-function se(t) {
-	let r = e(t, "a"), i = e(t, "guid"), a = e(t, "title"), [, s, c = "audio/mpeg"] = o(t, "audio") ?? [];
-	if (t.kind !== 54 || !r?.startsWith(`${n.show}:${t.pubkey}:`) || !i || !a || !s?.startsWith("https://")) return;
-	let [, l, u] = o(t, "transcript") ?? [], d = e(t, "episode_type");
+function se(e) {
+	let i = n(e, "a"), a = n(e, "guid"), o = n(e, "title"), [, s, c = "audio/mpeg"] = t(e, "audio") ?? [];
+	if (e.kind !== 54 || !i?.startsWith(`${r.show}:${e.pubkey}:`) || !a || !o || !s?.startsWith("https://")) return;
+	let [, l, u] = t(e, "transcript") ?? [], d = n(e, "episode_type");
 	return {
-		event: t,
-		creator: t.pubkey,
-		published: t.created_at,
-		show: r,
-		guid: i,
-		title: a,
-		description: t.content || e(t, "description") || "",
+		event: e,
+		creator: e.pubkey,
+		published: e.created_at,
+		show: i,
+		guid: a,
+		title: o,
+		description: e.content || n(e, "description") || "",
 		audio: {
 			url: s,
 			type: c,
-			size: V(e(t, "size")),
-			duration: V(e(t, "duration"))
+			size: V(n(e, "size")),
+			duration: V(n(e, "duration"))
 		},
-		image: e(t, "image"),
-		episode: V(e(t, "episode")),
-		season: V(e(t, "season")),
+		image: n(e, "image"),
+		episode: V(n(e, "episode")),
+		season: V(n(e, "season")),
 		episodeType: d === "trailer" || d === "bonus" ? d : "full",
-		explicit: e(t, "explicit") === "true",
-		hls: e(t, "hls"),
+		explicit: n(e, "explicit") === "true",
+		hls: n(e, "hls"),
 		transcript: l ? {
 			url: l,
 			type: u ?? "text/plain"
 		} : void 0,
-		breaks: oe(t),
-		mp3: ae(o(t, "mp3"))
+		breaks: oe(e),
+		mp3: ae(t(e, "mp3"))
 	};
 }
 function ce(e, t) {
@@ -391,7 +390,7 @@ var H = (e) => e.replace(/[&<>"']/g, (e) => ({
 	"'": "&apos;"
 })[e]), U = (e, t) => t === void 0 || t === "" ? "" : `<${e}>${H(String(t))}</${e}>`, le = (e) => e.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f￾￿]/g, "");
 function W(e, t, n) {
-	let r = (e) => (/* @__PURE__ */ new Date(e * 1e3)).toUTCString(), a = e.subcategory ? `<itunes:category text="${H(e.category)}"><itunes:category text="${H(e.subcategory)}"/></itunes:category>` : `<itunes:category text="${H(e.category)}"/>`, o = e.ownerEmail ? `<itunes:owner>${U("itunes:name", e.ownerName ?? e.author)}${U("itunes:email", e.ownerEmail)}</itunes:owner>` : "", s = t.map((t) => [
+	let r = (e) => (/* @__PURE__ */ new Date(e * 1e3)).toUTCString(), i = e.subcategory ? `<itunes:category text="${H(e.category)}"><itunes:category text="${H(e.subcategory)}"/></itunes:category>` : `<itunes:category text="${H(e.category)}"/>`, a = e.ownerEmail ? `<itunes:owner>${U("itunes:name", e.ownerName ?? e.author)}${U("itunes:email", e.ownerEmail)}</itunes:owner>` : "", o = t.map((t) => [
 		"<item>",
 		U("title", t.title),
 		U("description", t.description),
@@ -421,34 +420,34 @@ function W(e, t, n) {
 		U("itunes:author", e.author),
 		`<itunes:image href="${H(e.image)}"/>`,
 		`<image>${U("url", e.image)}${U("title", e.title)}${U("link", e.link ?? n.pageUrl())}</image>`,
-		a,
+		i,
 		U("itunes:explicit", e.explicit ? "true" : "false"),
 		U("itunes:type", e.type ?? "episodic"),
-		o,
+		a,
 		U("copyright", e.copyright),
 		U("podcast:guid", e.guid),
 		e.ownerEmail ? `<podcast:locked owner="${H(e.ownerEmail)}">yes</podcast:locked>` : "",
 		U("generator", "Fairground"),
-		U("lastBuildDate", r(n.generatedAt ?? i())),
-		...s,
+		U("lastBuildDate", r(n.generatedAt ?? s())),
+		...o,
 		"</channel>",
 		"</rss>"
 	].join("\n"));
 }
-var ue = (e) => c(s(new TextEncoder().encode(e)));
-function de(e, n, r, i = "", a = Math.floor(Date.now() / 1e3)) {
-	if (!e?.startsWith("Nostr ")) return { error: "missing Nostr authorization" };
-	let o;
+var ue = (e) => a(o(new TextEncoder().encode(e)));
+function de(t, n, r, a = "", o = Math.floor(Date.now() / 1e3)) {
+	if (!t?.startsWith("Nostr ")) return { error: "missing Nostr authorization" };
+	let s;
 	try {
-		o = JSON.parse(new TextDecoder().decode(l.decode(e.slice(6).trim())));
+		s = JSON.parse(new TextDecoder().decode(i.decode(t.slice(6).trim())));
 	} catch {
 		return { error: "malformed authorization" };
 	}
-	let s = (e) => o.tags?.find((t) => t[0] === e)?.[1];
-	return o.kind !== 27235 || !t(o) ? { error: "authorization is not a valid signed request" } : Math.abs(a - o.created_at) > 60 ? { error: "authorization has expired" } : s("u") !== n || s("method") !== r.toUpperCase() ? { error: "authorization is for another request" } : i && s("payload") !== ue(i) ? { error: "authorization doesn’t match the request body" } : { pubkey: o.pubkey };
+	let c = (e) => s.tags?.find((t) => t[0] === e)?.[1];
+	return s.kind !== 27235 || !e(s) ? { error: "authorization is not a valid signed request" } : Math.abs(o - s.created_at) > 60 ? { error: "authorization has expired" } : c("u") !== n || c("method") !== r.toUpperCase() ? { error: "authorization is for another request" } : a && c("payload") !== ue(a) ? { error: "authorization doesn’t match the request body" } : { pubkey: s.pubkey };
 }
 // src/network.ts
-var fe = 2604, pe = (t) => t.kind === n.pqBinding && e(t, "alg") === "ml-dsa-65" && e(t, "key")?.length === fe;
+var fe = 2604, pe = (e) => e.kind === r.pqBinding && n(e, "alg") === "ml-dsa-65" && n(e, "key")?.length === fe;
 function G(e) {
 	return new Set(e.filter(pe).map((e) => e.pubkey));
 }
@@ -491,7 +490,7 @@ function K(e) {
 				referrerDomain: e.referrerDomain,
 				productsAvailed: r.side,
 				network: "algorand",
-				cryptoCurrencyCode: "USDC",
+				cryptoCurrencyCode: r.side === "BUY" ? r.asset ?? "USDC" : "USDC",
 				fiatCurrency: "USD",
 				partnerCustomerId: r.customer,
 				redirectURL: r.redirectURL,
@@ -602,10 +601,10 @@ function Z(e, t) {
 	} : { block: !1 };
 }
 // src/gateway.ts
-var Q = () => import("./ads-Di2z4O4w.js"), De = () => import("./pq-BbiwCKUY.js").then((e) => e.t);
-async function $(e, n, r = WebSocket, i = 4e3) {
+var Q = () => import("./ads-CNS6Emzr.js"), De = () => import("./pq-DdqIFRtl.js").then((e) => e.t);
+async function $(t, n, r = WebSocket, i = 4e3) {
 	let a = /* @__PURE__ */ new Map();
-	return await Promise.all(e.map((e) => new Promise((o) => {
+	return await Promise.all(t.map((t) => new Promise((o) => {
 		let s, c = Math.random().toString(36).slice(2, 10), l = () => {
 			clearTimeout(u);
 			try {
@@ -614,7 +613,7 @@ async function $(e, n, r = WebSocket, i = 4e3) {
 			o();
 		}, u = setTimeout(l, i);
 		try {
-			s = new r(e);
+			s = new r(t);
 		} catch {
 			clearTimeout(u), o();
 			return;
@@ -623,14 +622,14 @@ async function $(e, n, r = WebSocket, i = 4e3) {
 			"REQ",
 			c,
 			n
-		])), s.onerror = l, s.onclose = l, s.onmessage = (e) => {
+		])), s.onerror = l, s.onclose = l, s.onmessage = (t) => {
 			let n;
 			try {
-				n = JSON.parse(String(e.data));
+				n = JSON.parse(String(t.data));
 			} catch {
 				return;
 			}
-			Array.isArray(n) && n[1] === c && (n[0] === "EOSE" || n[0] === "CLOSED" ? l() : n[0] === "EVENT" && !a.has(n[2]?.id) && t(n[2]) && a.set(n[2].id, n[2]));
+			Array.isArray(n) && n[1] === c && (n[0] === "EOSE" || n[0] === "CLOSED" ? l() : n[0] === "EVENT" && !a.has(n[2]?.id) && e(n[2]) && a.set(n[2].id, n[2]));
 		};
 	}))), [...a.values()];
 }
@@ -718,37 +717,37 @@ async function je(e) {
 }
 var Me = (e) => /mpeg|mp3/.test(e) ? "mp3" : /mp4|m4a|aac/.test(e) ? "m4a" : "audio";
 function Ne(e) {
-	let t = e.base.replace(/\/+$/, ""), r = e.fetch ?? ((...e) => fetch(...e)), i = e.WebSocket ?? WebSocket, a = e.now ?? (() => Math.floor(Date.now() / 1e3)), o = (e.cacheSeconds ?? 120) * 1e3, s = /* @__PURE__ */ new Map(), c = {
+	let t = e.base.replace(/\/+$/, ""), n = e.fetch ?? ((...e) => fetch(...e)), i = e.WebSocket ?? WebSocket, a = e.now ?? (() => Math.floor(Date.now() / 1e3)), o = (e.cacheSeconds ?? 120) * 1e3, s = /* @__PURE__ */ new Map(), c = {
 		"Access-Control-Allow-Origin": "*",
 		"Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges, ETag"
 	}, l = (t) => $(e.relays, t, i);
 	async function u(e, t) {
-		let r = B(e, t), [i, a, o, s] = await Promise.all([
+		let n = B(e, t), [i, a, o, s] = await Promise.all([
 			l({
-				kinds: [n.show],
+				kinds: [r.show],
 				authors: [e],
 				"#d": [t]
 			}),
 			l({
 				kinds: [54],
 				authors: [e],
-				"#a": [r],
+				"#a": [n],
 				limit: 1e3
 			}),
 			l({
-				kinds: [n.placement],
+				kinds: [r.placement],
 				authors: [e],
 				limit: 500
 			}),
 			l({
-				kinds: [n.pqBinding],
+				kinds: [r.pqBinding],
 				authors: [e]
 			})
 		]);
 		if (!G(s).has(e)) return;
 		let c = i.map(ie).filter((e) => !!e).sort((e, t) => t.event.created_at - e.event.created_at)[0];
 		if (!c || Z(c.event).block) return;
-		let u = ce(a.filter((e) => !Z(e).block), r);
+		let u = ce(a.filter((e) => !Z(e).block), n);
 		!c.explicit && [c.event, ...u.map((e) => e.event)].some((e) => {
 			let t = Z(e);
 			return !t.block && t.hide === "sexual";
@@ -756,11 +755,11 @@ function Ne(e) {
 		let d = o.length ? o.map((await Q()).parsePlacement).filter((e) => !!e) : [], [f, p, m] = d.length ? await Promise.all([
 			l({ ids: [...new Set(d.map((e) => e.acceptanceId))] }),
 			l({
-				kinds: [n.approval],
+				kinds: [r.approval],
 				"#e": d.map((e) => e.event.id)
 			}),
 			l({
-				kinds: [n.pqBinding],
+				kinds: [r.pqBinding],
 				authors: [...new Set(d.map((e) => e.advertiser))]
 			})
 		]) : [
@@ -792,76 +791,60 @@ function Ne(e) {
 			...c,
 			"Content-Type": "text/plain"
 		}
-	}), p, m = () => e.starter ? p ??= import("./starter--ZveX1R5.js").then((t) => t.createStarter({
-		fetch: r,
-		...e.starter
-	})) : void 0, h = e.ramp && K({
-		fetch: r,
+	}), p = e.ramp && K({
+		fetch: n,
 		...e.ramp
-	}), g = (e, t = 200) => Response.json(e, {
+	}), m = (e, t = 200) => Response.json(e, {
 		status: t,
 		headers: {
 			...c,
 			"Cache-Control": "no-store"
 		}
 	});
-	async function _(t, r = "") {
-		let i = de(t.headers.get("Authorization"), t.url, t.method, r);
-		return "error" in i ? g({ error: i.error }, 401) : G(await l({
-			kinds: [n.pqBinding],
+	async function h(t, n = "") {
+		let i = de(t.headers.get("Authorization"), t.url, t.method, n);
+		return "error" in i ? m({ error: i.error }, 401) : G(await l({
+			kinds: [r.pqBinding],
 			authors: [i.pubkey]
-		})).has(i.pubkey) ? e.blocked?.includes(i.pubkey) ? g({ error: "this account can’t use this gateway" }, 403) : i.pubkey : g({ error: "not a Fairground account" }, 403);
+		})).has(i.pubkey) ? e.blocked?.includes(i.pubkey) ? m({ error: "this account can’t use this gateway" }, 403) : i.pubkey : m({ error: "not a Fairground account" }, 403);
 	}
-	async function v(e, t, n) {
-		if (t === "/wallet/config" && e.method === "GET") return g({
-			starter: (await m())?.sponsor ?? null,
-			ramp: !!h
-		});
-		if (t === "/wallet/start" && e.method === "POST") {
-			let t = await m();
-			if (!t) return g({ error: "this gateway doesn’t start wallets" }, 503);
-			let n = await e.text(), r = await _(e, n);
-			if (r instanceof Response) return r;
-			let i = await t.start(r, JSON.parse(n || "{}")).catch((e) => ({
-				status: 502,
-				error: e.message
-			}));
-			return "txid" in i ? g(i) : g({ error: i.error }, i.status);
-		}
+	async function g(e, t, n) {
+		if (t === "/wallet/config" && e.method === "GET") return m({ ramp: !!p });
 		if (t === "/ramp/session" && e.method === "POST") {
-			if (!h) return g({ error: "buying and selling aren’t set up on this gateway yet" }, 503);
-			let t = await e.text(), r = await _(e, t);
+			if (!p) return m({ error: "buying and selling aren’t set up on this gateway yet" }, 503);
+			let t = await e.text(), r = await h(e, t);
 			if (r instanceof Response) return r;
 			let i = JSON.parse(t || "{}");
-			if (i.side !== "BUY" && i.side !== "SELL" || !/^[A-Z2-7]{58}$/.test(i.walletAddress ?? "") || !/^(https:\/\/|http:\/\/localhost[:/])/.test(i.redirectURL ?? "")) return g({ error: "bad request" }, 400);
+			if (i.side !== "BUY" && i.side !== "SELL" || !/^[A-Z2-7]{58}$/.test(i.walletAddress ?? "") || !/^(https:\/\/|http:\/\/localhost[:/])/.test(i.redirectURL ?? "")) return m({ error: "bad request" }, 400);
 			let a = Number(i.amount) > 0 ? Number(i.amount) : void 0;
 			try {
-				let e = await h.session({
+				let e = await p.session({
 					side: i.side,
 					walletAddress: i.walletAddress,
 					customer: r,
 					redirectURL: i.redirectURL,
 					userIp: n.ip ?? "0.0.0.0",
+					asset: i.asset === "ALGO" ? "ALGO" : "USDC",
 					...i.side === "BUY" ? { fiatAmount: a } : { cryptoAmount: a }
 				});
-				return g({ url: e });
+				return m({ url: e });
 			} catch (e) {
-				return g({ error: e.message }, 502);
+				return m({ error: e.message }, 502);
 			}
 		}
 		let r = /^\/ramp\/order\/([A-Za-z0-9-]{6,80})$/.exec(t);
 		if (r && e.method === "GET") {
-			if (!h) return g({ error: "buying and selling aren’t set up on this gateway yet" }, 503);
-			let t = await _(e);
+			if (!p) return m({ error: "buying and selling aren’t set up on this gateway yet" }, 503);
+			let t = await h(e);
 			if (t instanceof Response) return t;
 			try {
-				let e = await h.order(r[1]);
-				return e.customer && e.customer !== t ? g({ error: "that order belongs to someone else" }, 403) : g({
+				let e = await p.order(r[1]);
+				return e.customer && e.customer !== t ? m({ error: "that order belongs to someone else" }, 403) : m({
 					order: e,
 					problem: e.side === "SELL" ? ge(e, t) ?? null : null
 				});
 			} catch (e) {
-				return g({ error: e.message }, 502);
+				return m({ error: e.message }, 502);
 			}
 		}
 	}
@@ -875,7 +858,7 @@ function Ne(e) {
 			}
 		});
 		let l = new URL(o.url), u = l.pathname.startsWith(t) ? l.pathname.slice(t.length) : l.pathname;
-		if (u.startsWith("/wallet/") || u.startsWith("/ramp/")) return await v(o, u, s) ?? f("page");
+		if (u.startsWith("/wallet/") || u.startsWith("/ramp/")) return await g(o, u, s) ?? f("page");
 		if (o.method !== "GET" && o.method !== "HEAD") return new Response("method not allowed\n", {
 			status: 405,
 			headers: c
@@ -886,7 +869,7 @@ function Ne(e) {
 				return {
 					relay: e,
 					ok: (await $([e], {
-						kinds: [n.pqBinding],
+						kinds: [r.pqBinding],
 						limit: 1
 					}, i, 3e3)).length > 0,
 					ms: Date.now() - t
@@ -915,13 +898,13 @@ function Ne(e) {
 		}
 		let h = p[2];
 		if (e.blocked?.includes(m)) return f("show");
-		let g = await d(m, h);
-		if (!g) return f("show");
-		let _ = `${`${l.protocol}//${l.host}`}${t}/podcast/${z(m)}/${h}`;
+		let _ = await d(m, h);
+		if (!_) return f("show");
+		let v = `${`${l.protocol}//${l.host}`}${t}/podcast/${z(m)}/${h}`;
 		if (!p[3]) {
-			let t = W(g.show, g.episodes, {
-				feedUrl: `${_}.xml`,
-				enclosureUrl: (e) => `${_}/${encodeURIComponent(e.guid)}.${Me(e.audio.type)}`,
+			let t = W(_.show, _.episodes, {
+				feedUrl: `${v}.xml`,
+				enclosureUrl: (e) => `${v}/${encodeURIComponent(e.guid)}.${Me(e.audio.type)}`,
 				pageUrl: (t) => t ? `${e.appUrl}#/media/${t.event.id}` : `${e.appUrl}#/show/${z(m)}/${h}`,
 				generatedAt: a()
 			});
@@ -932,19 +915,19 @@ function Ne(e) {
 				...e.feedHeaders
 			} });
 		}
-		let y = decodeURIComponent(p[3]), b = g.episodes.find((e) => e.guid === y);
+		let y = decodeURIComponent(p[3]), b = _.episodes.find((e) => e.guid === y);
 		if (!b) return f("episode");
-		let x = g.placements.length ? (await Q()).breaksFor({
+		let x = _.placements.length ? (await Q()).breaksFor({
 			creator: m,
 			kind: "audio",
-			show: g.show.address,
+			show: _.show.address,
 			duration: b.audio.duration,
 			marks: b.breaks ?? []
-		}, g.placements, {
+		}, _.placements, {
 			now: a(),
-			acceptances: g.acceptances,
-			approvals: g.approvals,
-			pqKeyOf: (await De()).keyLookup(g.bindings)
+			acceptances: _.acceptances,
+			approvals: _.approvals,
+			pqKeyOf: (await De()).keyLookup(_.bindings)
 		}) : [], S = Oe(b, x);
 		if (!S) return new Response(null, {
 			status: 302,
@@ -973,7 +956,7 @@ function Ne(e) {
 		return D && (T["Content-Range"] = `bytes ${O}-${k}/${C}`), T["Content-Length"] = String(k - O + 1), o.method === "HEAD" ? new Response(null, {
 			status: A,
 			headers: T
-		}) : new Response(Ae(S, O, k, r), {
+		}) : new Response(Ae(S, O, k, n), {
 			status: A,
 			headers: T
 		});
