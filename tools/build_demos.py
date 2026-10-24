@@ -70,13 +70,18 @@ def build_expo(src, name):
 
 
 def build_godot(src, name):
-    (src / "export_presets.cfg").write_text(GODOT_PRESET)
+    preset = GODOT_PRESET
+    if (src / "web" / "shell.html").exists():
+        preset = preset.replace('html/custom_html_shell=""', 'html/custom_html_shell="res://web/shell.html"')
+    (src / "export_presets.cfg").write_text(preset)
     (src / "build").mkdir()
     run("godot4", "--headless", "--import", "--path", ".", cwd=src)
     run("godot4", "--headless", "--path", ".", "--export-release", "Web", "build/index.html", cwd=src)
     out = src / "build"
     # Move Godot's inline style and start-up script into files so the page runs without 'unsafe-inline' scripts.
     page = (out / "index.html").read_text()
+    if "index.png" not in page:
+        (out / "index.png").unlink(missing_ok=True)
     style = re.search(r"<style>(.*?)</style>", page, re.S)
     script = re.search(r'<script src="index.js"></script>\s*<script>(.*?)</script>', page, re.S)
     (out / "index.css").write_text(style.group(1).strip() + "\n")
