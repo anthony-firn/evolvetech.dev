@@ -1,11 +1,11 @@
 """Publish the same public files to independent Netlify and Bunny storage copies."""
 from concurrent.futures import ThreadPoolExecutor
-from io import BytesIO
+import json
 import mimetypes
+import os
 import subprocess
-import time
 from urllib.parse import quote
-from hosting import CONFIG as C, ROOT, bunny, netlify, request
+from hosting import CONFIG as C, ROOT, bunny, request
 
 
 def deploy_bunny():
@@ -23,23 +23,15 @@ def deploy_bunny():
 
 
 def deploy_netlify():
-    import zipfile
-    buffer = BytesIO()
-    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
-        for path in sorted((ROOT / "public").rglob("*")):
-            if path.is_file():
-                archive.write(path, path.relative_to(ROOT / "public").as_posix())
-    deploy = netlify("POST", f"/sites/{C['netlify_site']}/deploys", buffer.getvalue(),
-                     {"Content-Type": "application/zip"})
-    for _ in range(60):
-        state = netlify("GET", f"/deploys/{deploy['id']}")
-        if state["state"] == "ready":
-            print("Netlify: production deploy ready:", deploy["id"])
-            return
-        if state["state"] == "error":
-            raise RuntimeError("Netlify rejected the deployment")
-        time.sleep(2)
-    raise RuntimeError("Netlify deployment did not become ready in two minutes")
+    """Deploys public/ and the edge functions in netlify/edge-functions with the Netlify CLI, which bundles them."""
+    result = subprocess.run(
+        ["npx", "--yes", "netlify-cli@27.14.1", "deploy", "--prod", "--dir", "public", "--site", C["netlify_site"],
+         "--message", os.environ.get("GITHUB_SHA", "local")[:12], "--json"],
+        cwd=ROOT, capture_output=True, text=True, timeout=600)
+    if result.returncode != 0:
+        raise RuntimeError("Netlify deploy failed:\n" + (result.stderr or result.stdout)[-3000:])
+    deploy = json.loads(result.stdout[result.stdout.index("{"):])
+    print("Netlify: production deploy ready:", deploy.get("deploy_id"))
 
 
 if __name__ == "__main__":
