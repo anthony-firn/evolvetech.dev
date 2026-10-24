@@ -81,7 +81,7 @@ PAGES = [
          description="Fairground is an open-source social network with no company in the middle: creators are paid directly, an AI on your device ranks your feed, and deals are signed with post-quantum cryptography.",
          lede="A social network with no company in the middle. Advertisers and fans pay creators directly, an AI on your own device ranks your feed, and every deal is a public, signed record. Nothing runs on servers the project pays for.",
          demo="/play/fairground/", demo_text="Open the app", repo="https://github.com/anthony-firn/fairground",
-         media=video("fairground", "", "Fairground on a phone with sample data: picking topics, a feed ranked on the device, why a post was ranked, a sponsorship offer and fan support.", phone=True, w=430, h=860),
+         media=video("fairground", "", "Fairground on a phone: picking topics, then the free King Gizzard & the Lizard Wizard album Polygondwanaland posted with every track playable in the feed, and the poster’s profile.", phone=True, w=430, h=860),
          status="Early release", license="Apache 2.0", stack="TypeScript, React, Nostr, Capacitor, Transformers.js",
          sections=[
              callout("Early and experimental.", "Payments are real USDC on Algorand and go straight from one person's wallet to another's; Fairground never holds funds. Try it with small amounts while it matures. Nothing here is financial, legal or tax advice."),
@@ -102,7 +102,7 @@ PAGES = [
              section("Run a relay", "Relays store and deliver posts, and Fairground sends them a share of the donations from the people they serve. Phones and browser tabs can't be relays, so yours needs to run somewhere always on: a small cloud server, a home server or a hosted relay service. Install any Nostr relay software (strfry and nostr-rs-relay are common choices), set the operator <code>pubkey</code> in its NIP-11 information to the public key shown in the app, then open <strong>Create → Become a relay</strong> and enter its wss:// address. The app checks that the relay names you, publishes where donations should go, and shows what comes in and what you've passed on.", anchor="run-a-relay"),
              section("Engineering choices", bullets=[
                  "A protocol core in TypeScript that Node runs without a build step, covered by 79 unit tests, including attack cases (forged edits, swapped signatures, changed terms, underpayment, invented survey answers). Each security rule was mutation-checked: removing it fails a test.",
-                 "An end-to-end test drives the built app in Chrome against a local relay seeded with sample data: onboarding, ranking, posting, sponsorship, account sync to a second device, and the on-device model.",
+                 "An end-to-end test drives the built app in Chrome against a local relay with labelled test fixtures: onboarding, ranking, posting, sponsorship, account sync to a second device, and the on-device model. The demo video is recorded from real published posts only.",
                  "The app runs under this site's strict Content-Security-Policy. The AI runtime is served from the app itself, and the library's blob: loader is switched off so scripts never need more than 'self'."]),
          ]),
     dict(slug="retirement", title="Retirement Research", poster="retirement-poster.webp",
