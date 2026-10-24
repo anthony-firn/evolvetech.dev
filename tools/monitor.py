@@ -8,8 +8,13 @@ from hosting import CONFIG as C, bunny
 PREFIX = "evolvetech-monitor:"
 
 
+# The homepage marker must survive copy changes: the October 2026 redesign removed the old one, and both CDNs then
+# looked down, which silently disabled failover.
+HOMEPAGE_MARKER = "<title>Anthony Firn"
+
+
 def healthy(target):
-    for path, expected in [("/health.json", '"status":"ok"'), ("/", "Useful projects.")]:
+    for path, expected in [("/health.json", '"status":"ok"'), ("/", HOMEPAGE_MARKER)]:
         result = subprocess.run([
             "curl", "--silent", "--show-error", "--fail", "--max-time", "15",
             "--connect-to", f"{C['hostname']}:443:{target}:443",
