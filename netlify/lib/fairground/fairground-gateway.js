@@ -792,7 +792,7 @@ function Ne(e) {
 			...c,
 			"Content-Type": "text/plain"
 		}
-	}), p, m = () => e.starter ? p ??= import("./starter-C2wUvsqJ.js").then((t) => t.createStarter({
+	}), p, m = () => e.starter ? p ??= import("./starter--ZveX1R5.js").then((t) => t.createStarter({
 		fetch: r,
 		...e.starter
 	})) : void 0, h = e.ramp && K({

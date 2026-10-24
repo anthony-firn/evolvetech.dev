@@ -1,6 +1,6 @@
 {
   "source": "https://github.com/anthony-firn/fairground.git",
   "path": "gateway/",
-  "commit": "95b4af5ce51acb3b23097ce2dec7f1618c383133",
+  "commit": "27d1d5044ef7e96e0995739506454139dd432c59",
   "build": "npm run gateway:build"
 }

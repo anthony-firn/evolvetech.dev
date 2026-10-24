@@ -901,7 +901,7 @@ var _t = (e) => Y(Q("TX"), mt(e)), vt = (e, t) => X({
 	}
 }, $ = "https://mainnet-api.4160.nodely.dev", xt = 250000n, St = "fairground:starter";
 async function Ct(e, t = $, n = (...e) => fetch(...e)) {
-	let r = await n(`${t}/v2/accounts/${e}?exclude=created-assets,created-apps,apps-local-state`);
+	let r = await n(`${t}/v2/accounts/${e}`);
 	if (!r.ok) throw Error(`reading the wallet: the Algorand node said ${r.status}`);
 	let i = await r.json(), a = (i.assets ?? []).find((e) => e["asset-id"] === k);
 	return {
