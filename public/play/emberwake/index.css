@@ -1,84 +1,12 @@
-html, body, #canvas {
-	margin: 0;
-	padding: 0;
-	border: 0;
-}
-
-body {
-	color: white;
-	background-color: black;
-	overflow: hidden;
-	touch-action: none;
-}
-
-#canvas {
-	display: block;
-}
-
-#canvas:focus {
-	outline: none;
-}
-
-#status, #status-splash, #status-progress {
-	position: absolute;
-	left: 0;
-	right: 0;
-}
-
-#status, #status-splash {
-	top: 0;
-	bottom: 0;
-}
-
-#status {
-	background-color: #242424;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	visibility: hidden;
-}
-
-#status-splash {
-	max-height: 100%;
-	max-width: 100%;
-	margin: auto;
-}
-
-#status-splash.show-image--false {
-	display: none;
-}
-
-#status-splash.fullsize--true {
-	height: 100%;
-	width: 100%;
-	object-fit: contain;
-}
-
-#status-splash.use-filter--false {
-	image-rendering: pixelated;
-}
-
-#status-progress, #status-notice {
-	display: none;
-}
-
-#status-progress {
-	bottom: 10%;
-	width: 50%;
-	margin: 0 auto;
-}
-
-#status-notice {
-	background-color: #5b3943;
-	border-radius: 0.5rem;
-	border: 1px solid #9b3943;
-	color: #e0e0e0;
-	font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif;
-	line-height: 1.3;
-	margin: 0 2rem;
-	overflow: hidden;
-	padding: 1rem;
-	text-align: center;
-	z-index: 1;
-}
+html,body { margin:0; width:100%; height:100%; background:#090b10; color:#efdbbc; overflow:hidden; }
+#canvas { display:block; outline:none; }
+#status { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(ellipse at center,#251b1a,#090b10 68%); font-family:Georgia,serif; }
+#ember-brand { text-align:center; }
+.ember-mark { display:block; font-size:72px; color:#e9a65d; text-shadow:0 0 50px #b74c2d; }
+h1 { font-size:clamp(32px,7vw,64px); letter-spacing:.18em; font-weight:normal; margin:20px 0; }
+p { font:11px system-ui,sans-serif; letter-spacing:.4em; color:#c49b74; }
+small { display:block; margin-top:52px; color:#a99a8a; font:13px system-ui,sans-serif; }
+#status-progress { margin:22px auto; width:min(300px,75vw); height:5px; border:0; background:#312723; accent-color:#dfa768; }
+#status-progress::-webkit-progress-bar { background:#312723; }
+#status-progress::-webkit-progress-value { background:#dfa768; }
+#status-notice { display:none; max-width:560px; margin:20px; font:14px/1.5 system-ui,sans-serif; text-align:center; color:#efb5a3; }

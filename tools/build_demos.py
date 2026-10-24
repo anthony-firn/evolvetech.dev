@@ -2,6 +2,8 @@
 
 Built files are committed, so deploys and the Bunny backup never depend on a project build succeeding later.
 """
+import argparse
+import hashlib
 import json
 import re
 import shutil
@@ -74,7 +76,7 @@ def build_godot(src, name):
     if (src / "web" / "shell.html").exists():
         preset = preset.replace('html/custom_html_shell=""', 'html/custom_html_shell="res://web/shell.html"')
     (src / "export_presets.cfg").write_text(preset)
-    (src / "build").mkdir()
+    (src / "build").mkdir(exist_ok=True)
     run("godot4", "--headless", "--import", "--path", ".", cwd=src)
     run("godot4", "--headless", "--path", ".", "--export-release", "Web", "build/index.html", cwd=src)
     out = src / "build"
@@ -128,26 +130,50 @@ def build_vite(src, name):
     return out
 
 
-def main(names):
+def build_demo(src, name):
+    demo = DEMOS[name]
+    commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=src, capture_output=True, text=True, check=True).stdout.strip()
+    provenance = {"source": demo["repo"], "commit": commit}
+    dirty = subprocess.run(["git", "status", "--porcelain"], cwd=src, capture_output=True, text=True, check=True).stdout
+    if dirty:
+        # A local preview must not claim to be the unmodified published commit.
+        digest = hashlib.sha256()
+        names = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+                               cwd=src, capture_output=True, check=True).stdout.decode().split("\0")
+        for filename in sorted(set(names) - {""}):
+            path = src / filename
+            if path.is_file():
+                digest.update(filename.encode() + b"\0" + path.read_bytes() + b"\0")
+        provenance.update(modified=True, working_tree_sha256=digest.hexdigest())
+    out = {"expo": build_expo, "godot": build_godot, "pyodide": build_pyodide, "data": build_data, "vite": build_vite}[demo["build"]](src, name)
+    if "description" in demo:
+        page = out / "index.html"
+        head = (f'<meta name="description" content="{demo["description"]}">'
+                f'<link rel="canonical" href="https://www.evolvetech.dev/play/{name}/"></head>')
+        page.write_text(page.read_text().replace("</head>", head, 1))
+    target = PLAY / name
+    shutil.rmtree(target, ignore_errors=True)
+    shutil.copytree(out, target)
+    (target / "BUILD.json").write_text(json.dumps(provenance, indent=2) + "\n")
+    print(f"{name}: built {commit[:12]}{' + local changes' if dirty else ''} into {target.relative_to(ROOT)}")
+
+
+def main(names, local_source=None):
+    if local_source:
+        if len(names) != 1:
+            raise SystemExit("--local-source requires exactly one demo name")
+        build_demo(local_source.resolve(), names[0])
+        return
     for name in names or DEMOS:
-        demo = DEMOS[name]
         with tempfile.TemporaryDirectory() as temp:
             src = Path(temp) / name
-            run("git", "clone", "--quiet", demo["repo"], str(src), cwd=temp)
-            commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=src, capture_output=True, text=True, check=True).stdout.strip()
-            out = {"expo": build_expo, "godot": build_godot, "pyodide": build_pyodide, "data": build_data, "vite": build_vite}[demo["build"]](src, name)
-            if "description" in demo:
-                # Engine-generated pages get the site's search metadata; their canvas stays untouched.
-                page = out / "index.html"
-                head = (f'<meta name="description" content="{demo["description"]}">'
-                        f'<link rel="canonical" href="https://www.evolvetech.dev/play/{name}/"></head>')
-                page.write_text(page.read_text().replace("</head>", head, 1))
-            target = PLAY / name
-            shutil.rmtree(target, ignore_errors=True)
-            shutil.copytree(out, target)
-            (target / "BUILD.json").write_text(json.dumps({"source": demo["repo"], "commit": commit}, indent=2) + "\n")
-            print(f"{name}: built {commit[:12]} into {target.relative_to(ROOT)}")
+            run("git", "clone", "--quiet", DEMOS[name]["repo"], str(src), cwd=temp)
+            build_demo(src, name)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("names", nargs="*", choices=list(DEMOS))
+    parser.add_argument("--local-source", type=Path, help="Build one local source checkout, recording uncommitted source provenance")
+    args = parser.parse_args()
+    main(args.names, args.local_source)
