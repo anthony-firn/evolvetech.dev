@@ -1,0 +1,9 @@
+{
+  "name": "evolvetech-dev",
+  "private": true,
+  "description": "Netlify functions for evolvetech.dev (the site itself is static files in public/).",
+  "type": "module",
+  "dependencies": {
+    "@netlify/blobs": "^11.1.6"
+  }
+}

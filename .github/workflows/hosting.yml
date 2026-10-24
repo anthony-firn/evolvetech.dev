@@ -27,6 +27,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: npm ci
       - run: python3 tools/test_monitor.py
       - run: python3 tools/deploy.py
         env:
