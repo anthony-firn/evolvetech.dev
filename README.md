@@ -82,11 +82,14 @@ To reproduce this hosting arrangement in another account, create a Netlify site,
 | `/play/emberwake/` | emberwake | Godot 4.7.2 web export, no threads |
 | `/play/pulse-pop/` | pulse-pop | Expo web export |
 | `/play/symmetry-forge/` | symmetry-forge `src/symforge` | `demos/symmetry-forge/` + Pyodide 314.0.7 |
+| `/play/fairground/` | fairground `app/` | Vite build of the React app (same code as its iOS and Android apps) |
 
 `python3 tools/build_demos.py [name ...]` clones each project's current `main`, builds it, and records the commit in
 `public/play/<name>/BUILD.json`. It needs git, Node.js and `godot4` with the web export templates.
 `/play/*` gets its own Content-Security-Policy (WebAssembly and inline styles) in `public/_headers` and in a matching
 Bunny edge rule; the rest of the site keeps the strict policy. Change both together.
+`/play/fairground/*` overrides it to also allow connections to Nostr relays (`wss:`), the Algorand indexer and model
+host (`https:`) and a local Ollama, and images and video from `https:`. It needs a matching Bunny edge rule too.
 Bunny Storage serves unknown extensions as `application/octet-stream`, so a further edge rule sets `text/javascript` for
 `*.mjs` (Pyodide's modules); browsers refuse to run module scripts with any other type.
 

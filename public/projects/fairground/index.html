@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fairground — Anthony Firn</title>
+  <meta name="description" content="Fairground is an open-source social network with no company in the middle: creators are paid directly, an AI on your device ranks your feed, and deals are signed with post-quantum cryptography.">
+  <link rel="canonical" href="https://www.evolvetech.dev/projects/fairground/">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Fairground — Anthony Firn">
+  <meta property="og:description" content="Fairground is an open-source social network with no company in the middle: creators are paid directly, an AI on your device ranks your feed, and deals are signed with post-quantum cryptography.">
+  <meta property="og:url" content="https://www.evolvetech.dev/projects/fairground/">
+  <meta property="og:image" content="https://www.evolvetech.dev/assets/media/fairground-poster.webp">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#06080d">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f6fa">
+  <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+  <link rel="preload" href="/assets/fonts/space-grotesk.woff2" as="font" type="font/woff2" crossorigin>
+  <script src="/assets/v2/theme.js"></script>
+  <link rel="stylesheet" href="/assets/v2/style.css">
+  <script type="module" src="/assets/v2/main.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="shell">
+      <a class="brand" href="/" aria-label="Anthony Firn, home"><span class="monogram" aria-hidden="true">AF</span><span><strong>Anthony Firn</strong><small>EvolveTech</small></span></a>
+      <nav class="nav" aria-label="Main"><a href="/#work">Work</a><a href="/#engineering">Engineering</a><a href="/#experience">Experience</a><a href="/resume/">Résumé</a><a class="nav-cta" href="/#contact">Contact</a><button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></nav>
+    </div>
+  </header>
+  <main id="main" class="shell">
+    <section class="page-hero">
+      <a class="crumb" href="/#work">← All work</a>
+      <p class="label">Decentralized social · Nostr · Post-quantum cryptography · React</p>
+      <h1>Fairground</h1>
+      <p class="lede">A social network with no company in the middle. Advertisers and fans pay creators directly, an AI on your own device ranks your feed, and every deal is a public, signed record. Nothing runs on servers the project pays for.</p>
+      <div class="btn-row"><a class="btn primary" href="/play/fairground/">Open the app <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="https://github.com/anthony-firn/fairground">Source on GitHub ↗</a></div>
+    </section>
+    <figure class="case-media phone-stage reveal"><div class="phone"><video data-autoplay muted loop playsinline preload="metadata" poster="/assets/media/fairground-poster.webp" width="430" height="860" aria-label="Fairground on a phone with sample data: picking topics, a feed ranked on the device, why a post was ranked, a sponsorship offer and fan support."><source src="/assets/media/fairground.webm" type="video/webm"><source src="/assets/media/fairground.mp4" type="video/mp4"></video></div></figure>
+    <div class="prose">
+      <aside class="callout"><h2>Early and experimental.</h2><p>Payments are real USDC on Algorand and go straight from one person's wallet to another's; Fairground never holds funds. Try it with small amounts while it matures. Nothing here is financial, legal or tax advice.</p></aside>
+      <section><h2>The idea</h2><p>Platforms sit between creators, audiences and advertisers, take a cut, and decide what everyone sees. Fairground removes the middle: posts live on independent Nostr relays, the feed is ranked on the reader's device by a recipe they control, and money moves directly between the people involved. The project's own costs are a static site.</p></section>
+      <section><h2>What I built</h2><ul><li>A web app that ships unchanged as the iOS and Android apps (Capacitor). A new reader gets a good feed in seconds with no sign-up: an account is created silently, one optional tap picks topics, and a small embedding model in the browser (Transformers.js, about 23 MB) learns from likes and reading time without sending anything anywhere.</li><li>Direct sponsorships as four signed events: offer, acceptance (which embeds the exact offer it accepts), a post labelled #ad, and a payment receipt checked against the public chain by its memo. Advertisers' payment records are public, so creators can see who pays before they accept.</li><li>Hybrid signatures on every contract: Nostr's Schnorr signature plus ML-DSA-65 (FIPS 204), with key rotations signed by the previous post-quantum key. Creators are paid in USDC on Algorand, whose accounts can sign with Falcon-1024.</li><li>Prices indexed to US CPI-U, so a late or long deal still pays what it was worth; index values arrive as signed attestations that each client trusts k-of-n, published monthly from the BLS by a GitHub Action.</li><li>Anonymous audience surveys: one answer per throwaway key, carrying an RSA blind-signed token (RFC 9474), so nobody can link answers to people while advertisers can still recount them and catch invented answers.</li><li>Fan support with an optional ad-free pledge, opt-in donations split between development and the relays a creator actually uses, and relays that can pledge to pass a share back to creators, all checkable from the chain.</li><li>Username-and-password sign-in with no server: Argon2id derives a key that finds and opens an encrypted vault on relays, with a passkey (WebAuthn PRF) as a true second factor.</li></ul></section>
+      <section><h2>Hard problems, honestly</h2><ul><li>No stablecoin is quantum-secure end to end today: the contracts and the creator's account are, but Algorand's consensus and USDC's issuer keys are still classical.</li><li>Nobody can verify view counts without a central tracker, so deals are a flat fee per post, and survey counts are bounded by public participation rather than trusted.</li><li>Donations to relays follow events a reader actually saw, credited to the relay that delivered them first and grouped by operator, so running extra relays to collect donations doesn't pay.</li><li>Authenticator-app codes can't protect a vault anyone can copy, because nothing would enforce the check; a passkey's hardware secret can, so that is the second factor offered.</li></ul></section>
+      <section id="run-a-relay"><h2>Run a relay</h2><p>Relays store and deliver posts, and Fairground sends them a share of the donations from the people they serve. Phones and browser tabs can't be relays, so yours needs to run somewhere always on: a small cloud server, a home server or a hosted relay service. Install any Nostr relay software (strfry and nostr-rs-relay are common choices), set the operator <code>pubkey</code> in its NIP-11 information to the public key shown in the app, then open <strong>Create → Become a relay</strong> and enter its wss:// address. The app checks that the relay names you, publishes where donations should go, and shows what comes in and what you've passed on.</p></section>
+      <section><h2>Engineering choices</h2><ul><li>A protocol core in TypeScript that Node runs without a build step, covered by 79 unit tests, including attack cases (forged edits, swapped signatures, changed terms, underpayment, invented survey answers). Each security rule was mutation-checked: removing it fails a test.</li><li>An end-to-end test drives the built app in Chrome against a local relay seeded with sample data: onboarding, ranking, posting, sponsorship, account sync to a second device, and the on-device model.</li><li>The app runs under this site's strict Content-Security-Policy. The AI runtime is served from the app itself, and the library's blob: loader is switched off so scripts never need more than 'self'.</li></ul></section>
+      <dl class="facts"><div><dt>Status</dt><dd>Early release</dd></div><div><dt>License</dt><dd>Apache 2.0</dd></div><div><dt>Built with</dt><dd>TypeScript, React, Nostr, Capacitor, Transformers.js</dd></div></dl>
+    </div>
+  </main>
+  <footer class="site-footer"><div class="shell"><span>© 2026 Anthony Firn · EvolveTech</span><nav aria-label="Footer"><a href="/">Home</a><a href="/resume/">Résumé</a><a href="https://github.com/anthony-firn">GitHub</a></nav></div></footer>
+</body>
+</html>

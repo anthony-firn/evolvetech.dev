@@ -63,11 +63,12 @@ def video(name, url, alt, phone=False, w=1280, h=800):
             f'<span>{url}</span></div>{tag}</div></figure>')
 
 
-def section(title, *paragraphs, bullets=()):
+def section(title, *paragraphs, bullets=(), anchor=None):
     body = "".join(f"<p>{p}</p>" for p in paragraphs)
     if bullets:
         body += "<ul>" + "".join(f"<li>{b}</li>" for b in bullets) + "</ul>"
-    return f'      <section><h2>{title}</h2>{body}</section>'
+    attr = f' id="{anchor}"' if anchor else ""
+    return f'      <section{attr}><h2>{title}</h2>{body}</section>'
 
 
 def callout(title, text):
@@ -75,6 +76,35 @@ def callout(title, text):
 
 
 PAGES = [
+    dict(slug="fairground", title="Fairground", poster="fairground-poster.webp",
+         label="Decentralized social · Nostr · Post-quantum cryptography · React",
+         description="Fairground is an open-source social network with no company in the middle: creators are paid directly, an AI on your device ranks your feed, and deals are signed with post-quantum cryptography.",
+         lede="A social network with no company in the middle. Advertisers and fans pay creators directly, an AI on your own device ranks your feed, and every deal is a public, signed record. Nothing runs on servers the project pays for.",
+         demo="/play/fairground/", demo_text="Open the app", repo="https://github.com/anthony-firn/fairground",
+         media=video("fairground", "", "Fairground on a phone with sample data: picking topics, a feed ranked on the device, why a post was ranked, a sponsorship offer and fan support.", phone=True, w=430, h=860),
+         status="Early release", license="Apache 2.0", stack="TypeScript, React, Nostr, Capacitor, Transformers.js",
+         sections=[
+             callout("Early and experimental.", "Payments are real USDC on Algorand and go straight from one person's wallet to another's; Fairground never holds funds. Try it with small amounts while it matures. Nothing here is financial, legal or tax advice."),
+             section("The idea", "Platforms sit between creators, audiences and advertisers, take a cut, and decide what everyone sees. Fairground removes the middle: posts live on independent Nostr relays, the feed is ranked on the reader's device by a recipe they control, and money moves directly between the people involved. The project's own costs are a static site."),
+             section("What I built", bullets=[
+                 "A web app that ships unchanged as the iOS and Android apps (Capacitor). A new reader gets a good feed in seconds with no sign-up: an account is created silently, one optional tap picks topics, and a small embedding model in the browser (Transformers.js, about 23 MB) learns from likes and reading time without sending anything anywhere.",
+                 "Direct sponsorships as four signed events: offer, acceptance (which embeds the exact offer it accepts), a post labelled #ad, and a payment receipt checked against the public chain by its memo. Advertisers' payment records are public, so creators can see who pays before they accept.",
+                 "Hybrid signatures on every contract: Nostr's Schnorr signature plus ML-DSA-65 (FIPS 204), with key rotations signed by the previous post-quantum key. Creators are paid in USDC on Algorand, whose accounts can sign with Falcon-1024.",
+                 "Prices indexed to US CPI-U, so a late or long deal still pays what it was worth; index values arrive as signed attestations that each client trusts k-of-n, published monthly from the BLS by a GitHub Action.",
+                 "Anonymous audience surveys: one answer per throwaway key, carrying an RSA blind-signed token (RFC 9474), so nobody can link answers to people while advertisers can still recount them and catch invented answers.",
+                 "Fan support with an optional ad-free pledge, opt-in donations split between development and the relays a creator actually uses, and relays that can pledge to pass a share back to creators, all checkable from the chain.",
+                 "Username-and-password sign-in with no server: Argon2id derives a key that finds and opens an encrypted vault on relays, with a passkey (WebAuthn PRF) as a true second factor."]),
+             section("Hard problems, honestly", bullets=[
+                 "No stablecoin is quantum-secure end to end today: the contracts and the creator's account are, but Algorand's consensus and USDC's issuer keys are still classical.",
+                 "Nobody can verify view counts without a central tracker, so deals are a flat fee per post, and survey counts are bounded by public participation rather than trusted.",
+                 "Donations to relays follow events a reader actually saw, credited to the relay that delivered them first and grouped by operator, so running extra relays to collect donations doesn't pay.",
+                 "Authenticator-app codes can't protect a vault anyone can copy, because nothing would enforce the check; a passkey's hardware secret can, so that is the second factor offered."]),
+             section("Run a relay", "Relays store and deliver posts, and Fairground sends them a share of the donations from the people they serve. Phones and browser tabs can't be relays, so yours needs to run somewhere always on: a small cloud server, a home server or a hosted relay service. Install any Nostr relay software (strfry and nostr-rs-relay are common choices), set the operator <code>pubkey</code> in its NIP-11 information to the public key shown in the app, then open <strong>Create → Become a relay</strong> and enter its wss:// address. The app checks that the relay names you, publishes where donations should go, and shows what comes in and what you've passed on.", anchor="run-a-relay"),
+             section("Engineering choices", bullets=[
+                 "A protocol core in TypeScript that Node runs without a build step, covered by 79 unit tests, including attack cases (forged edits, swapped signatures, changed terms, underpayment, invented survey answers). Each security rule was mutation-checked: removing it fails a test.",
+                 "An end-to-end test drives the built app in Chrome against a local relay seeded with sample data: onboarding, ranking, posting, sponsorship, account sync to a second device, and the on-device model.",
+                 "The app runs under this site's strict Content-Security-Policy. The AI runtime is served from the app itself, and the library's blob: loader is switched off so scripts never need more than 'self'."]),
+         ]),
     dict(slug="retirement", title="Retirement Research", poster="retirement-poster.webp",
          label="Investing · Python · PyTorch · Open source",
          description="A simulation engine that compares retirement withdrawal strategies by spendable income after tax and by how often they break.",

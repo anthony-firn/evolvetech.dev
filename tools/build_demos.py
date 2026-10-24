@@ -19,6 +19,7 @@ DEMOS = {
                   "description": "Play Emberwake, a 3D action roguelike made with Godot and Blender, in your browser."},
     "symmetry-forge": {"repo": "https://github.com/anthony-firn/symmetry-forge.git", "build": "pyodide"},
     "retirement": {"repo": "https://github.com/anthony-firn/retirement-research.git", "build": "data"},
+    "fairground": {"repo": "https://github.com/anthony-firn/fairground.git", "build": "vite"},
 }
 PYODIDE = "314.0.7"
 PYODIDE_FILES = ["pyodide.mjs", "pyodide.asm.mjs", "pyodide.asm.wasm", "python_stdlib.zip", "pyodide-lock.json"]
@@ -110,6 +111,18 @@ def build_data(src, name):
     return out
 
 
+def build_vite(src, name):
+    """The project's own tests, then its Vite web build. The app shell gets the site's canonical link."""
+    run("npm", "ci", "--no-audit", "--no-fund", cwd=src)
+    run("npm", "test", cwd=src)
+    run("npm", "run", "app:build", cwd=src)
+    out = src / "app" / "dist"
+    page = out / "index.html"
+    page.write_text(page.read_text().replace(
+        "</head>", f'  <link rel="canonical" href="https://www.evolvetech.dev/play/{name}/">\n</head>', 1))
+    return out
+
+
 def main(names):
     for name in names or DEMOS:
         demo = DEMOS[name]
@@ -117,7 +130,7 @@ def main(names):
             src = Path(temp) / name
             run("git", "clone", "--quiet", demo["repo"], str(src), cwd=temp)
             commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=src, capture_output=True, text=True, check=True).stdout.strip()
-            out = {"expo": build_expo, "godot": build_godot, "pyodide": build_pyodide, "data": build_data}[demo["build"]](src, name)
+            out = {"expo": build_expo, "godot": build_godot, "pyodide": build_pyodide, "data": build_data, "vite": build_vite}[demo["build"]](src, name)
             if "description" in demo:
                 # Engine-generated pages get the site's search metadata; their canvas stays untouched.
                 page = out / "index.html"

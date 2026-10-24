@@ -5,7 +5,8 @@ from urllib.parse import urlsplit
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1] / "public"
-GAME_PAGES = {"play/emberwake/index.html", "play/pulse-pop/index.html"}   # full-screen engine canvases have no heading
+# Full-screen engine canvases and app shells render their headings at runtime.
+GAME_PAGES = {"play/emberwake/index.html", "play/pulse-pop/index.html", "play/fairground/index.html"}
 errors = []
 
 class Page(HTMLParser):
