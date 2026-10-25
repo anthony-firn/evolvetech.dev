@@ -78,6 +78,7 @@ To reproduce this hosting arrangement in another account, create a Netlify site,
 
 | Path | Source | Built with |
 |---|---|---|
+| `/play/emergence/` | emergence `web/` and Rust model crates | Rust `wasm32-unknown-unknown`, no JS runtime dependencies |
 | `/play/retirement/` | retirement-research `results/printer_validate.json` | `demos/retirement/` + extracted `data.json` |
 | `/play/emberwake/` | emberwake | Godot 4.7.2 web export, no threads |
 | `/play/pulse-pop/` | pulse-pop | Expo web export |
@@ -86,6 +87,8 @@ To reproduce this hosting arrangement in another account, create a Netlify site,
 
 `python3 tools/build_demos.py [name ...]` clones each project's current `main`, builds it, and records the commit in
 `public/play/<name>/BUILD.json`. It needs git, Node.js and `godot4` with the web export templates.
+The Emergence lab additionally needs Rust and `rustup target add wasm32-unknown-unknown`.
+Its source UI and model adapters live in the public `emergence` repository; the site builder runs that project's `web/build.py`.
 `/play/*` gets its own Content-Security-Policy (WebAssembly and inline styles) in `public/_headers` and in a matching
 Bunny edge rule; the rest of the site keeps the strict policy. Change both together.
 `/play/fairground/*` overrides it to also allow connections to Nostr relays (`wss:`), the Algorand indexer and model

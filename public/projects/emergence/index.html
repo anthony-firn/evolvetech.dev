@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Emergence — Anthony Firn</title>
+  <meta name="description" content="Emergence uses model validity and error claims to choose how much physics a simulation or engineering design needs: fluids, light, rendering, materials, chips and CAD.">
+  <link rel="canonical" href="https://www.evolvetech.dev/projects/emergence/">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Emergence — Anthony Firn">
+  <meta property="og:description" content="Emergence uses model validity and error claims to choose how much physics a simulation or engineering design needs: fluids, light, rendering, materials, chips and CAD.">
+  <meta property="og:url" content="https://www.evolvetech.dev/projects/emergence/">
+  <meta property="og:image" content="https://www.evolvetech.dev/assets/media/emergence-poster.webp">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#06080d">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f6fa">
+  <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+  <link rel="preload" href="/assets/fonts/space-grotesk.woff2" as="font" type="font/woff2" crossorigin>
+  <script src="/assets/v2/theme.js"></script>
+  <link rel="stylesheet" href="/assets/v2/style.css">
+  <script type="module" src="/assets/v2/main.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="shell">
+      <a class="brand" href="/" aria-label="Anthony Firn, home"><span class="monogram" aria-hidden="true">AF</span><span><strong>Anthony Firn</strong><small>EvolveTech</small></span></a>
+      <nav class="nav" aria-label="Main"><a href="/#work">Work</a><a href="/#engineering">Engineering</a><a href="/#experience">Experience</a><a href="/resume/">Résumé</a><a class="nav-cta" href="/#contact">Contact</a><button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></nav>
+    </div>
+  </header>
+  <main id="main" class="shell">
+    <section class="page-hero">
+      <a class="crumb" href="/#work">← All work</a>
+      <p class="label">Simulation &amp; design · Rust · CUDA · WebAssembly</p>
+      <h1>Emergence</h1>
+      <p class="lede">Use a cheap model while its error is small enough. Unfold to a finer one where it fails. Bring that decision into fluid simulation, light, rendering and engineering design, with the uncertainty carried to the answer.</p>
+      <div class="btn-row"><a class="btn primary" href="/play/emergence/">Open the emergence lab <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="https://github.com/anthony-firn/emergence">Source on GitHub ↗</a></div>
+    </section>
+    <figure class="case-media reveal"><div class="browser"><div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/emergence</span></div><img src="/assets/media/emergence-poster.webp" width="1200" height="695" alt="The Emergence lab: optical model selection with a reference curve, error claims and a tolerance control"></div></figure>
+    <div class="prose">
+      <section><h2>The same idea across systems</h2><p>Many simulations spend their time resolving details that do not change the answer. The emergence engine asks each model for an error claim and a cost, picks the cheapest one meeting the request, and unfolds when its indicator or certificate fails. Expensive fine models can be folded into reusable closure tables checked on held-out points.</p><p>Claims say whether they are asymptotic, validated or rigorous. An audit compares selected answers with the reference model. If the requested accuracy is unreachable, the result says so.</p></section>
+      <section><h2>Try it in the browser</h2><ul><li>Light and atmosphere: change a sphere's size, material or error tolerance. The real Rust ladder selects a Rayleigh expansion, a resonance-aware folded table, or the full Mie series. Every plotted result is checked against the series, with claimed and observed errors shown together.</li><li>Fluid motion: run the native f64 spectral CPU solver through WebAssembly on a small periodic grid. Compare a planar Taylor–Green vortex with its exact energy decay, or inspect a slice through the 3D vortex and its resolution warning.</li><li>Engineering design: edit fins and airflow in the original motor-driver cooling graph. Electrical losses, the temperature feedback loop and laminar channels feed requirements with uncertainty. A nominally passing trace drop is honestly undecided; out-of-regime flow makes the thermal result unavailable.</li></ul></section>
+      <section><h2>What the native workspace contains</h2><p>The public repository brings together incompressible and compressible fluids, water/air interfaces, convection, photons and spectral rendering, heat and materials, chip and CPU design, CAD and a shared engineering project graph. The chip flow includes a small CPU running Fibonacci; the CAD examples link geometry to mass, printable parts and thermal requirements.</p><p>These systems have different maturity. Atmosphere and water optics are model building blocks, not a validated weather forecast. The repository documents which couplings exist and which remain incomplete.</p></section>
+      <section><h2>Fluid motion you can inspect</h2><p><a href="/play/emergence/#flow"><img src="/assets/media/emergence-fluid.webp" loading="lazy" width="1200" height="695" alt="The 3D Taylor–Green vortex in the browser, with a vorticity slice, energy and a resolution indicator"></a></p><p>A slice through an evolving periodic flow. The arrows show velocity in the slice; orange and cyan distinguish opposite vorticity. The exact planar preset provides a separate quantitative check. The 3D view uses the same CPU solver, with a small grid suitable for a browser.</p></section>
+      <section><h2>Light transport and rendering</h2><p><img src="/assets/media/emergence-render.webp" loading="lazy" width="1200" height="800" alt="Retained Rust renderer output: a cup of liquid, ceramic saucer, spoon and linen on a wooden table"></p><p>A retained native renderer output from the same workspace. Rust computes the scene geometry, light transport and final pixels. Wood and linen maps are generated appearance estimates; the scene is a rendering experiment with documented limitations. The <a href="https://github.com/anthony-firn/emergence/tree/main/analysis/photographic_scene">source, settings and provenance</a> are public.</p></section>
+      <section><h2>Measured gains, with their limits</h2><p>A retained native cloud-scattering benchmark was 10.7× faster than evaluating the full Mie series everywhere after a one-off table build; every sampled node agreed to 4.7 × 10⁻¹². Those are measurements for that benchmark and hardware, not browser speed claims.</p><p>For certified fluid resolution at Re = 200 and t = 0.5, a 10⁻³ requested L² tolerance selected 16³ with a 3.5 × 10⁻⁴ bound; the measured distance to a 48³ comparison was 8.7 × 10⁻⁵. Adaptive refinement did not beat the best fixed grid on Taylor–Green. Both the gain and that negative result are retained in the <a href="https://github.com/anthony-firn/emergence/blob/main/analysis/emergence_engine.md">validation write-up</a>.</p></section>
+      <section><h2>What a claim covers</h2><p>A numerical error claim applies inside a model and its assumptions. It does not certify a physical device or remove uncertainty from estimated material properties. The browser fluid grids are illustrative and manually selected; the native certified-resolution ladder is documented separately. The design graph carries the rigor of each contributing model through to its requirement status.</p></section>
+      <dl class="facts"><div><dt>Status</dt><dd>Research workspace with checked domain benchmarks</dd></div><div><dt>License</dt><dd>Apache 2.0</dd></div><div><dt>Built with</dt><dd>Rust, CUDA, WebAssembly, Web Workers</dd></div></dl>
+    </div>
+  </main>
+  <footer class="site-footer"><div class="shell"><span>© 2026 Anthony Firn · EvolveTech</span><nav aria-label="Footer"><a href="/">Home</a><a href="/resume/">Résumé</a><a href="https://github.com/anthony-firn">GitHub</a></nav></div></footer>
+</body>
+</html>

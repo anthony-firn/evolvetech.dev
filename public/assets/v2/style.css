@@ -124,6 +124,7 @@ section{position:relative}
 .browser-bar i:nth-child(1){background:#ff5f57}.browser-bar i:nth-child(2){background:#febc2e}.browser-bar i:nth-child(3){background:#28c840}
 .browser-bar span{margin-left:12px;flex:1;max-width:340px;height:22px;border-radius:6px;background:var(--tint-2);font:500 .7rem/22px var(--mono);color:var(--dim);padding:0 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .browser video,.phone video{width:100%;height:auto;background:#000}
+.browser img{width:100%;height:auto}
 .phone-stage{display:flex;justify-content:center}
 .phone{width:min(300px,72%);padding:10px;border-radius:44px;background:linear-gradient(160deg,#2a3140,#11151d);border:1px solid var(--line-2);box-shadow:0 40px 80px -30px rgba(0,0,0,.9)}
 .phone video{border-radius:34px;aspect-ratio:430/860;object-fit:cover}
@@ -216,6 +217,7 @@ section{position:relative}
 .prose{max-width:780px}
 .prose h2{font-size:1.7rem;margin:52px 0 16px}
 .prose p,.prose li{color:var(--text-2)}.prose p+p{margin-top:14px}
+.prose img{width:100%;height:auto;border:1px solid var(--line-2);border-radius:12px}
 .prose ul{padding-left:20px;display:grid;gap:8px}.prose ul li::marker{color:var(--ember)}
 .callout{margin:40px 0;padding:22px 24px;border-radius:14px;border:1px solid rgba(255,155,74,.3);background:rgba(255,155,74,.06)}
 .callout h2{margin:0 0 8px;font-size:1.1rem}

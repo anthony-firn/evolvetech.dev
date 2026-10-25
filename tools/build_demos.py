@@ -22,6 +22,7 @@ DEMOS = {
     "symmetry-forge": {"repo": "https://github.com/anthony-firn/symmetry-forge.git", "build": "pyodide"},
     "retirement": {"repo": "https://github.com/anthony-firn/retirement-research.git", "build": "data"},
     "fairground": {"repo": "https://github.com/anthony-firn/fairground.git", "build": "vite"},
+    "emergence": {"repo": "https://github.com/anthony-firn/emergence.git", "build": "rust"},
 }
 PYODIDE = "314.0.7"
 PYODIDE_FILES = ["pyodide.mjs", "pyodide.asm.mjs", "pyodide.asm.wasm", "python_stdlib.zip", "pyodide-lock.json"]
@@ -130,6 +131,13 @@ def build_vite(src, name):
     return out
 
 
+def build_rust(src, name):
+    """Compile the project's Rust models to WebAssembly and copy its own lab UI."""
+    out = src / "web" / "dist"
+    run(sys.executable, str(src / "web" / "build.py"), "--out", str(out), cwd=src)
+    return out
+
+
 def build_demo(src, name):
     demo = DEMOS[name]
     commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=src, capture_output=True, text=True, check=True).stdout.strip()
@@ -145,7 +153,9 @@ def build_demo(src, name):
             if path.is_file():
                 digest.update(filename.encode() + b"\0" + path.read_bytes() + b"\0")
         provenance.update(modified=True, working_tree_sha256=digest.hexdigest())
-    out = {"expo": build_expo, "godot": build_godot, "pyodide": build_pyodide, "data": build_data, "vite": build_vite}[demo["build"]](src, name)
+    out = {"expo": build_expo, "godot": build_godot, "pyodide": build_pyodide, "data": build_data, "vite": build_vite, "rust": build_rust}[demo["build"]](src, name)
+    if demo["build"] == "rust":
+        provenance["wasm_sha256"] = hashlib.sha256((out / "emergence_web.wasm").read_bytes()).hexdigest()
     if "description" in demo:
         page = out / "index.html"
         head = (f'<meta name="description" content="{demo["description"]}">'
