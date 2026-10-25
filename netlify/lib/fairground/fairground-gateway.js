@@ -489,7 +489,7 @@ function K(e) {
 				apiKey: e.apiKey,
 				referrerDomain: e.referrerDomain,
 				productsAvailed: r.side,
-				network: "algorand",
+				network: r.side === "BUY" && r.asset === "ALGO" ? "mainnet" : "algorand",
 				cryptoCurrencyCode: r.side === "BUY" ? r.asset ?? "USDC" : "USDC",
 				fiatCurrency: "USD",
 				partnerCustomerId: r.customer,
@@ -515,7 +515,10 @@ function K(e) {
 				},
 				body: JSON.stringify({ widgetParams: a })
 			});
-			if (!o.ok) throw Error(`Transak couldn’t start a session (${o.status})`);
+			if (!o.ok) {
+				let e = await o.json().catch(() => ({}));
+				throw o.status === 401 && e.error === "invalid_api_key" ? Error("Transak rejected the checkout API key. Check production activation and the approved domain and IP.") : Error(`Transak couldn’t start a session (${o.status})`);
+			}
 			let s = (await o.json()).data?.widgetUrl;
 			if (!s?.startsWith("https://")) throw Error("Transak returned no widget link");
 			return s;
@@ -808,40 +811,54 @@ function Ne(e) {
 			authors: [i.pubkey]
 		})).has(i.pubkey) ? e.blocked?.includes(i.pubkey) ? m({ error: "this account can’t use this gateway" }, 403) : i.pubkey : m({ error: "not a Fairground account" }, 403);
 	}
-	async function g(e, t, n) {
-		if (t === "/wallet/config" && e.method === "GET") return m({ ramp: !!p });
-		if (t === "/ramp/session" && e.method === "POST") {
+	async function g(t, n, r) {
+		if (n === "/wallet/config" && t.method === "GET") return m({ ramp: !!p });
+		if (n === "/ramp/session" && t.method === "POST") {
 			if (!p) return m({ error: "buying and selling aren’t set up on this gateway yet" }, 503);
-			let t = await e.text(), r = await h(e, t);
-			if (r instanceof Response) return r;
-			let i = JSON.parse(t || "{}");
-			if (i.side !== "BUY" && i.side !== "SELL" || !/^[A-Z2-7]{58}$/.test(i.walletAddress ?? "") || !/^(https:\/\/|http:\/\/localhost[:/])/.test(i.redirectURL ?? "")) return m({ error: "bad request" }, 400);
-			let a = Number(i.amount) > 0 ? Number(i.amount) : void 0;
+			let n = await t.text(), i = await h(t, n);
+			if (i instanceof Response) return i;
+			let a;
+			try {
+				a = JSON.parse(n || "{}");
+			} catch {
+				return m({ error: "bad request" }, 400);
+			}
+			if (!a || typeof a != "object" || a.side !== "BUY" && a.side !== "SELL" || !/^[A-Z2-7]{58}$/.test(a.walletAddress ?? "") || !/^(https:\/\/|http:\/\/localhost[:/])/.test(a.redirectURL ?? "")) return m({ error: "bad request" }, 400);
+			let o;
+			try {
+				o = new URL(a.redirectURL);
+			} catch {
+				return m({ error: "bad return URL" }, 400);
+			}
+			let s = new URL(e.appUrl);
+			if (o.origin !== s.origin || o.pathname !== s.pathname) return m({ error: "return to this app only" }, 400);
+			if (!r.ip || r.ip === "0.0.0.0") return m({ error: "the gateway could not determine your IP address" }, 503);
+			let c = Number(a.amount) > 0 ? Number(a.amount) : void 0;
 			try {
 				let e = await p.session({
-					side: i.side,
-					walletAddress: i.walletAddress,
-					customer: r,
-					redirectURL: i.redirectURL,
-					userIp: n.ip ?? "0.0.0.0",
-					asset: i.asset === "ALGO" ? "ALGO" : "USDC",
-					...i.side === "BUY" ? { fiatAmount: a } : { cryptoAmount: a }
+					side: a.side,
+					walletAddress: a.walletAddress,
+					customer: i,
+					redirectURL: a.redirectURL,
+					userIp: r.ip,
+					asset: a.asset === "ALGO" ? "ALGO" : "USDC",
+					...a.side === "BUY" ? { fiatAmount: c } : { cryptoAmount: c }
 				});
 				return m({ url: e });
 			} catch (e) {
 				return m({ error: e.message }, 502);
 			}
 		}
-		let r = /^\/ramp\/order\/([A-Za-z0-9-]{6,80})$/.exec(t);
-		if (r && e.method === "GET") {
+		let i = /^\/ramp\/order\/([A-Za-z0-9-]{6,80})$/.exec(n);
+		if (i && t.method === "GET") {
 			if (!p) return m({ error: "buying and selling aren’t set up on this gateway yet" }, 503);
-			let t = await h(e);
-			if (t instanceof Response) return t;
+			let e = await h(t);
+			if (e instanceof Response) return e;
 			try {
-				let e = await p.order(r[1]);
-				return e.customer && e.customer !== t ? m({ error: "that order belongs to someone else" }, 403) : m({
-					order: e,
-					problem: e.side === "SELL" ? ge(e, t) ?? null : null
+				let t = await p.order(i[1]);
+				return t.customer && t.customer !== e ? m({ error: "that order belongs to someone else" }, 403) : m({
+					order: t,
+					problem: t.side === "SELL" ? ge(t, e) ?? null : null
 				});
 			} catch (e) {
 				return m({ error: e.message }, 502);
@@ -849,6 +866,25 @@ function Ne(e) {
 		}
 	}
 	return async function(o, s = {}) {
+		let l = new URL(o.url), u = l.pathname.startsWith(t) ? l.pathname.slice(t.length) : l.pathname;
+		if (u.startsWith("/wallet/") || u.startsWith("/ramp/")) {
+			let t = e.walletOrigins ?? [new URL(e.appUrl).origin], n = o.headers.get("Origin");
+			if (n && !t.includes(n)) return Response.json({ error: "origin not allowed" }, {
+				status: 403,
+				headers: {
+					"Cache-Control": "no-store",
+					Vary: "Origin"
+				}
+			});
+			let r = o.method === "OPTIONS" ? new Response(null, {
+				status: 204,
+				headers: {
+					"Access-Control-Allow-Headers": "Authorization, Content-Type",
+					"Access-Control-Allow-Methods": "GET, POST"
+				}
+			}) : await g(o, u, s) ?? f("page");
+			return r.headers.set("Access-Control-Allow-Origin", n ?? t[0]), r.headers.set("Vary", "Origin"), r.headers.set("Cache-Control", "no-store"), r;
+		}
 		if (o.method === "OPTIONS") return new Response(null, {
 			status: 204,
 			headers: {
@@ -857,8 +893,6 @@ function Ne(e) {
 				"Access-Control-Allow-Methods": "GET, HEAD, POST"
 			}
 		});
-		let l = new URL(o.url), u = l.pathname.startsWith(t) ? l.pathname.slice(t.length) : l.pathname;
-		if (u.startsWith("/wallet/") || u.startsWith("/ramp/")) return await g(o, u, s) ?? f("page");
 		if (o.method !== "GET" && o.method !== "HEAD") return new Response("method not allowed\n", {
 			status: 405,
 			headers: c
