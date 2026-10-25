@@ -76,6 +76,24 @@ def callout(title, text):
 
 
 PAGES = [
+    dict(slug="evolve-inbox", title="Evolve Inbox", poster="evolve-inbox-demo.jpg",
+         label="Email · JavaScript · Serverless",
+         description="Evolve Inbox is an open-source web inbox for custom-domain email, with inbound webhooks, a password-protected reader, attachments and reported sender checks.",
+         lede="A small inbox for mail sent to your own domain. Built for EvolveTech, with a reader for formatted messages, plain text and attachments, and source you can deploy yourself.",
+         demo="/play/evolve-inbox/", demo_text="Try the fictional inbox", repo="https://github.com/anthony-firn/evolve-inbox",
+         media='<figure class="case-media reveal"><div class="browser"><div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/evolve-inbox</span></div><img src="/assets/media/evolve-inbox-demo.jpg" width="1280" height="800" alt="Evolve Inbox displaying fictional sample mail and a formatted message"></div><figcaption>Fictional messages in the public demo. The live EvolveTech inbox is password-protected.</figcaption></figure>',
+         status="Receives EvolveTech mail; public demo uses fictional messages", license="Apache 2.0", stack="JavaScript, Netlify Functions, Netlify Blobs, Forward Email",
+         sections=[
+             section("Why I built it", "EvolveTech needed an inbox for its own domain: a place to receive service messages and read them in a browser. A small receiving app was enough. Forward Email handles SMTP and posts parsed messages to a webhook; a Netlify Function stores them and serves the reader."),
+             section("Try the reader", "The public demo uses the same reader UI with three fictional messages. Open formatted mail, switch to plain text, download the sample attachment and inspect a failed sender check. It is read only and makes no requests to the real mailbox."),
+             section("How mail arrives", "A domain alias or catch-all points to a private webhook URL. Each delivery becomes a message object in site-wide Netlify Blobs storage, with a separate inbox index. The browser authenticates to the message API with the inbox password. The webhook has its own independent secret.", "The forwarding rule is encrypted before it is published in DNS, keeping the webhook secret out of public TXT records. Provider accounts, deployment secrets and mailbox contents are not included in the repository."),
+             section("What the reader does", bullets=[
+                 "Formatted HTML mail opens in a sandboxed frame with a policy that blocks scripts and remote images. A plain-text view remains available.",
+                 "Attachments download directly from the authenticated message. SPF, DKIM and DMARC badges show the results reported by the forwarding provider.",
+                 "The layout adapts from a two-column desktop reader to a message list and reader on a phone. It follows the device's light or dark theme." ]),
+             section("Run your own", '<a href="https://github.com/anthony-firn/evolve-inbox#deploy-your-own-inbox">The deployment guide</a> covers Netlify settings, independent reader and webhook secrets, Forward Email routing, encrypted TXT records and a real delivery check. The repository includes tests, a static demo builder and a sample Netlify deployment. Hosting and forwarding depend on the providers you choose.'),
+             section("Scope and limits", "This is a receiving inbox for one owner. Sending, SMTP submission, IMAP, POP3, multiple accounts, a second factor and search are not implemented. Messages are not end-to-end encrypted; the forwarding and hosting accounts can access them.", "The index lists the newest 2,000 messages. There is no automated retention, and the simple shared index can race during simultaneous deliveries. Tests cover access checks, webhook delivery, message retrieval, attachments and deletion; browser checks exercise the reader, mobile layout and isolation of untrusted HTML."),
+         ]),
     dict(slug="emergence", title="Emergence", poster="emergence-poster.webp",
          label="Simulation &amp; design · Rust · CUDA · WebAssembly",
          description="Emergence uses model validity and error claims to choose how much physics a simulation or engineering design needs: fluids, light, rendering, materials, chips and CAD.",

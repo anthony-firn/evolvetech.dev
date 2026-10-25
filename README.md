@@ -78,6 +78,7 @@ To reproduce this hosting arrangement in another account, create a Netlify site,
 
 | Path | Source | Built with |
 |---|---|---|
+| `/play/evolve-inbox/` | [evolve-inbox](https://github.com/anthony-firn/evolve-inbox) | Shared inbox reader with fictional messages; no live mailbox API |
 | `/play/emergence/` | emergence `web/` and Rust model crates | Rust `wasm32-unknown-unknown`, no JS runtime dependencies |
 | `/play/retirement/` | retirement-research `results/printer_validate.json` | `demos/retirement/` + extracted `data.json` |
 | `/play/emberwake/` | emberwake | Godot 4.7.2 web export, no threads |
@@ -97,6 +98,8 @@ Bunny Storage serves unknown extensions as `application/octet-stream`, so a furt
 `*.mjs` (Pyodide's modules); browsers refuse to run module scripts with any other type.
 
 ## Add a project
+
+Evolve Inbox is the standalone open-source version of this site's mail function. Its public demo and project page use only fictional mail. The `/mail` service remains private, with credentials in Netlify and messages in the site-wide `mail` Blobs store. Rebuild the fictional demonstration with `python3 tools/build_demos.py evolve-inbox`, or pass `--local-source /path/to/evolve-inbox` for a local checkout.
 
 Create `public/projects/<slug>/index.html`, add a directory entry on the homepage and update `public/sitemap.xml`.
 Give the project a truthful status and link to its own repository or live service when available.

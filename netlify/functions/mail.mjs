@@ -1,3 +1,4 @@
+// Standalone open-source project: https://github.com/anthony-firn/evolve-inbox
 // The evolvetech.dev inbox. Forward Email receives mail for every address at the domain and posts each message here
 // (to a secret URL kept in an encrypted DNS record); messages are kept in Netlify Blobs and read at /mail with a
 // password. Settings (Netlify environment variables, Functions scope): MAIL_HOOK_SECRET, MAIL_PASSWORD.

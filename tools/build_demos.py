@@ -15,6 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PLAY = ROOT / "public" / "play"
 DEMOS = {
+    "evolve-inbox": {"repo": "https://github.com/anthony-firn/evolve-inbox.git", "build": "node"},
     "pulse-pop": {"repo": "https://github.com/anthony-firn/pulse-pop.git", "build": "expo",
                   "description": "Play Pulse Pop, a quick touch game built with Expo and React Native, in your browser."},
     "emberwake": {"repo": "https://github.com/anthony-firn/emberwake.git", "build": "godot",
@@ -131,6 +132,14 @@ def build_vite(src, name):
     return out
 
 
+def build_node(src, name):
+    """A Node-built static demonstration with its own tests and no production data."""
+    run("npm", "ci", "--no-audit", "--no-fund", cwd=src)
+    run("npm", "test", cwd=src)
+    run("npm", "run", "build", cwd=src)
+    return src / "public"
+
+
 def build_rust(src, name):
     """Compile the project's Rust models to WebAssembly and copy its own lab UI."""
     out = src / "web" / "dist"
@@ -153,7 +162,7 @@ def build_demo(src, name):
             if path.is_file():
                 digest.update(filename.encode() + b"\0" + path.read_bytes() + b"\0")
         provenance.update(modified=True, working_tree_sha256=digest.hexdigest())
-    out = {"expo": build_expo, "godot": build_godot, "pyodide": build_pyodide, "data": build_data, "vite": build_vite, "rust": build_rust}[demo["build"]](src, name)
+    out = {"expo": build_expo, "godot": build_godot, "pyodide": build_pyodide, "data": build_data, "vite": build_vite, "node": build_node, "rust": build_rust}[demo["build"]](src, name)
     if demo["build"] == "rust":
         provenance["wasm_sha256"] = hashlib.sha256((out / "emergence_web.wasm").read_bytes()).hexdigest()
     if "description" in demo:
