@@ -1,5 +1,5 @@
 {
   "source": "https://github.com/anthony-firn/fairground.git",
-  "commit": "26e86010f60eed24387f9d49f55f73816a6c858b",
+  "commit": "fb723cee1612656ce196f317c50151d58572c20c",
   "build": "npm run app:build"
 }
