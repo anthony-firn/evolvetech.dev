@@ -98,6 +98,15 @@ The workspace also supports primitive parts, revisioned A3 shop drawings, SVG/PD
 parts CSV. General constraints, STEP editing, GD&T and PCB fabrication outputs remain future work. Donations link to
 Fairground's existing About/support flow and the same public development fund. See the source repository's
 `analysis/collaborative_cad.md` for scope, protocol and validation.
+The CAD page also exposes separate PCB and silicon editors. PCB supports illustrative
+through-hole footprints, pad nets, explicit top/bottom copper connections, geometric
+clearance checks and BOM CSV. Silicon supports rectangular block floorplans, placement
+locks, core keepout, spacing halos, requested block-area checks and concept SVG export.
+Both save locally with undo/redo and validated JSON files. They do not yet use the
+mechanical revision graph or peer connection, and do not produce qualified PCB
+fabrication packages or PDK-backed IC sign-off. The homepage and project page link
+directly to each workspace and show retained browser screenshots.
+
 For a local game checkout, use `python3 tools/build_demos.py emberwake --local-source /path/to/emberwake`.
 Local builds record the base commit, a modified flag and a source-tree hash in `BUILD.json`; a clean clone keeps the usual commit-only provenance.
 Emberwake's source contains its branded web shell and icon; the builder selects that shell, extracts its CSS/JS for the site's CSP, and omits unused splash images and editor import metadata.
