@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1] / "public"
 # Full-screen engine canvases and app shells render their headings at runtime.
-GAME_PAGES = {"play/emberwake/index.html", "play/pulse-pop/index.html", "play/fairground/index.html"}
+GAME_PAGES = {"play/emberwake/index.html", "play/pulse-pop/index.html", "play/fairground/index.html", "play/evolve-inbox/index.html"}
 errors = []
 
 class Page(HTMLParser):
