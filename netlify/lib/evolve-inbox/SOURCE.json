@@ -1,0 +1,12 @@
+{
+  "source": "https://github.com/anthony-firn/evolve-inbox",
+  "commit": "6c1394272f1ad3aa47916cf704da89fe65a103ee",
+  "files_sha256": {
+    "src/inbox.mjs": "9b999fb9618e901f939376c87868c6b8522bf3b6b7a91f7559918f2ed4155c30",
+    "src/incoming.mjs": "80c145c25271abdf57c94ba11ab1814bd661f348675ba4f32725433803113f38",
+    "src/mail-store.mjs": "f19207467187399bdb6a3e4d88c8e6bdbb238e39001d44f47c3597837b34e172",
+    "test/inbox.test.mjs": "e170eb1ddc8593eb08d7119499bcf9d2211919a1509622356a6889b5a52e6748",
+    "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "NOTICE": "cca9bd46cce61941216007de3dba27228578b9371338abb46776015dc486d83c"
+  }
+}

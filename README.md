@@ -121,6 +121,8 @@ Bunny Storage serves unknown extensions as `application/octet-stream`, so a furt
 
 Evolve Inbox is the standalone open-source version of this site's mail function. Its public demo and project page use only fictional mail. The `/mail` service remains private, with credentials in Netlify and messages in the site-wide `mail` Blobs store. Rebuild the fictional demonstration with `python3 tools/build_demos.py evolve-inbox`, or pass `--local-source /path/to/evolve-inbox` for a local checkout.
 
+The live handler is pinned under `netlify/lib/evolve-inbox/`, including its upstream commit, file hashes, license and backend tests. Update it from a committed checkout with `python3 tools/sync_inbox.py --source /path/to/evolve-inbox`, then run `npm ci` and `node --test netlify/lib/evolve-inbox/test/inbox.test.mjs`. The sync command copies only an explicit allowlist of committed code, tests and license files. The function keeps the existing `mail` store and credentials, with EvolveTech branding and domain defaults. Production deployment and public-site checks run the backend tests before publishing.
+
 Create `public/projects/<slug>/index.html`, add a directory entry on the homepage and update `public/sitemap.xml`.
 Give the project a truthful status and link to its own repository or live service when available.
 Do not add invented projects as placeholders. Keep personal data, market-data caches and signed application packages out of this website repo.
