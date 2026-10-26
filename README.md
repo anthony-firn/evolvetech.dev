@@ -79,6 +79,7 @@ To reproduce this hosting arrangement in another account, create a Netlify site,
 | Path | Source | Built with |
 |---|---|---|
 | `/play/emergence/` | emergence `web/` and Rust model crates | Rust `wasm32-unknown-unknown`, no JS runtime dependencies |
+| `/play/emergence/cad/` | emergence `web/cad/` + native engineering graph and CAD kernel | Local revisions, WebRTC peer sync, Rust checks and STL export |
 | `/play/retirement/` | retirement-research `results/printer_validate.json` | `demos/retirement/` + extracted `data.json` |
 | `/play/emberwake/` | emberwake | Godot 4.7.2 web export, no threads |
 | `/play/pulse-pop/` | pulse-pop | Expo web export |
@@ -89,6 +90,16 @@ To reproduce this hosting arrangement in another account, create a Netlify site,
 `public/play/<name>/BUILD.json`. It needs git, Node.js and `godot4` with the web export templates.
 The Emergence lab additionally needs Rust and `rustup target add wasm32-unknown-unknown`.
 Its source UI and model adapters live in the public `emergence` repository; the site builder runs that project's `web/build.py`.
+The CAD prototype is packaged by that same build. Its branches, merge conflicts and reviews work locally,
+across browser tabs, or over manually paired WebRTC data channels. Cloudflare STUN is configured for network discovery; some networks still need a user-supplied TURN relay.
+Geometry and prescribed optical heat feed the electrothermal graph, while Mie scattering stays independent.
+The workspace also supports primitive parts, revisioned A3 shop drawings, SVG/PDF, analytic DXF profiles and mechanical
+parts CSV. General constraints, STEP editing, GD&T and PCB fabrication outputs remain future work. Donations link to
+Fairground's existing About/support flow and the same public development fund. See the source repository's
+`analysis/collaborative_cad.md` for scope, protocol and validation.
+For a local game checkout, use `python3 tools/build_demos.py emberwake --local-source /path/to/emberwake`.
+Local builds record the base commit, a modified flag and a source-tree hash in `BUILD.json`; a clean clone keeps the usual commit-only provenance.
+Emberwake's source contains its branded web shell and icon; the builder selects that shell, extracts its CSS/JS for the site's CSP, and omits unused splash images and editor import metadata.
 `/play/*` gets its own Content-Security-Policy (WebAssembly and inline styles) in `public/_headers` and in a matching
 Bunny edge rule; the rest of the site keeps the strict policy. Change both together.
 `/play/fairground/*` overrides it to also allow connections to Nostr relays (`wss:`), the Algorand indexer and model

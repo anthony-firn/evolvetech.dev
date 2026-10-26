@@ -1,5 +1,5 @@
 document.documentElement.classList.remove("no-js");
-const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const motion = matchMedia("(prefers-reduced-motion: reduce)");
 
 // Header turns solid once the page scrolls.
 const header = document.querySelector(".site-header");
@@ -13,13 +13,36 @@ const revealer = new IntersectionObserver((entries) => {
 document.querySelectorAll(".reveal").forEach((el) => revealer.observe(el));
 
 // Demo videos play only while on screen; reduced-motion visitors get controls instead.
+const videos = new Map();
+function syncVideos() {
+  for (const [video, visible] of videos) {
+    if (!visible || document.hidden) video.pause();
+    else if (!motion.matches) video.play().catch(() => {});
+  }
+}
 const player = new IntersectionObserver((entries) => {
-  for (const e of entries) e.isIntersecting ? e.target.play().catch(() => {}) : e.target.pause();
-}, { threshold: 0.35 });
-document.querySelectorAll("video[data-autoplay]").forEach((v) => {
-  if (reduced) { v.controls = true; v.removeAttribute("autoplay"); return; }
-  player.observe(v);
+  for (const entry of entries) videos.set(entry.target, entry.isIntersecting && entry.intersectionRatio >= 0.35);
+  syncVideos();
+}, { threshold: [0, 0.35] });
+document.querySelectorAll("video[data-autoplay]").forEach((video) => {
+  video.controls = motion.matches; video.removeAttribute("autoplay");
+  videos.set(video, false); player.observe(video);
 });
+motion.addEventListener("change", () => {
+  for (const video of videos.keys()) { video.controls = motion.matches; if (motion.matches) video.pause(); }
+  syncVideos();
+});
+
+// SVG dash animation repaints: run it only while its diagram is visible.
+const animated = new IntersectionObserver((entries) => {
+  for (const entry of entries) entry.target.classList.toggle("animation-visible", entry.isIntersecting);
+});
+document.querySelectorAll("#arch-svg").forEach((diagram) => animated.observe(diagram));
+function onVisibility() {
+  document.documentElement.classList.toggle("page-hidden", document.hidden);
+  syncVideos();
+}
+document.addEventListener("visibilitychange", onVisibility); onVisibility();
 
 // Which CDN served this page? Both copies are live; DNS picks one and fails over automatically.
 const served = document.getElementById("served-by");

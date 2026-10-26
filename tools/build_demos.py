@@ -34,7 +34,7 @@ dedicated_server=false
 custom_features=""
 export_filter="all_resources"
 include_filter=""
-exclude_filter="blender/*, tests/*, agents/*"
+exclude_filter="blender/*, tests/*, agents/*, reports/*, build/*, web/*"
 export_path="build/index.html"
 encryption_include_filters=""
 encryption_exclude_filters=""
@@ -78,6 +78,7 @@ def build_godot(src, name):
         preset = preset.replace('html/custom_html_shell=""', 'html/custom_html_shell="res://web/shell.html"')
     (src / "export_presets.cfg").write_text(preset)
     (src / "build").mkdir(exist_ok=True)
+    (src / "build" / ".gdignore").touch()
     run("godot4", "--headless", "--import", "--path", ".", cwd=src)
     run("godot4", "--headless", "--path", ".", "--export-release", "Web", "build/index.html", cwd=src)
     out = src / "build"
@@ -163,7 +164,7 @@ def build_demo(src, name):
         page.write_text(page.read_text().replace("</head>", head, 1))
     target = PLAY / name
     shutil.rmtree(target, ignore_errors=True)
-    shutil.copytree(out, target)
+    shutil.copytree(out, target, ignore=shutil.ignore_patterns(".gdignore", "*.import"))
     (target / "BUILD.json").write_text(json.dumps(provenance, indent=2) + "\n")
     print(f"{name}: built {commit[:12]}{' + local changes' if dirty else ''} into {target.relative_to(ROOT)}")
 
