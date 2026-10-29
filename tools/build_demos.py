@@ -24,6 +24,7 @@ DEMOS = {
     "retirement": {"repo": "https://github.com/anthony-firn/retirement-research.git", "build": "data"},
     "fairground": {"repo": "https://github.com/anthony-firn/fairground.git", "build": "vite"},
     "emergence": {"repo": "https://github.com/anthony-firn/emergence.git", "build": "rust"},
+    "de111": {"repo": "https://github.com/anthony-firn/de111.git", "build": "static"},
 }
 PYODIDE = "314.0.7"
 PYODIDE_FILES = ["pyodide.mjs", "pyodide.asm.mjs", "pyodide.asm.wasm", "python_stdlib.zip", "pyodide-lock.json"]
@@ -141,6 +142,12 @@ def build_node(src, name):
     return src / "public"
 
 
+def build_static(src, name):
+    """A buildless browser tool: run the project's own tests, then publish its web/ folder as is."""
+    run("npm", "test", cwd=src)
+    return src / "web"
+
+
 def build_rust(src, name):
     """Compile the project's Rust models to WebAssembly and copy its own lab UI."""
     out = src / "web" / "dist"
@@ -163,7 +170,7 @@ def build_demo(src, name):
             if path.is_file():
                 digest.update(filename.encode() + b"\0" + path.read_bytes() + b"\0")
         provenance.update(modified=True, working_tree_sha256=digest.hexdigest())
-    out = {"expo": build_expo, "godot": build_godot, "pyodide": build_pyodide, "data": build_data, "vite": build_vite, "node": build_node, "rust": build_rust}[demo["build"]](src, name)
+    out = {"expo": build_expo, "godot": build_godot, "pyodide": build_pyodide, "data": build_data, "vite": build_vite, "node": build_node, "rust": build_rust, "static": build_static}[demo["build"]](src, name)
     if demo["build"] == "rust":
         provenance["wasm_sha256"] = hashlib.sha256((out / "emergence_web.wasm").read_bytes()).hexdigest()
     if "description" in demo:
