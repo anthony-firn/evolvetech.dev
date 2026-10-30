@@ -98,6 +98,15 @@ The workspace also supports primitive parts, revisioned A3 shop drawings, SVG/PD
 parts CSV. General constraints, STEP editing, GD&T and PCB fabrication outputs remain future work. Donations link to
 Fairground's existing About/support flow and the same public development fund. See the source repository's
 `analysis/collaborative_cad.md` for scope, protocol and validation.
+The CAD page also exposes separate PCB and silicon editors. PCB supports illustrative
+through-hole footprints, pad nets, explicit top/bottom copper connections, geometric
+clearance checks and BOM CSV. Silicon supports rectangular block floorplans, placement
+locks, core keepout, spacing halos, requested block-area checks and concept SVG export.
+Both save locally with undo/redo and validated JSON files. They do not yet use the
+mechanical revision graph or peer connection, and do not produce qualified PCB
+fabrication packages or PDK-backed IC sign-off. The homepage and project page link
+directly to each workspace and show retained browser screenshots.
+
 For a local game checkout, use `python3 tools/build_demos.py emberwake --local-source /path/to/emberwake`.
 Local builds record the base commit, a modified flag and a source-tree hash in `BUILD.json`; a clean clone keeps the usual commit-only provenance.
 Emberwake's source contains its branded web shell and icon; the builder selects that shell, extracts its CSS/JS for the site's CSP, and omits unused splash images and editor import metadata.
@@ -111,6 +120,8 @@ Bunny Storage serves unknown extensions as `application/octet-stream`, so a furt
 ## Add a project
 
 Evolve Inbox is the standalone open-source version of this site's mail function. Its public demo and project page use only fictional mail. The `/mail` service remains private, with credentials in Netlify and messages in the site-wide `mail` Blobs store. Rebuild the fictional demonstration with `python3 tools/build_demos.py evolve-inbox`, or pass `--local-source /path/to/evolve-inbox` for a local checkout.
+
+The live handler is pinned under `netlify/lib/evolve-inbox/`, including its upstream commit, file hashes, license and backend tests. Update it from a committed checkout with `python3 tools/sync_inbox.py --source /path/to/evolve-inbox`, then run `npm ci` and `node --test netlify/lib/evolve-inbox/test/inbox.test.mjs`. The sync command copies only an explicit allowlist of committed code, tests and license files. The function keeps the existing `mail` store and credentials, with EvolveTech branding and domain defaults. Production deployment and public-site checks run the backend tests before publishing.
 
 Create `public/projects/<slug>/index.html`, add a directory entry on the homepage and update `public/sitemap.xml`.
 Give the project a truthful status and link to its own repository or live service when available.
