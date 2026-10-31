@@ -5,6 +5,7 @@
 
 export const SMALL_ESTATE_LIMIT = 208850;   // Prob. Code § 13100, deaths on or after April 1, 2025 (form DE-300)
 export const HOME_PETITION_LIMIT = 750000;  // Prob. Code § 13151 primary residence petition (DE-310), same dates
+export const DE221_HELPER = "../de221/";
 export const ROWS_ON_FORM = 10;
 export const ROWS_PER_ATTACHMENT_PAGE = 14;
 
@@ -25,7 +26,7 @@ export const BLANK = {
   spouse: "", rdp: "", children: "", child_kinds: ["natural"], grandkids: "", stepchild: "was_not",
   relatives: "", prior_spouse: "", prior_real: "no", prior_personal: "no", prior_kin: "",
   // Property
-  personal: "", income_real: "", income_personal: "", real_gross: "", real_debt: "",
+  personal: "", vehicles: "", income_real: "", income_personal: "", real_gross: "", real_debt: "",
   // Authority and bond
   iaea: "full", waivers: "", bond_type: "bond", bond_amount: "", blocked_amount: "", blocked_where: "",
   // People to notify
@@ -255,7 +256,10 @@ export function fill(a) {
     if (a.others_why.includes("other")) set("3g1d.reasons", a.others_other.trim());
   }
   if (r === "administrator") {
-    set(nominated ? "3g2b" : "3g2a", true);
+    // Boxes (a) and (b) are sworn statements about the petitioner, so they only fit when the petitioner is the one serving.
+    if (a.rep_same === "no") {
+      warnings.push("Item 3g(2) describes the petitioner, but you chose someone else to serve, so boxes (a) and (b) were left blank. Ask your court’s self-help center how to show that person’s right to serve.");
+    } else set(nominated ? "3g2b" : "3g2a", true);
     if (a.relation.trim()) { set("3g2c", true); set("3g2c.relation", a.relation.trim()); }
   }
   if (nominated) {
@@ -270,6 +274,11 @@ export function fill(a) {
     set("3h2", true);
     set("3h2.address", a.rep_address.trim());
     set(a.rep_lives === "abroad" ? "3h4" : "3h3", true);
+  }
+
+  // Only an executor named in the will can serve while living outside the United States.
+  if (a.rep_lives === "abroad" && r !== "executor") {
+    warnings.push("A person who doesn’t live in the United States can’t serve unless the will names them as executor (Probate Code § 8402). Choose someone else to serve.");
   }
 
   // 4. Independent administration
@@ -356,14 +365,17 @@ export function fill(a) {
 export function shortcuts(a) {
   const est = estate(a);
   const tips = [];
-  if (est.personal + est.realGross > 0 && est.personal + est.realGross <= SMALL_ESTATE_LIMIT) {
-    tips.push(`The property you listed adds up to $${money(est.personal + est.realGross)}, which is under the ${dollars(SMALL_ESTATE_LIMIT)} small-estate limit. If they died on or after April 1, 2025, a simpler process may work instead of probate.`);
+  // Registered vehicles don't count toward the small-estate limit (Prob. Code § 13050(b)).
+  const vehicles = Math.min(amount(a.vehicles), est.personal);
+  const counted = est.personal - vehicles + est.realGross;
+  if (est.personal + est.realGross > 0 && counted <= SMALL_ESTATE_LIMIT) {
+    tips.push(`The property you listed adds up to $${money(counted)}${vehicles ? " without the vehicles, which don’t count toward the limit" : ""}. That is under the ${dollars(SMALL_ESTATE_LIMIT)} small-estate limit. If they died on or after April 1, 2025, a simpler process may work instead of probate.`);
   }
   if (est.realGross > 0 && est.realGross <= HOME_PETITION_LIMIT) {
     tips.push(`If the real estate was their main home and is worth ${dollars(HOME_PETITION_LIMIT)} or less, a Petition to Determine Succession to Real Property (DE-310) may transfer it without full probate (deaths on or after April 1, 2025).`);
   }
   if (a.spouse === "yes" || a.rdp === "yes") {
-    tips.push("Property going to a surviving spouse or registered domestic partner can often pass with a Spousal or Domestic Partner Property Petition (DE-221) instead.");
+    tips.push(`Property going to a surviving spouse or registered domestic partner can often pass with a Spousal or Domestic Partner Property Petition instead. <a href="${DE221_HELPER}">Use our DE-221 helper</a>. If only part of the estate goes to them, the two petitions can be filed separately under one case number (Rules of Court, rule 7.301).`);
   }
   return tips;
 }

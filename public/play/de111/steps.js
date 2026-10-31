@@ -4,7 +4,7 @@
 // names), people (item 8 list), note (text that can depend on answers). `when(a)` hides a question until it applies.
 // `item` names the place on DE-111 so people can check the paper form.
 import { hasWill, asksRelatives, asksPriorSpouse, hasSpouseOrPartner, role, ROLE_WORDS, estate, money, noBondReason,
-  shortcuts, effectiveIaea } from "./logic.js";
+  shortcuts, effectiveIaea, reps, DE221_HELPER } from "./logic.js";
 
 export const COUNTIES = ["Alameda", "Alpine", "Amador", "Butte", "Calaveras", "Colusa", "Contra Costa", "Del Norte",
   "El Dorado", "Fresno", "Glenn", "Humboldt", "Imperial", "Inyo", "Kern", "Kings", "Lake", "Lassen", "Los Angeles",
@@ -15,6 +15,7 @@ export const COUNTIES = ["Alameda", "Alpine", "Amador", "Butte", "Calaveras", "C
   "Yuba"];
 
 export const LINKS = {
+  de221: DE221_HELPER,
   formalProbate: "https://selfhelp.courts.ca.gov/probate/formal-probate",
   simpleTransfer: "https://selfhelp.courts.ca.gov/probate/simple-transfer",
   selfHelpCenters: "https://selfhelp.courts.ca.gov/self-help-centers",
@@ -88,6 +89,8 @@ export const STEPS = [
         hint: "This is rare. Most wills don’t mention it at all. If it isn’t mentioned, choose No." },
       { id: "executor_named", type: "choice", label: "Does the will name an executor?", item: "Item 3g(1)", when: hasWill,
         options: YES_NO, hint: "The executor is the person the will chooses to handle the estate. Some wills also name a backup." },
+      { type: "note", tone: "warn", when: willNamesExecutor,
+        text: "A named executor who doesn’t file within 30 days of learning about the death and being named may lose the right to serve, unless there is good cause for the delay (Probate Code § 8001)." },
       { id: "executor_serves", type: "choice", label: "Will one of the executors named in the will serve?", item: "Items 2b and 3g(1)",
         when: willNamesExecutor, options: [
           { value: "yes", label: "Yes, one of them (or a backup named in the will) will serve" },
@@ -108,13 +111,19 @@ export const STEPS = [
     id: "who", title: "Who is asking, and who will be in charge",
     intro: "The petitioner is the person who files this form. The personal representative is the person the court puts in charge of the estate. Usually they are the same person.",
     questions: [
+      { type: "note", tone: "plain",
+        text: "<strong>Who can file:</strong> anyone with a legal interest in the estate, such as an heir, spouse, child, beneficiary or creditor (Probate Code §§ 48, 8000).<br><strong>Who can be in charge:</strong> someone 18 or older who isn’t under a conservatorship of the estate and is fit to serve. They must live in the United States, unless the will names them as executor (Probate Code § 8402)." },
       { id: "petitioners", type: "names", label: "Petitioner’s full name", add: "Add another petitioner", item: "Item 2",
-        hint: "If more than one person is asking together, add each one. Every petitioner signs the form." },
+        hint: "One person is usually enough. If more than one is asking together, add each one. Every petitioner signs the form, and being a petitioner doesn’t put someone in charge." },
       { id: "rep_same", type: "choice", label: "Who should the court put in charge?", item: "Item 2b", options: [
         { value: "yes", label: "The petitioner (or petitioners)" },
         { value: "no", label: "Someone else" }] },
       { id: "reps", type: "names", label: "Full name of the person to be put in charge", add: "Add another person",
         item: "Item 2b", when: (a) => a.rep_same === "no" },
+      { type: "note", tone: "info", when: (a) => reps(a).length > 1,
+        text: "With two people in charge, both must agree before either can act. With three or more, a majority must agree. If one can’t act, the others need a court order. The pay is split between them, not doubled (Probate Code §§ 9630, 10805)." },
+      { type: "note", tone: "warn", when: (a) => a.will === "no" && a.rep_same === "no",
+        text: "Item 3g(2) on the form describes the petitioner, so its boxes (a) and (b) will be left blank. Ask your court’s self-help center how to show the other person’s right to serve." },
       { type: "note", tone: "info", text: (a) => {
         if (!a.will) return "";
         const r = role(a);
@@ -136,6 +145,8 @@ export const STEPS = [
         { value: "abroad", label: "Outside the United States" }] },
       { id: "rep_address", type: "textarea", label: "Their permanent address", item: "Item 3h(2)",
         when: (a) => a.rep_lives !== "ca" },
+      { type: "note", tone: "warn", when: (a) => a.rep_lives === "abroad" && role(a) !== "executor",
+        text: "Someone who doesn’t live in the United States can’t serve unless the will names them as executor (Probate Code § 8402). Choose someone else." },
       { type: "note", tone: "warn", when: (a) => a.rep_lives !== "ca",
         text: "Courts often require a bond when the person in charge lives outside California, even if the will or the heirs waive it." },
     ],
@@ -151,6 +162,8 @@ export const STEPS = [
         hint: "Answer about their situation on the day they died." },
       { id: "rdp", type: "choice", label: "Did they have a registered domestic partner?", item: "Item 5a(3)–(4)", options: YES_NO,
         hint: "A partnership registered with the state, not just living together." },
+      { type: "note", tone: "info", when: hasSpouseOrPartner,
+        text: `<strong>You may not need probate for everything.</strong> Property that passes to the surviving spouse or partner can often go through a shorter court petition, DE-221, even if there is a house with a mortgage. <a href="${DE221_HELPER}">Use our DE-221 helper</a> to see where each item goes.` },
       { id: "children", type: "choice", label: "Did they have any children who were alive when they died?", item: "Item 5a(5)–(6)",
         options: YES_NO, hint: "Count adopted children too." },
       { id: "child_kinds", type: "multi", label: "Which describes their children?", item: "Item 5a(5)",
@@ -196,9 +209,11 @@ export const STEPS = [
     intro: "Give your best estimates. Exact values come later, on the Inventory and Appraisal.",
     questions: [
       { type: "note", tone: "plain",
-        text: "Leave out anything that passes without probate: property in a living trust, property owned in joint tenancy, and accounts or policies with a named beneficiary or “payable on death” (life insurance, IRAs, 401(k)s)." },
+        text: "Leave out anything that passes without probate: property in a living trust, property owned in joint tenancy, accounts or policies with a named beneficiary or “payable on death” (life insurance, IRAs, 401(k)s), and vehicles titled with OR between two owners or with a transfer-on-death beneficiary." },
       { id: "personal", type: "money", label: "Personal property", item: "Item 3d(1)",
-        hint: "Everything except real estate: bank and investment accounts in their name only, cars, valuables, money owed to them." },
+        hint: "Everything except real estate: bank and investment accounts in their name only, cars, valuables, money owed to them. Use what each thing was worth when they died. List a car at what it would sell for, even with a loan, and don’t subtract the loan. The form only subtracts debts on real estate." },
+      { id: "vehicles", type: "money", label: "How much of that is cars and other registered vehicles? (optional)",
+        hint: "This doesn’t go on the form. Vehicles don’t count toward the small-estate limit (Probate Code § 13050), so it helps show whether you need probate at all." },
       { id: "income_personal", type: "money", label: "Yearly income from personal property", item: "Item 3d(2)(b)",
         hint: "Interest, dividends and similar income for one year. Enter 0 if none." },
       { id: "real_gross", type: "money", label: "Market value of their real estate in California", item: "Item 3d(4)",

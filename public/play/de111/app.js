@@ -323,9 +323,10 @@ function welcome() {
     el("p", {}, "Probate is the court process that puts someone in charge of a person’s property after they die, so debts get paid and what is left goes to the right people. You may not need it if:"),
     el("ul", {},
       el("li", {}, "Everything was in a living trust, owned in joint tenancy, or had a named beneficiary (life insurance, retirement accounts, payable-on-death accounts)."),
-      el("li", {}, "The property that would go through probate is worth $208,850 or less (deaths on or after April 1, 2025). A small estate affidavit may work."),
+      el("li", {}, "The property that would go through probate is worth $208,850 or less, not counting vehicles (deaths on or after April 1, 2025). A small estate affidavit may work."),
       el("li", {}, "Their main home is worth $750,000 or less. A Petition to Determine Succession to Real Property (DE-310) may work."),
-      el("li", {}, "Everything goes to a surviving spouse or registered domestic partner (Spousal Property Petition, DE-221).")),
+      el("li", {}, "Everything goes to a surviving spouse or registered domestic partner. A Spousal Property Petition can handle it, even for a mortgaged house. ",
+        el("a", { href: LINKS.de221 }, "Use our DE-221 helper"), " to see what qualifies.")),
     el("p", {}, el("a", { href: LINKS.simpleTransfer, target: "_blank", rel: "noopener" }, "Simpler ways to transfer property"), " · ",
       el("a", { href: LINKS.formalProbate, target: "_blank", rel: "noopener" }, "How formal probate works"), " · ",
       el("a", { href: LINKS.selfHelpCenters, target: "_blank", rel: "noopener" }, "Free help at your court’s self-help center")),
@@ -364,7 +365,7 @@ function nextSteps(a) {
     el("li", {}, el("strong", {}, "Give notice. "), "Fill out the Notice of Petition to Administer Estate (", f("DE-121"), ") with the hearing date. At least 15 days before the hearing, an adult who isn’t part of the case mails it to everyone in item 8. The newspaper publishes it three times, the first at least 15 days before the hearing, and files a proof of publication."),
     el("li", {}, el("strong", {}, "Check the court’s probate notes "), "about a week or two before the hearing. They list anything the court wants fixed."),
     el("li", {}, el("strong", {}, "Prepare the appointment papers: "), "Order for Probate (", f("DE-140"), "), Letters (", f("DE-150"), "), Duties and Liabilities of Personal Representative (", f("DE-147"), ") and its confidential supplement DE-147S. Some courts want them with the petition, others after the hearing."),
-    el("li", {}, el("strong", {}, "After the court appoints you, "), "notify creditors (", f("DE-157"), ") and file an Inventory and Appraisal (", f("DE-160"), ") within four months."),
+    el("li", {}, el("strong", {}, "After the court appoints you, "), "notify creditors (", f("DE-157"), ") and file an Inventory and Appraisal (", f("DE-160"), ") within four months. If the estate has to sue someone outside the probate case, it needs a lawyer: a non-lawyer can’t represent it there (", el("em", {}, "Hansen v. Hansen"), ")."),
     el("li", {}, el("strong", {}, "Check for local forms. "), "Many counties require their own extra forms. Look at your court’s probate page or ask its ", el("a", { href: LINKS.selfHelpCenters, target: "_blank", rel: "noopener" }, "self-help center"), "."));
 }
 
@@ -408,7 +409,8 @@ function review() {
     result.attachments.length ? el("h3", {}, "Attach these behind page 4") : null,
     result.attachments.length ? el("ul", { class: "attach" }, ...result.attachments.map((x) => el("li", {}, x.text))) : null,
     shortcuts(answers).length ? el("div", { class: "note note-info" }, el("strong", {}, "Before you file: "),
-      "your numbers suggest a simpler process may be possible. ", el("a", { href: LINKS.simpleTransfer, target: "_blank", rel: "noopener" }, "Read about it")) : null,
+      "your numbers suggest a simpler process may be possible. ", el("a", { href: LINKS.simpleTransfer, target: "_blank", rel: "noopener" }, "Read about it"),
+      answers.spouse === "yes" || answers.rdp === "yes" ? [" or ", el("a", { href: LINKS.de221 }, "try our DE-221 helper for a surviving spouse or partner")] : null, ".") : null,
     el("div", { class: "actions" },
       el("button", { type: "button", class: "primary", onclick: () => build(false) }, "Download the filled-in DE-111 (PDF)"),
       el("button", { type: "button", class: "secondary", onclick: () => build(true) }, "Open it in a new tab")),

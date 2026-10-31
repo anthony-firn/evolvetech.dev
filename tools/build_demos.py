@@ -25,6 +25,7 @@ DEMOS = {
     "fairground": {"repo": "https://github.com/anthony-firn/fairground.git", "build": "vite"},
     "emergence": {"repo": "https://github.com/anthony-firn/emergence.git", "build": "rust"},
     "de111": {"repo": "https://github.com/anthony-firn/de111.git", "build": "static"},
+    "de221": {"repo": "https://github.com/anthony-firn/de221.git", "build": "static"},
 }
 PYODIDE = "314.0.7"
 PYODIDE_FILES = ["pyodide.mjs", "pyodide.asm.mjs", "pyodide.asm.wasm", "python_stdlib.zip", "pyodide-lock.json"]
