@@ -29,6 +29,7 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: node --test netlify/lib/evolve-inbox/test/inbox.test.mjs
+      - run: node --test tools/test_fairground_edge.mjs
       - run: python3 tools/test_monitor.py
       - run: python3 tools/deploy.py
         env:

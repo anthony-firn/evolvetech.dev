@@ -13,4 +13,5 @@ jobs:
           cache: npm
       - run: npm ci
       - run: node --test netlify/lib/evolve-inbox/test/inbox.test.mjs
+      - run: node --test tools/test_fairground_edge.mjs
       - run: python3 tools/check_site.py

@@ -1,5 +1,12 @@
 {
   "source": "https://github.com/anthony-firn/emergence.git",
   "commit": "352aafc0aba8d65069fa835da31474d40a6f8d32",
-  "wasm_sha256": "7e7b1b69777491a0d63b3a4848f58a4507f8b43a0e467636e68dc599dc39d562"
+  "wasm_sha256": "7e7b1b69777491a0d63b3a4848f58a4507f8b43a0e467636e68dc599dc39d562",
+  "site_patches": [
+    {
+      "file": "cad/index.html",
+      "reason": "Align the public fund explorer link with Fairground DEVELOPMENT_ADDRESS",
+      "sha256": "776d270e80eb584ef5e51bacd648a2ee876b0f2c802b48f6fdd358ed0c42c1ea"
+    }
+  ]
 }

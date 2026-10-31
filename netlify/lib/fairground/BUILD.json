@@ -1,5 +1,12 @@
 {
   "source": "https://github.com/anthony-firn/fairground.git",
-  "commit": "839ba738d668eda7a10f9dac539a90b0c5a2d88f",
-  "build": "npm run gateway:build"
+  "commit": "979a8ed69950edce967bee76bee068cf33061024",
+  "build": "npm run gateway:build",
+  "files_sha256": {
+    "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "ads-CZzZT2tk.js": "a05e2d90d025469674d7f191f694f6338612582234526acd9bf6d552d26ea019",
+    "fairground-gateway.js": "69d4b804d3e6725ae7efe79238f94464834afb46ffb32f7da08ab80b805810d4",
+    "pq-DdqIFRtl.js": "a2f1226d7c3b76699a626e36580e80b2c9345cebb1a57f134db5c56876a5af3c",
+    "pricing-dKU1SBIV.js": "f9010343c8a1aad86c46d30a6f2e473d4ea900a1ab50d245604d6c0b4749bca5"
+  }
 }

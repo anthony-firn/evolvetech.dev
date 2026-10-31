@@ -1,5 +1,25 @@
 {
   "source": "https://github.com/anthony-firn/fairground.git",
-  "commit": "a0be2de5d974c86f4fe93841ecc6d40adfb484a3",
-  "build": "npm run app:build"
+  "commit": "979a8ed69950edce967bee76bee068cf33061024",
+  "build": "npm run app:build",
+  "files_sha256": {
+    "assets/embed.worker-cRyWOaGo.js": "75debce3ca8af24a639ee764ebac5446b02cb6eb5bf4dfd6ebf804fcaa33f616",
+    "assets/hls-CydbS6hn.js": "a7b578046641a122957317c7bac6c3a18de24630c2bbc21cce3773e2b96297c9",
+    "assets/index-Cdk_YR23.css": "92873b5c99bef0aeb6a70b4933518c9189d13c5be7f508d5850e9685bf4e3cea",
+    "assets/index-S1BeG2Rl.js": "9dd42a2a9d7b2714fdddf273f361f8bbd413c76a8d89af515857436aa14540d6",
+    "assets/lamejs-D2d3HPyl.js": "5b8f2a1a532a92330d9a12e1bce88a60a84c7b8ae6685a321c17f2261b057b29",
+    "assets/walletActions-CMeGXcmD.js": "08a9d3e97a3ce05f95e531197480f144997f22f36078a264a2288abb85a234d2",
+    "icon.svg": "1f30631bf6f05fbe77bfa47c842acdd98727c9559f0ea96a714bf2283d563b8d",
+    "icons/icon-128.webp": "20e497b93aaadc975312c117f5bc9126c843c47a2bdfcf2bca6d92962aea0182",
+    "icons/icon-192.webp": "ed3fc74dd4c011858909013aca491617241afd5db111e1525a2c0d4ae3bb17f8",
+    "icons/icon-256.webp": "b5ba0c1af4832f193acbc58131fe9c57831bda138069d0e013cf68b675ec6777",
+    "icons/icon-48.webp": "f795b51f7b7a3c073ccd2b72349d426c175e359f05ba8da11abcdc8aa1015b20",
+    "icons/icon-512.webp": "3d614761c48d4d74200e4eea2b718c597c20f2bd67303ca75cf7aca230949190",
+    "icons/icon-72.webp": "fd285bbe002386eb239527d361347fc1697e163822f424038f3528ff25e88fe6",
+    "icons/icon-96.webp": "285c1fd1d1d35998fe0d3be531998759885d22a999ba82ce5be814ebbd58f1ef",
+    "index.html": "2e3bf28e7c9d2876319c90c1b1ae7e9e6794b0ae327c85e81c446fbd525392a7",
+    "manifest.webmanifest": "93e38b104f01ea84344e38041f4533a17f11f342a481cbe01436424f3e99eba3",
+    "ort/ort-wasm-simd-threaded.mjs": "c57ca56328877353a575e51bbca6f18450027d6c9bf2307a2cb2c41363b4de9f",
+    "ort/ort-wasm-simd-threaded.wasm": "06ba057753da3847e4c24f02d91ab133455b0817c69a44993a9a53a2146df9e3"
+  }
 }

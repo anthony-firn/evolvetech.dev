@@ -135,3 +135,35 @@ Do not add invented projects as placeholders. Keep personal data, market-data ca
 - [Lego Bunny DNS validation](https://go-acme.github.io/lego/dns/bunny/)
 - [GitHub scheduled-workflow limitations](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
 - [Cloudflare Pages custom-domain reactivation limitations](https://developers.cloudflare.com/pages/configuration/custom-domains/)
+
+## Fairground banking integration
+
+Fairground now uses Meld for server-created card/bank checkout sessions. Its wallet still signs Algorand transfers
+on the device. The Netlify edge function calls Meld directly; old `PAYMENTS_ORIGIN` and `PAYMENTS_PROXY_SECRET`
+settings are no longer used for this website. Buying/selling stays disabled until the private Meld credentials,
+approved suppliers and exact Algorand currency IDs are configured. The app's first purchase requests ALGO for setup;
+subsequent purchases request native Algorand USDC. No account backup or private wallet key is part of checkout.
+
+Server settings: `MELD_PAYMENTS_ENABLED`, `MELD_API_KEY`, `MELD_BUY_PROVIDER`, `MELD_SELL_PROVIDER`,
+`MELD_ALGO_CURRENCY_CODE`, `MELD_USDC_CURRENCY_CODE`, `MELD_SELL_PAYMENT_METHOD`, and optional
+`MELD_CHECKOUT_ORIGINS`. Keep the API key in private Netlify environment settings. The public wallet reports only
+availability and environment. Optional `PAYMENTS_PILOT_IP` still limits banking to one client IP during a private pilot. Missing configuration disables checkout. Supplier eligibility and working sandbox/
+production credentials still need confirmation with Meld. No live provider calls or infrastructure teardown are
+performed by the build.
+
+After changing Fairground source, run its tests, then synchronize both generated outputs together:
+
+```sh
+python3 tools/sync_fairground.py --source /path/to/fairground
+node --test tools/test_fairground_edge.mjs
+python3 tools/check_site.py
+```
+
+The sync copies only public build outputs and the license and records file hashes and local source provenance.
+See the source repository's `docs/meld-integration.md` for the API flow, sandbox setup and deployment requirements.
+
+The wallet and donation dialogs also provide **Transfer crypto I already own**, with Coinbase/Kraken instructions,
+copyable receiving addresses and Algorand QR links. New wallets receive ALGO first and show USDC readiness after opt-in;
+active wallets accept native Algorand USDC. External wallets can pay a filled payment request directly. Shared-note
+payments require their exact transaction ID rather than automatically crediting another donor's recent transfer.
+The source guide is `fairground/docs/crypto-transfers.md`; these paths do not require Meld credentials.

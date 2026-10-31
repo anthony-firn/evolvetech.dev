@@ -1,62 +1,63 @@
-// Fairground's gateway: RSS feeds for Apple Podcasts, Spotify and every other podcast app (with host-read ads stitched
-// into downloads), and buying and selling through Transak for the built-in wallet. Bundled from
-// github.com/anthony-firn/fairground (gateway/); see ../lib/fairground/BUILD.json.
-//
-// Optional private settings: PAYMENTS_ORIGIN, PAYMENTS_PROXY_SECRET.
-// Transak credentials belong on the fixed-IP payment service, never on this edge.
+// Fairground podcast and wallet gateway. Meld's private API calls run here; wallet signing stays on the device.
+// Source: github.com/anthony-firn/fairground; see ../lib/fairground/BUILD.json.
 import { createGateway, DEFAULT_RELAYS } from '../lib/fairground/fairground-gateway.js';
 
 const env = (name) => globalThis.Netlify?.env.get(name) || undefined;
-
+const names = ['MELD_API_KEY', 'MELD_BUY_PROVIDER', 'MELD_SELL_PROVIDER', 'MELD_ALGO_CURRENCY_CODE', 'MELD_USDC_CURRENCY_CODE', 'MELD_SELL_PAYMENT_METHOD'];
+const configured = env('MELD_PAYMENTS_ENABLED') === 'true' && names.every((name) => env(name));
 const handle = createGateway({
   relays: DEFAULT_RELAYS,
   base: '/fairground',
   appUrl: 'https://www.evolvetech.dev/play/fairground/',
-  // Podcast apps poll feeds often; the CDN answers most of them.
+  walletOrigins: ['https://www.evolvetech.dev', 'capacitor://localhost', 'http://localhost'],
   feedHeaders: { 'Netlify-CDN-Cache-Control': 'public, durable, s-maxage=300, stale-while-revalidate=3600' },
+  ramp: configured ? {
+    apiKey: env('MELD_API_KEY'), environment: 'production',
+    buyProvider: env('MELD_BUY_PROVIDER'), sellProvider: env('MELD_SELL_PROVIDER'),
+    algoCurrencyCode: env('MELD_ALGO_CURRENCY_CODE'), usdcCurrencyCode: env('MELD_USDC_CURRENCY_CODE'),
+    sellPaymentMethod: env('MELD_SELL_PAYMENT_METHOD'),
+    ...(env('MELD_CHECKOUT_ORIGINS') ? { checkoutOrigins: env('MELD_CHECKOUT_ORIGINS').split(',').map((s) => s.trim()) } : {}),
+  } : undefined,
 });
 
+// Per-isolate protection against accidental repeated checkout creation. Member signatures still authorize calls.
+const requests = new Map();
+const error = (message, status) => Response.json({ error: message }, { status, headers: { 'Cache-Control': 'no-store' } });
 export default async (request, context) => {
-  const url = new URL(request.url);
-  const paymentRoute = /^\/fairground\/(wallet|ramp)\//.test(url.pathname);
-  const origin = env('PAYMENTS_ORIGIN');
-  const secret = env('PAYMENTS_PROXY_SECRET');
-  if (!paymentRoute || !origin || !secret) return handle(request, { ip: context?.ip });
-  // The first live trial is private to the operator's current public IP.
-  const pilotIp = env('PAYMENTS_PILOT_IP');
-  if (pilotIp && context?.ip !== pilotIp) {
-    if (url.pathname === '/fairground/wallet/config') return Response.json({ ramp: false }, { headers: { 'Cache-Control': 'no-store' } });
-    return Response.json({ error: 'bank payments are in a private pilot' }, { status: 403, headers: { 'Cache-Control': 'no-store' } });
-  }
-  const browserOrigin = request.headers.get('Origin');
-  const allowed = ['https://www.evolvetech.dev', 'capacitor://localhost', 'http://localhost'];
-  const headers = {
-    'Cache-Control': 'no-store', Vary: 'Origin',
-    ...(browserOrigin && allowed.includes(browserOrigin) ? { 'Access-Control-Allow-Origin': browserOrigin } : {}),
-  };
-  if (browserOrigin && !allowed.includes(browserOrigin)) return Response.json({ error: 'origin not allowed' }, { status: 403, headers });
-  if (!context?.ip) return Response.json({ error: 'client IP unavailable' }, { status: 503, headers });
-  try {
-    const target = new URL(origin);
-    if (target.protocol !== 'https:' || target.pathname !== '/' || target.username || target.password || target.search || target.hash) throw new Error('invalid payment service origin');
-    const forwarded = new Headers({ 'x-fairground-proxy-secret': secret, 'x-fairground-client-ip': context.ip });
-    for (const name of ['authorization', 'origin', 'content-type']) {
-      const value = request.headers.get(name);
-      if (value) forwarded.set(name, value);
+  const path = new URL(request.url).pathname;
+  if (/^\/fairground\/(wallet|ramp)\//.test(path)) {
+    const pilotIp = env('PAYMENTS_PILOT_IP');
+    if (pilotIp && context?.ip !== pilotIp) {
+      if (path === '/fairground/wallet/config') return Response.json({ ramp: false }, { headers: { 'Cache-Control': 'no-store' } });
+      return error('bank payments are in a private pilot', 403);
     }
-    const body = request.method === 'POST' ? await request.arrayBuffer() : undefined;
-    if (body && body.byteLength > 16_384) return Response.json({ error: 'request too large' }, { status: 413, headers });
-    const response = await fetch(target.origin + url.pathname + url.search, { method: request.method, headers: forwarded, body, signal: AbortSignal.timeout(25_000), redirect: 'error' });
-    // In particular, do not relay cookies or expose the private bridge headers.
-    const out = new Headers(headers);
-    for (const name of ['content-type', 'access-control-allow-origin', 'access-control-allow-methods', 'access-control-allow-headers']) {
-      const value = response.headers.get(name);
-      if (value) out.set(name, value);
+    if (path === '/fairground/ramp/session' && request.method === 'POST') {
+      if (!context?.ip) return error('client IP unavailable', 503);
+      const now = Date.now();
+      for (const [ip, entry] of requests) if (now - entry.start >= 60_000) requests.delete(ip);
+      if (!requests.has(context.ip) && requests.size >= 10_000) return error('checkout temporarily unavailable', 503);
+      const entry = requests.get(context.ip) ?? { start: now, count: 0 };
+      requests.set(context.ip, entry);
+      if (++entry.count > 20) return error('please wait before starting another checkout', 429);
+      const reader = request.body?.getReader();
+      const chunks = [];
+      let size = 0;
+      if (reader) {
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          size += value.byteLength;
+          if (size > 16_384) { await reader.cancel(); return error('request too large', 413); }
+          chunks.push(value);
+        }
+      }
+      const body = new Uint8Array(size);
+      let offset = 0;
+      for (const chunk of chunks) { body.set(chunk, offset); offset += chunk.byteLength; }
+      request = new Request(request, { body });
     }
-    return new Response(response.body, { status: response.status, headers: out });
-  } catch {
-    return Response.json({ error: 'payment service temporarily unavailable' }, { status: 503, headers });
   }
+  return handle(request, { ip: context?.ip });
 };
 
 export const config = { path: '/fairground/*', cache: 'manual' };
