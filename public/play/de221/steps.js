@@ -188,7 +188,7 @@ export const STEPS = [
     intro: "List everything, even property you think stays off the petition. Each card tells you where that item goes. You don’t need dollar values for this form.",
     questions: [
       { type: "note", tone: "plain",
-        text: "<strong>Being in one name doesn’t make it separate.</strong> Property acquired during a marriage is presumed community property, no matter whose name is on the title (Family Code § 760).<br><strong>A mortgage doesn’t stop this.</strong> You don’t list the loan. It stays with the property, and the payments have to continue.<br><strong>Living there doesn’t matter.</strong> This petition isn’t limited to the home they lived in. A rental, or a share of someone else’s house, can go on it if that interest passes to the survivor." },
+        text: "<strong>Being in one name doesn’t make it separate.</strong> Property acquired during marriage may be community property, but deeds, agreements, source of funds and other facts can change that. Enter acquisition facts separately from the legal basis for your request.<br><strong>A mortgage doesn’t stop this.</strong> You don’t list the loan. It stays with the property, and the payments have to continue.<br><strong>Living there doesn’t matter.</strong> This petition isn’t limited to the home they lived in. A rental, or a share of someone else’s house, can go on it if that interest passes to the survivor." },
       { id: "assets", type: "assets", label: "Property", item: "Attachments 7, 7a and 7b" },
       { type: "note", tone: "total", text: (a) => {
         const { passing, confirmed, placed, remains } = fill(a);
@@ -210,6 +210,8 @@ export const STEPS = [
         hint: "This means an agreement that one spouse gets more than half overall. A prenuptial or postnuptial agreement can also change what counts as community property, so if there is one, have a lawyer read it first." },
       { id: "referee", type: "choice", label: "Do you want a probate referee right away?", item: "Item 1c", options: YES_NO,
         hint: "A probate referee is a court-appointed appraiser. Someone might ask for one to value property, for example for taxes. Most people choose No." },
+      { id: "facts_override", type: "textarea", label: "Replacement Attachment 7 text (optional)", item: "Attachment 7",
+        hint: "For a petition you have polished with help: paste the entire final facts statement here to replace the automatic facts. This does not change the property lists; verify that all three attachments agree. Leave blank to use the generated facts." },
       { id: "facts_extra", type: "textarea", label: "Anything else the court should know? (optional)", item: "Attachment 7",
         hint: "This tool writes Attachment 7 from your answers. Add any other facts that show why the property passes to the survivor. You can read the full text before downloading." },
     ],

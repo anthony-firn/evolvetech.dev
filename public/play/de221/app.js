@@ -214,8 +214,17 @@ function assetCard(x, i, remove) {
     title: field("title", "Who owns it on the title?", select(titleOptions(answers)), true),
     share: field("share", "What percent did they own?", text({ class: "short", inputmode: "decimal", placeholder: "50" }), "For a half share, enter 50."),
     co_owner: field("co_owner", "Name of the other owner (optional)", text()),
-    source: field("source", "How did they get it?", select(sourceOptions(answers)), `This decides whether it is community or separate property. Think about when they got it and whose money paid for it.`),
-    acquired: field("acquired", "Date they got it", date, `Courts compare this with the date of the ${word}.`),
+    source: field("source", "How did they get it?", select(sourceOptions(answers)), "Enter the facts you know. This answer alone does not determine community or separate ownership."),
+    basis: field("basis", "What legal basis are you asking the court to use?", select([
+      {value:"will", label:"The will gives the decedent’s interest to the survivor; do not request a character determination"},
+      {value:"community", label:"Community property, after reviewing deeds and any agreements"},
+      {value:"quasi", label:"Quasi-community property, after legal review"},
+      {value:"separate", label:"Separate property, after reviewing deeds and any agreements"}
+    ]), "A will-only request does not confirm the survivor’s existing share. If that share needs confirmation, get advice about also requesting Attachment 7b."),
+    recorded: field("recorded", "Deed recording date (optional)", date, "Separate from the purchase or acquisition date; copy the recorder’s stamp."),
+    document_number: field("document_number", "Recorded document number (optional)", text()),
+    title_wording: field("title_wording", "Exact ownership wording on the deed (optional)", area, "For example, sole and separate property. Keep this fact even when relying on the will."),
+    acquired: field("acquired", "Date they got it (optional)", date, "Use a verified acquisition date. A loan or refinance date is not necessarily the purchase date. Leave blank if unknown."),
     funds: field("funds", "What paid for it? (optional)", area, "The down payment, closing costs and who made the payments, for example “Down payment from joint savings; mortgage paid from wages”. Courts look for this."),
     will_to: field("will_to", "Who does the will give it to?", select([{ value: "spouse", label: `The ${survivor(answers)}` }, { value: "other", label: "Someone else" }])),
   };
@@ -228,7 +237,7 @@ function assetCard(x, i, remove) {
   const kind = field("kind", "What kind of property is it?", select(KINDS));
 
   const card = el("fieldset", { class: "person asset" }, legend, kind, parts.label, parts.legal, parts.apn, parts.title, parts.share,
-    parts.co_owner, parts.source, parts.acquired, parts.funds, deed, parts.will_to, result,
+    parts.co_owner, parts.source, parts.basis, parts.acquired, parts.recorded, parts.document_number, parts.title_wording, parts.funds, deed, parts.will_to, result,
     el("button", { type: "button", class: "link danger", onclick: remove }, "Remove this item"));
 
   card.refresh = () => {
@@ -239,7 +248,8 @@ function assetCard(x, i, remove) {
     parts.legal.hidden = parts.apn.hidden = x.kind !== "real" || !(onPetition || !x.title);
     parts.share.hidden = x.title !== "other_tic";
     parts.co_owner.hidden = x.title !== "other_tic" && x.title !== "other_jt";
-    parts.source.hidden = parts.acquired.hidden = parts.funds.hidden = deed.hidden = !onPetition;
+    parts.source.hidden = parts.basis.hidden = parts.acquired.hidden = parts.funds.hidden = deed.hidden = !onPetition;
+    parts.recorded.hidden = parts.document_number.hidden = parts.title_wording.hidden = !onPetition || x.kind !== "real";
     parts.will_to.hidden = !(onPetition && answers.will_gives === "some" && hasWill(answers));
     const p = place(x, answers);
     result.className = `place place-${p.route}`;
@@ -435,13 +445,13 @@ function nextSteps(a) {
   return el("ol", { class: "next" },
     el("li", {}, el("strong", {}, "Read it, then sign. "), "The petitioner signs page 2 by hand. Leave the attorney lines blank. Make at least two copies."),
     el("li", {}, el("strong", {}, "Check your county’s rules. "), "Many counties want their own forms and extra papers. Riverside, for example, requires its own attachment with a copy of the death certificate and the deed that gave the decedent title. Look at your court’s probate page or ask its ", el("a", { href: LINKS.selfHelpCenters, target: "_blank", rel: "noopener" }, "self-help center"), "."),
-    hasWill(a) ? el("li", {}, el("strong", {}, "Give the court the original will "), "if it hasn’t been filed yet.") : null,
+    hasWill(a) ? el("li", {}, el("strong", {}, "Lodge the original will and codicils. "), "Keep copies with Attachment 4c. For a handwritten instrument, also provide a typed copy and ask whether ", el("a", {href:"../de135/"}, "DE-135 handwriting proof"), " is needed. For a witnessed will, ask about DE-131. A scan alone does not prove validity.") : null,
     el("li", {}, el("strong", {}, "File it "), `with the probate clerk at the ${a.county ? `${a.county} County` : "county"} superior court, with a Notice of Hearing (`, f("DE-120"), "). The filing fee is usually $435, and some counties charge a little more. There is no additional fee if a probate case is already open. If you can’t afford it, ask for a fee waiver (", f("FW-001"), "). The clerk sets a hearing date."),
     el("li", {}, el("strong", {}, "Give notice. "), "At least 15 days before the hearing, an adult who isn’t part of the case mails the Notice of Hearing and a copy of the petition to everyone in items 9 and 10, then fills in the proof of service on the notice. File that with the court. Newspaper publication isn’t part of this petition. If the will gives to a charity with no named recipient, notify the Attorney General too (Probate Code § 13655)."),
     el("li", {}, el("strong", {}, "Prepare the order "), "(", f("DE-226"), "). Its Attachments 5a and 7a list the same property as your Attachments 7a and 7b, so you can reuse them. Ask the clerk when it’s due."),
     el("li", {}, el("strong", {}, "Check the court’s probate notes "), "before the hearing. They list anything the court wants fixed. Then go to the hearing if your court requires it."),
     el("li", {}, el("strong", {}, "After the judge signs, "), "get certified copies of the order. Record one with the county recorder where each property is located, usually with a Preliminary Change of Ownership Report. Give copies to banks, the DMV and anyone else who holds property."),
-    el("li", {}, el("strong", {}, "Keep paying the mortgages. "), "Tell each loan servicer about the death. Federal law generally stops a lender from calling a home loan due because of a transfer to a relative when the borrower dies (12 U.S.C. § 1701j-3(d)), but ask the servicer before transferring a home nobody in the family will live in."),
+    el("li", {}, el("strong", {}, "Keep paying the mortgages. "), "Court ownership orders and loan servicing are separate. Identify the loan owner and ask the servicer about death-related transfer protections. Fannie Mae and Freddie Mac have additional rules; nonoccupancy does not automatically mean refinancing is required. Get advice on your loan before changing ownership."),
     el("li", {}, el("strong", {}, "Know what comes with it. "), "The survivor can be personally liable for the decedent’s debts, up to the net value of certain property, mainly what they received (Probate Code §§ 13550, 13551). If debts are large, ask a lawyer whether probate is safer; the survivor can also choose to have property go through probate (§ 13502)."),
     el("li", {}, el("strong", {}, "Ask about property tax. "), "Transfers to a spouse aren’t reassessed. A later transfer to a child generally avoids reassessment only if the home was the parent’s main home and the child moves in (Proposition 19). The county assessor can tell you how this applies."));
 }
@@ -480,14 +490,14 @@ function review() {
   put(main,
     el("h2", { tabindex: "-1" }, "Check and download"),
     result.warnings.length ? el("div", { class: "note note-warn" }, el("strong", {}, "Look at these first"),
-      el("ul", {}, ...result.warnings.map((w) => el("li", {}, w)))) : el("div", { class: "note note-ok" }, "No problems found in your answers."),
+      el("ul", {}, ...result.warnings.map((w) => el("li", {}, w)))) : el("div", { class: "note note-ok" }, "No missing items detected by these checks. Read the draft; this is not legal approval."),
     result.notes.length ? el("div", { class: "note note-info" }, el("ul", {}, ...result.notes.map((n) => el("li", {}, n)))) : null,
     result.placed.length ? el("h3", {}, "Where each item goes") : null,
     result.placed.length ? routes(result) : null,
     result.remains.length ? el("div", { class: "note note-info" }, el("strong", {}, "You’ll also need another route for some property. "),
       "What doesn’t pass to the survivor needs probate or a simpler process if it qualifies. If you need probate, use our ", el("a", { href: LINKS.de111 }, "DE-111 helper"),
       ". The two petitions are filed separately under the same case number (Rules of Court, rule 7.301).")
-      : result.passing.length ? el("div", { class: "note note-ok" }, "Everything you listed passes to the survivor or outside this petition, so you may not need probate.") : null,
+      : result.passing.length && !result.placed.some(({p}) => p.route === "unsure") ? el("div", { class: "note note-ok" }, "Everything you listed passes to the survivor or outside this petition, so you may not need probate.") : null,
     el("h3", {}, "Your petition asks the court to"),
     el("ul", {}, ...summary(answers, result).map((s) => el("li", {}, s))),
     result.attachments.length ? el("h3", {}, "Attach these behind page 2") : null,
@@ -499,6 +509,8 @@ function review() {
     out,
     el("p", { class: "hint" }, "The PDF stays editable, so you can fix small things in a PDF reader. Print it single-sided on plain letter paper."),
     el("p", {}, "If you’re unsure whether something is community or separate property, or anyone may object, ", lawyer, " before you file."),
+    el("h3", {}, "Related forms"),
+    el("p", {}, el("a", {href:"../de226/"}, "DE-226 proposed order"), " · ", el("a", {href:"../de120/"}, "DE-120 hearing notice"), " · ", el("a", {href:"../de135/"}, "DE-135 handwriting proof")),
     el("h3", {}, "What happens next"),
     nextSteps(answers),
     el("h3", {}, "Keep your answers"),

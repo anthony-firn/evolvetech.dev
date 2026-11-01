@@ -167,3 +167,12 @@ copyable receiving addresses and Algorand QR links. New wallets receive ALGO fir
 active wallets accept native Algorand USDC. External wallets can pay a filled payment request directly. Shared-note
 payments require their exact transaction ID rather than automatically crediting another donor's recent transfer.
 The source guide is `fairground/docs/crypto-transfers.md`; these paths do not require Meld credentials.
+
+## Probate form helpers
+
+`/play/probate/` explains the two petition routes and links to DE-111, DE-221, DE-226, DE-120 and DE-135.
+The companion helpers are maintained in [`demos/probate/`](demos/probate/README.md). Build them with
+`python3 demos/probate/build.py` and run `node --test demos/probate/tests/*.test.mjs` before publishing.
+They use official PDF templates and browser-only answer storage; no personal case information is bundled.
+The separate petition sources remain in `~/Dev/de111` and `~/Dev/de221` and are rebuilt using `tools/build_demos.py`
+with `--local-source`. Do not edit only the copies in `public/play/`; those are generated outputs.

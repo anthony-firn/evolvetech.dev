@@ -11,7 +11,7 @@ export const BLANK = {
   // The person who died
   d_name: "", d_aka: "", d_date: "", d_lived: "ca", d_county: "",
   // The surviving spouse or partner
-  partner: "spouse", s_name: "", married_date: "", married_place: "", ended: "no",
+  partner: "spouse", s_name: "", married_date: "", married_place: "", ended: "",
   filer: "self", filer_name: "",
   // The will
   will: "", will_date: "", codicil: "no", codicil_dates: "", will_handwritten: "no", will_foreign: "no",
@@ -21,7 +21,7 @@ export const BLANK = {
   relatives: "",
   // Property
   assets: [],
-  agreement: "no", referee: "no", facts_extra: "",
+  agreement: "no", referee: "no", facts_extra: "", facts_override: "",
   // People to notify
   people: [],
   // Court
@@ -34,7 +34,7 @@ export const BLANK = {
 
 export const BLANK_ASSET = {
   kind: "real", label: "", legal: "", apn: "", title: "", share: "", co_owner: "", source: "", acquired: "", funds: "",
-  deed: false, will_to: "",
+  deed: false, will_to: "", basis: "", recorded: "", document_number: "", title_wording: "",
 };
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
@@ -91,8 +91,9 @@ const OUTSIDE = {
 const INTEREST = { community: "community property", quasi: "quasi-community property" };
 
 function character(x) {
-  if (x.title === "spouses_cp") return "community";
-  return { earnings: "community", elsewhere: "quasi", before: "separate", gift: "separate", own_funds: "separate" }[x.source] || "unknown";
+  // Acquisition facts do not establish legal character. Saved answers must be reviewed too.
+  if (x.basis === "will") return "unknown";
+  return { community: "community", quasi: "quasi", separate: "separate" }[x.basis] || "unknown";
 }
 
 // Does the decedent's interest in this asset go to the survivor? Returns true, false, or null when we can't tell yet.
@@ -124,13 +125,29 @@ export function place(x, a) {
     if (x.title === "spouses_jt" || x.title === "cprs") notes.push("If this was really community property, a court finding can matter for taxes on a later sale. Ask a tax professional before skipping it.");
     return out;
   }
-  if (x.deed) notes.push("A deed or agreement like that can make property separate (Family Code § 852). Have a lawyer read it before you swear this is community property.");
+  if (x.deed && x.basis !== "will") notes.push("A deed or agreement like that can make property separate (Family Code § 852). Have a lawyer read it before you swear this is community property.");
   if (x.source === "mixed") notes.push("Property bought before the marriage but paid down with earnings during it can be part community and part separate. Ask a lawyer how to describe it.");
 
   const share = held(x);
-  if (x.title === "other_tic" && !share) { out.headline = "Enter the share they owned to see where this goes."; return out; }
+  if (x.title === "other_tic" && (!share || amount(x.share) > 100)) { out.headline = "Enter the share they owned to see where this goes."; return out; }
   const part = share < 100 ? ` the ${share}% interest held in the decedent’s name` : "";
   const kind = out.character;
+  if (!x.basis) {
+    out.headline = "Choose the legal basis after reviewing the deed and ownership facts. Acquisition during marriage alone does not settle this.";
+    return out;
+  }
+  if (x.basis === "will" && !hasWill(a)) {
+    out.headline = "The will-only request requires a will giving this interest to the survivor.";
+    return out;
+  }
+  if ((kind === "community" || kind === "quasi") && a.agreement === "yes") {
+    out.headline = "The unequal-property agreement needs individual review before the interests can be listed. This helper cannot assume each person owns half.";
+    return out;
+  }
+  if (kind === "quasi" && a.d_lived === "outside") {
+    out.headline = "Review the applicable state law before claiming quasi-community property for a nonresident decedent.";
+    return out;
+  }
   const will = hasWill(a);
   if (!a.will) { out.headline = "Answer the will questions to see where this goes."; return out; }
   const toSpouse = will ? byWill(x, a) : null;
@@ -168,7 +185,7 @@ export function place(x, a) {
         out.passing = whole;
         out.reason = `The decedent’s interest passes to the ${spouse} under the decedent’s will.`;
         out.headline = "Goes on Attachment 7a.";
-        if (kind === "unknown") notes.push("Because you haven’t said this is community property, the petition doesn’t ask the court to confirm any share as already belonging to the survivor.");
+        if (kind === "unknown") notes.push("This draft requests only the decedent’s interest under the will. It does not determine or confirm any interest the survivor already owns; review that issue before filing.");
       } else {
         out.route = "probate";
         out.remains = whole;
@@ -214,7 +231,7 @@ function titleSentence(x, a) {
 }
 
 function sourceSentence(x) {
-  const when = { earnings: "during the marriage, while the couple lived in California, with earnings or other community funds",
+  const when = { earnings: "during the marriage, with earnings or shared funds",
     elsewhere: "during the marriage, while the couple lived outside California, with funds that would have been community property had they lived in California",
     before: "by the decedent before the marriage", gift: "by the decedent as a gift or inheritance",
     own_funds: "with the decedent’s separate funds" }[x.source];
@@ -231,23 +248,26 @@ function marriageFact(a) {
   const who = a.s_name.trim() || `The ${survivor(a)}`;
   const verb = isPartner(a) ? `${who} and the decedent registered their domestic partnership${when}` : `${who} and the decedent married${when}`;
   // These sentences are sworn, so they only appear when the person told us they are true.
-  if (a.ended === "yes") return `${verb}. The decedent died${a.d_date ? ` on ${longDate(a.d_date)}` : ""}.`;
+  if (a.ended !== "no") return `${verb}. The decedent died${a.d_date ? ` on ${longDate(a.d_date)}` : ""}.`;
   return `${verb}, and remained ${isPartner(a) ? "registered domestic partners" : "married"} until the decedent died${a.d_date ? ` on ${longDate(a.d_date)}` : ""}. ` +
     `The ${bond(a)} was never ended by ${isPartner(a) ? "termination" : "divorce"} or annulment, and no court order ended their property rights.`;
 }
 
 function willFact(a) {
+  if (!a.will) return "";
   if (!hasWill(a)) return "The decedent died without a will.";
   const dated = a.will_date ? ` dated ${longDate(a.will_date)}` : "";
   const gives = { all: `The will gives all of the decedent’s property outright to the ${survivor(a)}.`,
     some: `The will gives part of the decedent’s property to the ${survivor(a)}, as stated below.`,
     none: `The will does not give the property below to the ${survivor(a)}.`,
     trust: `The will leaves the ${survivor(a)}’s share in trust or with limits.` }[a.will_gives] || "";
-  return `The decedent left a will${dated}, a copy of which is Attachment 4c. ${gives}`.trim();
+  return `The decedent left a will${dated}, a copy of which is Attachment 4c.${a.codicil === "yes" ? ` The codicil(s)${a.codicil_dates ? ` dated ${a.codicil_dates}` : ""} are also included in Attachment 4c.` : ""} ${gives}`.trim();
 }
 
 function factsFor(a, listed) {
   const items = listed.map(({ x, p, tag }) => [`Item ${tag}: ${x.label.trim() || "(not described)"}.`, titleSentence(x, a), sourceSentence(x),
+    x.recorded ? `The deed was recorded on ${longDate(x.recorded)}${x.document_number ? ` as Document No. ${x.document_number}` : ""}.` : "",
+    x.title_wording ? `The deed describes title as: ${x.title_wording}.` : "",
     x.funds.trim() ? `Funds used: ${x.funds.trim().replace(/\.$/, "")}.` : "", CHARACTER_WORDS[p.character], p.reason]
     .filter(Boolean).join(" "));
   return [marriageFact(a), willFact(a), ...items, a.facts_extra.trim()].filter(Boolean);
@@ -346,7 +366,8 @@ export function fill(answers) {
   // 7. The property, with the three attachments this tool writes
   if (passing.length) set("7a", true);
   if (confirmed.length) set("7b", true);
-  const facts = factsFor(a, listed);
+  const facts = a.facts_override.trim() ? [a.facts_override.trim()] : factsFor(a, listed);
+  if (a.facts_override.trim()) notes.push("Attachment 7 uses your replacement text. The helper has not checked that it supports every interest listed on Attachments 7a and 7b. Read the complete PDF before signing.");
   if (passing.length || confirmed.length) {
     attachments.push({ id: "7", text: "Attachment 7: the facts showing why this property passes to or belongs to the survivor. This tool adds it to the PDF for you.", generated: true });
   }
@@ -384,7 +405,11 @@ export function fill(answers) {
   set("sig.name", name);
   set("sig.date", longDate(a.sign_date));
 
+  if (a.county === "San Luis Obispo" && confirmed.length) notes.push("San Luis Obispo Local Rule 11.1302 requires additional marriage, property and financial history when relying on community or quasi-community property. Supply those facts and supporting documents; these basic questions do not cover all of them.");
+  if (a.assets.some(x => !x.basis && x.label)) notes.push("Previously saved property answers need review: acquisition facts no longer automatically classify property. Choose the legal basis on each property card.");
+
   // Things to check
+  if (!a.ended) warnings.push("Confirm whether the marriage or partnership ended or a court ended property rights before signing.");
   if (a.ended === "yes") {
     warnings.push("You said the marriage or partnership ended, or a court ended their property rights. That person may not count as a surviving spouse or partner (Probate Code § 78), so this form may not be available. Talk to a lawyer before filing.");
   }

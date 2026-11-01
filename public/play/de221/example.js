@@ -8,14 +8,14 @@ export const EXAMPLE = {
   assets: [
     { kind: "real", label: "Home at 123 Example Lane, Los Osos, California", apn: "074-123-456",
       legal: "Lot 12 of Tract 1234, in the County of San Luis Obispo, State of California, as shown on the map recorded in Book 10, Page 20 of Maps.",
-      title: "sole", source: "earnings", acquired: "1995-04-03",
+      title: "sole", basis: "community", source: "earnings", acquired: "1995-04-03",
       funds: "Down payment from joint savings; mortgage paid from both spouses’ wages" },
     { kind: "real", label: "One-half interest in 456 Sample Street, San Luis Obispo, California", apn: "002-456-789",
       legal: "Lot 7 of Tract 5678, in the County of San Luis Obispo, State of California, as shown on the map recorded in Book 22, Page 8 of Maps.",
-      title: "other_tic", share: "50", co_owner: "Daniel Sample", source: "earnings", acquired: "2018-09-20",
+      title: "other_tic", share: "50", co_owner: "Daniel Sample", basis: "community", source: "earnings", acquired: "2018-09-20",
       funds: "Down payment from joint savings; mortgage paid from wages" },
     { kind: "vehicle", label: "2021 Example Motors Sedan, VIN ending 4821, California license 8ABC123", title: "sole",
-      source: "earnings", acquired: "2021-02-15", funds: "Paid from joint savings" },
+      basis: "community", source: "earnings", acquired: "2021-02-15", funds: "Paid from joint savings" },
     { kind: "account", label: "Example Credit Union checking account ending 3307", title: "beneficiary" },
   ],
   people: [

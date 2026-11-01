@@ -303,6 +303,7 @@ function welcome() {
   const fileInput = el("input", { type: "file", accept: "application/json,.json", class: "sr-only", id: "open-file" });
   fileInput.addEventListener("change", openFile);
   put(main,
+    el("p", {class:"note note-info"}, "DE-111 starts formal probate and requests a personal representative. Its opening notice is DE-121, not DE-120. A spousal property petition uses DE-221, with DE-120 and a proposed DE-226 order. ", el("a", {href:"../probate/"}, "Compare the forms and filing steps")),
     el("h2", { class: "welcome-title", tabindex: "-1" }, "Fill out the Petition for Probate (DE-111)"),
     el("p", { class: "lede" }, "Answer questions in plain language and get the official California court form filled in, ready to print, sign and file."),
     el("ul", { class: "promises" },
@@ -402,7 +403,7 @@ function review() {
   put(main,
     el("h2", { tabindex: "-1" }, "Check and download"),
     result.warnings.length ? el("div", { class: "note note-warn" }, el("strong", {}, "Look at these first"),
-      el("ul", {}, ...result.warnings.map((w) => el("li", {}, w)))) : el("div", { class: "note note-ok" }, "No problems found in your answers."),
+      el("ul", {}, ...result.warnings.map((w) => el("li", {}, w)))) : el("div", { class: "note note-ok" }, "No missing items detected by these checks. Read the draft; this is not legal approval."),
     result.notes.length ? el("div", { class: "note note-info" }, el("ul", {}, ...result.notes.map((n) => el("li", {}, n)))) : null,
     el("h3", {}, "Your petition asks the court to"),
     el("ul", {}, ...summary(answers).map((s) => el("li", {}, s))),
