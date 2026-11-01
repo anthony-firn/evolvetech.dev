@@ -1,7 +1,7 @@
 """Exercise the homepage-to-helper flow, shared chrome, themes and immediate cross-form saves."""
 import sys,tempfile,json
 from pathlib import Path
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, expect
 BASE=sys.argv[1].rstrip('/') if len(sys.argv)>1 else 'http://localhost:8250'
 OUT=Path(tempfile.gettempdir())/'probate-suite-navigation';OUT.mkdir(exist_ok=True)
 errors=[]
@@ -69,7 +69,7 @@ with sync_playwright() as p:
  page.get_by_role('link',name='EvolveTech home',exact=False).first.click()
  page.wait_for_url(BASE+'/')
  page.get_by_role('article',name='California Probate Form Helpers').scroll_into_view_if_needed()
- page.wait_for_function('getComputedStyle(document.querySelector("[aria-labelledby=case-probate]")).opacity === "1"')
+ expect(page.locator("[aria-labelledby=case-probate]")).to_have_css("opacity", "1")
  page.screenshot(path=str(OUT/'homepage-phone.png'))
  assert not errors,errors
  browser.close()
