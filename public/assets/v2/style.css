@@ -250,3 +250,15 @@ figure.case-media{margin:0}
 .theme-toggle .sun{display:none}
 :root[data-theme=light] .theme-toggle .sun{display:block}:root[data-theme=light] .theme-toggle .moon{display:none}
 @media (prefers-color-scheme:light){:root:not([data-theme=dark]) .theme-toggle .sun{display:block}:root:not([data-theme=dark]) .theme-toggle .moon{display:none}}
+
+/* Form guide entry point: working links show how the small tools fit together. */
+.helper-preview { width: 100%; padding: clamp(18px, 3vw, 36px); }
+.helper-route { display: flex; align-items: center; gap: 16px; padding: 20px; border: 1px solid var(--line); border-radius: 12px; text-decoration: none; color: inherit; background: var(--surface); }
+.helper-route > strong { font-family: var(--display); font-size: 1.2rem; color: var(--cyan); white-space: nowrap; }
+.helper-route > span:nth-child(2) { flex: 1; font-weight: 600; }
+.helper-route small { display: block; color: var(--muted); font-size: .78rem; font-weight: 400; margin-top: 5px; }
+.helper-route:hover, .helper-chain a:hover { border-color: var(--cyan); }
+.helper-chain { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin: 12px 0 22px; }
+.helper-chain a { border: 1px solid var(--line); border-radius: 10px; padding: 14px 9px; text-align: center; font-weight: 600; text-decoration: none; color: inherit; }
+.helper-chain small { display: block; color: var(--muted); font-size: .7rem; font-weight: 400; margin-top: 5px; }
+@media(max-width: 540px) { .helper-route { padding: 15px; gap: 10px; } .helper-route > strong { font-size: 1rem; } .helper-chain a { padding: 12px 5px; font-size: .85rem; } }

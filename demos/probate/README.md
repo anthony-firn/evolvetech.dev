@@ -38,3 +38,28 @@ characters also require correction before generation. None of these checks is le
 Sources: Judicial Council forms; Alameda Superior Court simplified probate instructions; California Probate Code
 §§ 13650–13656, 1220, 8200, 8222; San Luis Obispo local rules 11.109, 11.501 and 11.1302. County fee and submission
 requirements must be checked individually. No court or attorney has reviewed these tools.
+
+## Shared interface
+
+All five helpers use the shared shell defined in `layout.py` and the canonical stylesheet in `web/style.css`.
+The three companion forms have the same welcome, step sidebar, mobile step menu, review and download flow as the
+petitions. The guide's two route buttons explain how the forms fit together without deciding eligibility.
+A homepage project card and navigation link lead into the guide.
+
+When changing shared chrome or styling, update the petition source copies before rebuilding them:
+
+```sh
+python3 demos/probate/sync_petitions.py --sources /home/anthony/Dev
+python3 tools/build_demos.py de111 --local-source /home/anthony/Dev/de111
+python3 tools/build_demos.py de221 --local-source /home/anthony/Dev/de221
+python3 demos/probate/build.py
+```
+
+Commit the petition source changes as well as the site outputs. Local standalone petition previews keep their own
+synchronized stylesheet and theme script. The theme setting is shared with the main website. Existing answer keys are
+preserved; companion step position is separate. Navigating away from a petition flushes its pending autosave.
+
+With `public/` served at port 8250, run `python3 demos/probate/tests/navigation_check.py` to exercise homepage entry,
+route filtering, all five shared menus, current-form indicators, themes, phone step menus and immediate cross-form
+answer persistence. The PDF walkthrough accepts that same base URL via
+`python3 demos/probate/tests/ui_check.py http://localhost:8250/play/`.

@@ -31,6 +31,12 @@ function save() {
   }, 300);
 }
 
+// A navigation click can happen before the debounced save fires.
+window.addEventListener("pagehide", () => {
+  clearTimeout(saveTimer);
+  try { localStorage.setItem(KEY, JSON.stringify(answers)); } catch { /* file backup remains available */ }
+});
+
 const hasAnswers = () => Object.keys(BLANK).some((k) => JSON.stringify(answers[k]) !== JSON.stringify(BLANK[k]));
 
 // ---------- small DOM helpers ----------
@@ -308,7 +314,7 @@ function welcome() {
     el("p", { class: "lede" }, "Answer questions in plain language and get the official California court form filled in, ready to print, sign and file."),
     el("ul", { class: "promises" },
       el("li", {}, el("strong", {}, "Private. "), "Your answers stay in this browser on this device. Nothing is sent anywhere."),
-      el("li", {}, el("strong", {}, "Free. "), "No account, no fees."),
+      el("li", {}, el("strong", {}, "Free. "), "No account. Court filing fees may still apply."),
       el("li", {}, el("strong", {}, "About 30 minutes. "), "Stop any time. Your answers are saved on this device until you erase them.")),
     el("div", { class: "actions" },
       el("button", { type: "button", class: "primary", onclick: () => go(0) }, resume ? "Continue where I left off" : "Start"),
