@@ -16,6 +16,8 @@ class Rules(unittest.TestCase):
         self.assertEqual(rule["Triggers"][0]["PatternMatches"], ["*/play/evolve-jobs/*"])
         self.assertEqual(rule["ActionParameter2"], "jobs-policy")
         self.assertEqual(rule["Description"], DESCRIPTION)
+        self.assertEqual(rule["Guid"], "00000000-0000-0000-0000-000000000000")
+        rule["Guid"] = "provider-created-rule-id"
         updated = make_rule({"EdgeRules": [source, rule]}, "new-policy")
         self.assertEqual(updated["Guid"], rule["Guid"])
         self.assertEqual(updated["OrderIndex"], rule["OrderIndex"])

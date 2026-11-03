@@ -34,7 +34,7 @@ function normalize(board, post, now2 = Date.now()) {
   boardURL(board);
   if (!/^[a-zA-Z0-9-]{1,100}$/.test(post.id)) throw new Error("Invalid posting ID");
   const salary = post.salaryRange || {};
-  const annual = salary.interval === "per-year";
+  const annual = ["per-year", "per-year-salary"].includes(salary.interval);
   return {
     version: 1,
     id: `lever:${board}:${post.id}`,

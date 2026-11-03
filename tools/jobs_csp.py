@@ -1,9 +1,8 @@
 """Keep Evolve Jobs' Bunny response policy aligned with its Netlify policy."""
 import copy
-import uuid
 
 DESCRIPTION = "Evolve Jobs browser and WASM policy"
-GUID = str(uuid.uuid5(uuid.NAMESPACE_URL, "https://www.evolvetech.dev/play/evolve-jobs/"))
+CREATE_GUID = "00000000-0000-0000-0000-000000000000"
 
 
 def jobs_policy(headers):
@@ -29,7 +28,7 @@ def make_rule(zone, policy):
                                          for pattern in trigger.get("PatternMatches", [])]
     if not any("evolve-jobs" in pattern for trigger in rule["Triggers"] for pattern in trigger.get("PatternMatches", [])):
         raise RuntimeError("Evolve Jobs edge rule must have its own URL trigger")
-    rule.update(Guid=existing.get("Guid", GUID) if existing else GUID,
+    rule.update(Guid=existing["Guid"] if existing else CREATE_GUID,
                 Description=DESCRIPTION, Enabled=True,
                 OrderIndex=existing.get("OrderIndex", 0) if existing else max((x.get("OrderIndex", 0) for x in rules), default=0) + 1,
                 ActionParameter1="Content-Security-Policy", ActionParameter2=policy,
