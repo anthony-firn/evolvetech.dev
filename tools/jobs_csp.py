@@ -2,7 +2,6 @@
 import copy
 
 DESCRIPTION = "Evolve Jobs browser and WASM policy"
-CREATE_GUID = "00000000-0000-0000-0000-000000000000"
 
 
 def jobs_policy(headers):
@@ -28,9 +27,10 @@ def make_rule(zone, policy):
                                          for pattern in trigger.get("PatternMatches", [])]
     if not any("evolve-jobs" in pattern for trigger in rule["Triggers"] for pattern in trigger.get("PatternMatches", [])):
         raise RuntimeError("Evolve Jobs edge rule must have its own URL trigger")
-    rule.update(Guid=existing["Guid"] if existing else CREATE_GUID,
-                Description=DESCRIPTION, Enabled=True,
+    rule.update(Description=DESCRIPTION, Enabled=True,
                 OrderIndex=existing.get("OrderIndex", 0) if existing else max((x.get("OrderIndex", 0) for x in rules), default=0) + 1,
                 ActionParameter1="Content-Security-Policy", ActionParameter2=policy,
                 ExtraActions=[])
+    if existing:
+        rule["Guid"] = existing["Guid"]
     return rule
