@@ -76,6 +76,20 @@ def callout(title, text):
 
 
 PAGES = [
+    dict(slug="evolve-jobs", title="Evolve Jobs", poster="og.jpg",
+         label="Jobs · Local automation · Nostr · Open source",
+         description="Free job search with pay and qualification rules, distributed public listings and a local application worker.",
+         lede="Find roles that meet your pay floor and search rules. Search employer listings in the browser, then run an application worker on your own device. Public listings can travel through Nostr; a Rust/WASM engine matches roles on your device. Your résumé stays with you until you apply.",
+         demo="/play/evolve-jobs/", demo_text="Open job search", repo="https://github.com/anthony-firn/evolve-jobs",
+         media="",
+         status="Early prototype; Lever discovery and standard hosted-form automation", license="Apache 2.0", stack="Rust/WASM, JavaScript, Nostr, Chromium extension; optional Node/SQLite worker",
+         sections=[
+             section("Search on your terms", "Set a minimum annual salary, currency, job-title terms, qualification keywords, location and remote-work preferences. The published salary minimum must meet your floor; missing pay, hourly ranges and other currencies do not qualify. Keywords help screen a listing but do not establish your eligibility."),
+             section("A worker you run", "The browser searches public Lever employer boards, imports and exports listing files, and reads shared listings from relays you choose. The companion browser extension submits matching roles only for employers you enable, using your own résumé and saved answers. It runs entirely on your device, with no application backend. An optional Node worker is also available. It refreshes the original listing before applying and keeps a local application history to prevent duplicate attempts.", "The first adapter supports standard Lever forms. Unanswered questions, consent controls, unfamiliar forms and CAPTCHA stop for manual review. The WASM engine and browser extension are tested with intercepted local fixtures; no real application was submitted during development. This is an early prototype, with no promise of universal form support or guaranteed income."),
+             section("Distributed public discovery", "Anyone can fetch employer listings, host the static workspace or operate a Nostr relay. Signed public listing events use an experimental schema; a signature identifies its publisher, not an employer endorsement. Peer listings are refreshed from the employer before applying. There is no required EvolveTech account, profile server or central job index. Private profiles and application history are not shared through relays."),
+             section("Free to use", 'No subscription, application fee or salary commission. Optional donations use <a href="/play/fairground/#/about">Fairground’s shared support flow</a>, as with other EvolveTech projects. Donations support development; they do not change ranking or application access.'),
+             section("Run your own", '<a href="https://github.com/anthony-firn/evolve-jobs#client-first-setup">Follow the client setup guide →</a> Download the unpacked Chromium companion from the workspace. Search and matching run in the browser with WASM; your private profile and enabled employers stay in the extension’s local storage.'),
+         ]),
     dict(slug="evolve-inbox", title="Evolve Inbox", poster="evolve-inbox-demo.jpg",
          label="Email · JavaScript · Serverless",
          description="Evolve Inbox is an open-source inbox for custom-domain email, with search, attachments, guided deployment, DNS diagnostics and retry-aware inbound delivery.",

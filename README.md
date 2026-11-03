@@ -117,6 +117,31 @@ host (`https:`) and a local Ollama, and images and video from `https:`. It needs
 Bunny Storage serves unknown extensions as `application/octet-stream`, so a further edge rule sets `text/javascript` for
 `*.mjs` (Pyodide's modules); browsers refuse to run module scripts with any other type.
 
+## Evolve Jobs
+
+Evolve Jobs is the client-first job-search project at `/play/evolve-jobs/`, with its own
+[public repository](https://github.com/anthony-firn/evolve-jobs) and `/projects/evolve-jobs/` overview.
+The static browser app performs role, qualification-keyword and annual-pay comparisons with a Rust/WASM
+engine, fetches public Lever employer listings directly and can exchange signed public listings over Nostr.
+It caches its own assets for offline use; live discovery and applications still need network access.
+
+The downloadable Chromium companion extension stores a private profile and résumé locally and submits
+supported Lever forms for explicitly enabled employers. It refreshes jobs from the employer, caps attempts,
+keeps duplicate protection and stops on unknown questions, consent controls and CAPTCHA. An optional Node
+worker is also available. Neither requires an EvolveTech application backend. Qualification keywords do not
+establish eligibility; the project is an early prototype tested on intercepted form fixtures, with no real
+applications submitted during development. Donations link to Fairground’s existing shared support flow.
+
+Rebuild with `python3 tools/build_demos.py evolve-jobs --local-source /path/to/evolve-jobs`.
+This requires Rust with `wasm32-unknown-unknown`, Node.js 22.13+, Python 3 and Playwright Chromium.
+The generated `BUILD.json` pins the source commit. Keep résumés, local profiles and application histories out of
+this website repository; only the public site build and extension ZIP belong here.
+
+`public/_headers` adds an app-specific CSP permitting the WASM engine, direct connections to
+`https://api.lever.co` and user-selected `wss:` relays. `tools/deploy.py` applies the same policy to a scoped Bunny edge rule before uploading files. It derives
+the URL-trigger shape from the existing Fairground policy and updates only the Evolve Jobs rule.
+Bunny does not interpret Netlify’s `_headers`.
+
 ## Add a project
 
 Evolve Inbox is the standalone open-source version of this site's mail function. Its public demo and project page use only fictional mail. The `/mail` service remains private, with credentials in Netlify and messages in the site-wide `mail` Blobs store. Rebuild the fictional demonstration with `python3 tools/build_demos.py evolve-inbox`, or pass `--local-source /path/to/evolve-inbox` for a local checkout.

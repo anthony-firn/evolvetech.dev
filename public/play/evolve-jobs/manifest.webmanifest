@@ -1,0 +1,1 @@
+{"name":"Evolve Jobs","short_name":"Evolve Jobs","start_url":"./","scope":"./","display":"standalone","background_color":"#0c1117","theme_color":"#0c1117","description":"Local job search with a Rust/WASM matching engine."}

@@ -15,6 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PLAY = ROOT / "public" / "play"
 DEMOS = {
+    "evolve-jobs": {"repo": "https://github.com/anthony-firn/evolve-jobs.git", "build": "jobs"},
     "evolve-inbox": {"repo": "https://github.com/anthony-firn/evolve-inbox.git", "build": "node"},
     "pulse-pop": {"repo": "https://github.com/anthony-firn/pulse-pop.git", "build": "expo",
                   "description": "Play Pulse Pop, a quick touch game built with Expo and React Native, in your browser."},
@@ -143,6 +144,15 @@ def build_node(src, name):
     return src / "public"
 
 
+def build_jobs(src, name):
+    """Bundle the browser job search; provider form fixtures require Chromium."""
+    run("npm", "ci", "--no-audit", "--no-fund", cwd=src)
+    run("npx", "playwright", "install", "chromium", cwd=src)
+    run("npm", "test", cwd=src)
+    run("npm", "run", "build", cwd=src)
+    return src / "dist" / "site"
+
+
 def build_static(src, name):
     """A buildless browser tool: run the project's own tests, then publish its web/ folder as is."""
     run("npm", "test", cwd=src)
@@ -171,7 +181,7 @@ def build_demo(src, name):
             if path.is_file():
                 digest.update(filename.encode() + b"\0" + path.read_bytes() + b"\0")
         provenance.update(modified=True, working_tree_sha256=digest.hexdigest())
-    out = {"expo": build_expo, "godot": build_godot, "pyodide": build_pyodide, "data": build_data, "vite": build_vite, "node": build_node, "rust": build_rust, "static": build_static}[demo["build"]](src, name)
+    out = {"expo": build_expo, "godot": build_godot, "pyodide": build_pyodide, "data": build_data, "vite": build_vite, "node": build_node, "jobs": build_jobs, "rust": build_rust, "static": build_static}[demo["build"]](src, name)
     if demo["build"] == "rust":
         provenance["wasm_sha256"] = hashlib.sha256((out / "emergence_web.wasm").read_bytes()).hexdigest()
     if "description" in demo:

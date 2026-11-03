@@ -32,6 +32,7 @@ jobs:
       - run: node --test tools/test_fairground_edge.mjs
       - run: node --test demos/probate/tests/*.test.mjs
       - run: python3 tools/test_monitor.py
+      - run: python3 tools/test_jobs_csp.py
       - run: python3 tools/deploy.py
         env:
           BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}

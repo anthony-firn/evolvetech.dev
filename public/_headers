@@ -12,3 +12,6 @@
 
 /health.json
   Cache-Control: no-store
+
+/play/evolve-jobs/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self' https://api.lever.co wss:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'none'
