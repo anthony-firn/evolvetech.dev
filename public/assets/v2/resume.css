@@ -26,18 +26,18 @@
 @media print{
   @page{size:Letter;margin:.42in .5in}
   :root,:root[data-theme]{--text:#111;--text-2:#222;--muted:#333;--dim:#555;--line:#ddd;--line-2:#bbb;--ember:#c4501a}
-  html,body{background:#fff;color:#111;font-size:9.6pt;line-height:1.36}
+  html,body{background:#fff;color:#111;font-size:9.3pt;line-height:1.3}
   .site-header,.skip{display:none}
   .resume{padding:0;max-width:none;width:100%}
-  .cv-head{padding-bottom:10pt}
+  .cv-head{padding-bottom:8pt}
   .cv-head h1{font-size:24pt}
   .cv-contact{font-size:8.5pt}
-  .cv-section{padding:7pt 0}.cv-job,.cv-skills div{break-inside:avoid}
+  .cv-section{padding:6pt 0}.cv-job,.cv-skills div{break-inside:avoid}
   .cv-section h2{margin-bottom:6pt;font-size:8pt}
   .cv-section p,.cv-job ul,.cv-skills dd{color:#222}
   .cv-job+.cv-job{margin-top:7pt}
   .cv-job h3{font-size:10.5pt}
-  .cv-job ul{font-size:9.5pt;gap:2pt;margin-top:3pt}
+  .cv-job ul{font-size:9.1pt;gap:1.5pt;margin-top:2pt}
   .cv-skills{gap:3pt}.cv-skills div{grid-template-columns:95pt 1fr;gap:8pt;font-size:8.8pt}.cv-two{gap:20pt;grid-template-columns:2.5fr 1fr}
   a{color:inherit;text-decoration:none}
 }
