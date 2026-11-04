@@ -3,8 +3,11 @@
 import { createGateway, DEFAULT_RELAYS } from '../lib/fairground/fairground-gateway.js';
 
 const env = (name) => globalThis.Netlify?.env.get(name) || undefined;
-const names = ['MELD_API_KEY', 'MELD_BUY_PROVIDER', 'MELD_SELL_PROVIDER', 'MELD_ALGO_CURRENCY_CODE', 'MELD_USDC_CURRENCY_CODE', 'MELD_SELL_PAYMENT_METHOD'];
+// Card purchases need the first three; cash-outs need all three of the rest, so buying can open first.
+const names = ['MELD_API_KEY', 'MELD_BUY_PROVIDER', 'MELD_ALGO_CURRENCY_CODE'];
+const sellNames = ['MELD_SELL_PROVIDER', 'MELD_USDC_CURRENCY_CODE', 'MELD_SELL_PAYMENT_METHOD'];
 const configured = env('MELD_PAYMENTS_ENABLED') === 'true' && names.every((name) => env(name));
+const selling = sellNames.every((name) => env(name));
 const handle = createGateway({
   relays: DEFAULT_RELAYS,
   base: '/fairground',
@@ -13,9 +16,8 @@ const handle = createGateway({
   feedHeaders: { 'Netlify-CDN-Cache-Control': 'public, durable, s-maxage=300, stale-while-revalidate=3600' },
   ramp: configured ? {
     apiKey: env('MELD_API_KEY'), environment: 'production',
-    buyProvider: env('MELD_BUY_PROVIDER'), sellProvider: env('MELD_SELL_PROVIDER'),
-    algoCurrencyCode: env('MELD_ALGO_CURRENCY_CODE'), usdcCurrencyCode: env('MELD_USDC_CURRENCY_CODE'),
-    sellPaymentMethod: env('MELD_SELL_PAYMENT_METHOD'),
+    buyProvider: env('MELD_BUY_PROVIDER'), algoCurrencyCode: env('MELD_ALGO_CURRENCY_CODE'),
+    ...(selling ? { sellProvider: env('MELD_SELL_PROVIDER'), usdcCurrencyCode: env('MELD_USDC_CURRENCY_CODE'), sellPaymentMethod: env('MELD_SELL_PAYMENT_METHOD') } : {}),
     ...(env('MELD_CHECKOUT_ORIGINS') ? { checkoutOrigins: env('MELD_CHECKOUT_ORIGINS').split(',').map((s) => s.trim()) } : {}),
   } : undefined,
 });

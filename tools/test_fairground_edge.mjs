@@ -23,7 +23,7 @@ test('Meld is disabled without complete credentials and never forwards to the re
 
 test('configured Meld exposes only public availability and rejects anonymous/foreign-origin sessions', async () => {
   const handle = await edge(env);
-  assert.deepEqual(await (await handle(request('wallet/config'), { ip: '203.0.113.10' })).json(), { ramp: true, provider: 'meld', environment: 'production' });
+  assert.deepEqual(await (await handle(request('wallet/config'), { ip: '203.0.113.10' })).json(), { ramp: true, provider: 'meld', environment: 'production', sell: true });
   const unsigned = await handle(request('ramp/session', { method: 'POST', body: '{}' }), { ip: '203.0.113.10' });
   assert.equal(unsigned.status, 401);
   assert.ok(!(await unsigned.text()).includes(env.MELD_API_KEY));
@@ -31,6 +31,14 @@ test('configured Meld exposes only public availability and rejects anonymous/for
   assert.equal(foreign.status, 403);
   const preflight = await handle(request('ramp/session', { method: 'OPTIONS', headers: { Origin: 'https://www.evolvetech.dev' } }), { ip: '203.0.113.10' });
   assert.equal(preflight.headers.get('Access-Control-Allow-Origin'), 'https://www.evolvetech.dev');
+});
+
+test('card purchases open without the cash-out settings, which only turn on as a complete set', async () => {
+  const buyOnly = { ...env, MELD_SELL_PROVIDER: undefined, MELD_USDC_CURRENCY_CODE: undefined, MELD_SELL_PAYMENT_METHOD: undefined };
+  const handle = await edge(buyOnly);
+  assert.deepEqual(await (await handle(request('wallet/config'), { ip: '203.0.113.10' })).json(), { ramp: true, provider: 'meld', environment: 'production', sell: false });
+  const partial = await edge({ ...buyOnly, MELD_SELL_PROVIDER: 'TEST_SELL' });
+  assert.equal((await (await partial(request('wallet/config'), { ip: '203.0.113.10' })).json()).sell, false);
 });
 
 test('Meld checkout requires a real platform client IP and bounds bodies and repeated requests', async () => {
