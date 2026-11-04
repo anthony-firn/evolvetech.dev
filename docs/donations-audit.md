@@ -5,6 +5,15 @@ processor to migrate in the other portfolio projects inspected. Meld is the plan
 donor's own Fairground wallet; the donation itself remains a direct USDC transfer on Algorand. Donors with funded
 external Algorand wallets can use the existing wallet-link/QR flow independently of Meld.
 
+## Update — 2026-11-03: donating needs no balance
+
+Donors no longer set up a Fairground wallet. From any project's support link, a donor pays by card through Meld
+(once enabled) or sends ALGO from an exchange; their own Fairground wallet turns it into the USDC donation and closes
+in the same step, leaving nothing behind. A split donation (development and relays) is one purchase. Only wallets that
+keep a balance, receive payments or cash out are set up, including the development fund itself. Meld is asked for
+native ALGO purchases only, with cash-outs configured separately, and the edge function enables purchases without the
+cash-out settings. Details: Fairground's `docs/meld-integration.md` and `docs/protocol.md` (Paying without a balance).
+
 ## Project inventory
 
 | System | Existing donation entry | Result |

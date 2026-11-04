@@ -119,34 +119,34 @@ function A(e) {
 	};
 }
 b(k(4), x("0123456789ABCDEF"), S("")), b(k(5), x("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"), C(5), S("")), b(k(5), x("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"), S("")), b(k(5), x("0123456789ABCDEFGHIJKLMNOPQRSTUV"), C(5), S("")), b(k(5), x("0123456789ABCDEFGHIJKLMNOPQRSTUV"), S("")), b(k(5), x("0123456789ABCDEFGHJKMNPQRSTVWXYZ"), S(""), w((e) => e.toUpperCase().replace(/O/g, "0").replace(/[IL]/g, "1")));
-var ee = typeof Uint8Array.from([]).toBase64 == "function" && typeof Uint8Array.fromBase64 == "function";
-ee || b(k(6), x("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"), C(6), S("")), b(k(6), x("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"), S("")), ee || b(k(6), x("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"), C(6), S("")), b(k(6), x("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"), S(""));
-var j = b(x("qpzry9x8gf2tvdw0s3jn54khce6mua7l"), S("")), te = [
+var j = typeof Uint8Array.from([]).toBase64 == "function" && typeof Uint8Array.fromBase64 == "function";
+j || b(k(6), x("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"), C(6), S("")), b(k(6), x("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"), S("")), j || b(k(6), x("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"), C(6), S("")), b(k(6), x("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"), S(""));
+var M = b(x("qpzry9x8gf2tvdw0s3jn54khce6mua7l"), S("")), N = [
 	996825010,
 	642813549,
 	513874426,
 	1027748829,
 	705979059
 ];
-function M(e) {
+function P(e) {
 	let t = e >> 25, n = (e & 33554431) << 5;
-	for (let e = 0; e < te.length; e++) (t >> e & 1) == 1 && (n ^= te[e]);
+	for (let e = 0; e < N.length; e++) (t >> e & 1) == 1 && (n ^= N[e]);
 	return n;
 }
-function N(e, t, n = 1) {
+function F(e, t, n = 1) {
 	let r = e.length, i = 1;
 	for (let t = 0; t < r; t++) {
 		let n = e.charCodeAt(t);
 		if (n < 33 || n > 126) throw Error(`Invalid prefix (${e})`);
-		i = M(i) ^ n >> 5;
+		i = P(i) ^ n >> 5;
 	}
-	i = M(i);
-	for (let t = 0; t < r; t++) i = M(i) ^ e.charCodeAt(t) & 31;
-	for (let e of t) i = M(i) ^ e;
-	for (let e = 0; e < 6; e++) i = M(i);
-	return i ^= n, j.encode(O([i % D[30]], 30, 5, !1));
+	i = P(i);
+	for (let t = 0; t < r; t++) i = P(i) ^ e.charCodeAt(t) & 31;
+	for (let e of t) i = P(i) ^ e;
+	for (let e = 0; e < 6; e++) i = P(i);
+	return i ^= n, M.encode(O([i % D[30]], 30, 5, !1));
 }
-function ne(e) {
+function I(e) {
 	let t = e === "bech32" ? 1 : 734539939, n = k(5), r = n.decode, i = n.encode, a = A(r);
 	function o(e, n, r = 90) {
 		h("bech32.encode prefix", e), f(n) && (n = Array.from(n)), y("bech32.encode", n);
@@ -154,8 +154,8 @@ function ne(e) {
 		if (i === 0) throw TypeError(`Invalid prefix length ${i}`);
 		let a = i + 7 + n.length;
 		if (r !== !1 && a > r) throw TypeError(`Length ${a} exceeds limit ${r}`);
-		let o = e.toLowerCase(), s = N(o, n, t);
-		return `${o}1${j.encode(n)}${s}`;
+		let o = e.toLowerCase(), s = F(o, n, t);
+		return `${o}1${M.encode(n)}${s}`;
 	}
 	function s(e, n = 90) {
 		h("bech32.decode input", e);
@@ -167,7 +167,7 @@ function ne(e) {
 		if (a === 0 || a === -1) throw Error("Letter \"1\" must be present between prefix and data only");
 		let o = i.slice(0, a), s = i.slice(a + 1);
 		if (s.length < 6) throw Error("Data must be at least 6 characters long");
-		let c = j.decode(s).slice(0, -6), l = N(o, c, t);
+		let c = M.decode(s).slice(0, -6), l = F(o, c, t);
 		if (!s.endsWith(l)) throw Error(`Invalid checksum in ${e}: expected "${l}"`);
 		return {
 			prefix: o,
@@ -197,32 +197,32 @@ function ne(e) {
 		toWords: i
 	};
 }
-var P = ne("bech32");
-ne("bech32m"), typeof Uint8Array.from([]).toHex == "function" && typeof Uint8Array.fromHex == "function" || b(k(4), x("0123456789abcdef"), S(""), w((e) => {
+var L = I("bech32");
+I("bech32m"), typeof Uint8Array.from([]).toHex == "function" && typeof Uint8Array.fromHex == "function" || b(k(4), x("0123456789abcdef"), S(""), w((e) => {
 	if (typeof e != "string" || e.length % 2 != 0) throw TypeError(`hex.decode: expected string, got ${typeof e} with length ${e.length}`);
 	return e.toLowerCase();
 }));
 // node_modules/nostr-tools/lib/esm/nip19.js
-var F = new TextDecoder("utf-8");
+var R = new TextDecoder("utf-8");
 new TextEncoder();
-var I = 5e3;
-function re(e) {
-	let { prefix: t, words: n } = P.decode(e, I), r = new Uint8Array(P.fromWords(n));
+var ee = 5e3;
+function te(e) {
+	let { prefix: t, words: n } = L.decode(e, ee), r = new Uint8Array(L.fromWords(n));
 	switch (t) {
 		case "nprofile": {
-			let e = L(r);
+			let e = z(r);
 			if (!e[0]?.[0]) throw Error("missing TLV 0 for nprofile");
 			if (e[0][0].length !== 32) throw Error("TLV 0 should be 32 bytes");
 			return {
 				type: "nprofile",
 				data: {
 					pubkey: c(e[0][0]),
-					relays: e[1] ? e[1].map((e) => F.decode(e)) : []
+					relays: e[1] ? e[1].map((e) => R.decode(e)) : []
 				}
 			};
 		}
 		case "nevent": {
-			let e = L(r);
+			let e = z(r);
 			if (!e[0]?.[0]) throw Error("missing TLV 0 for nevent");
 			if (e[0][0].length !== 32) throw Error("TLV 0 should be 32 bytes");
 			if (e[2] && e[2][0].length !== 32) throw Error("TLV 2 should be 32 bytes");
@@ -231,14 +231,14 @@ function re(e) {
 				type: "nevent",
 				data: {
 					id: c(e[0][0]),
-					relays: e[1] ? e[1].map((e) => F.decode(e)) : [],
+					relays: e[1] ? e[1].map((e) => R.decode(e)) : [],
 					author: e[2]?.[0] ? c(e[2][0]) : void 0,
 					kind: e[3]?.[0] ? parseInt(c(e[3][0]), 16) : void 0
 				}
 			};
 		}
 		case "naddr": {
-			let e = L(r);
+			let e = z(r);
 			if (!e[0]?.[0]) throw Error("missing TLV 0 for naddr");
 			if (!e[2]?.[0]) throw Error("missing TLV 2 for naddr");
 			if (e[2][0].length !== 32) throw Error("TLV 2 should be 32 bytes");
@@ -247,10 +247,10 @@ function re(e) {
 			return {
 				type: "naddr",
 				data: {
-					identifier: F.decode(e[0][0]),
+					identifier: R.decode(e[0][0]),
 					pubkey: c(e[2][0]),
 					kind: parseInt(c(e[3][0]), 16),
-					relays: e[1] ? e[1].map((e) => F.decode(e)) : []
+					relays: e[1] ? e[1].map((e) => R.decode(e)) : []
 				}
 			};
 		}
@@ -266,7 +266,7 @@ function re(e) {
 		default: throw Error(`unknown prefix ${t}`);
 	}
 }
-function L(e) {
+function z(e) {
 	let t = {}, n = e;
 	for (; n.length > 0;) {
 		if (n.length < 2) throw Error("not enough data to read TLV");
@@ -276,26 +276,26 @@ function L(e) {
 	}
 	return t;
 }
-function R(e) {
-	return ae("npub", l(e));
+function B(e) {
+	return re("npub", l(e));
 }
-function ie(e, t) {
-	let n = P.toWords(t);
-	return P.encode(e, n, I);
+function ne(e, t) {
+	let n = L.toWords(t);
+	return L.encode(e, n, ee);
 }
-function ae(e, t) {
-	return ie(e, t);
+function re(e, t) {
+	return ne(e, t);
 }
 // src/mp3.ts
-var oe = (e, t) => e.version === t.version && e.sampleRate === t.sampleRate && e.channels === t.channels, z = (e, t) => `${r.show}:${e}:${t}`;
-function se(e) {
+var ie = (e, t) => e.version === t.version && e.sampleRate === t.sampleRate && e.channels === t.channels, V = (e, t) => `${r.show}:${e}:${t}`;
+function ae(e) {
 	let i = n(e, "d"), a = n(e, "title"), o = n(e, "image"), [, s, c] = t(e, "category") ?? [], l = n(e, "guid");
 	if (e.kind !== r.show || !i || !a || !o || !s || !l) return;
 	let [, u, d] = t(e, "owner") ?? [], f = n(e, "type");
 	return {
 		event: e,
 		creator: e.pubkey,
-		address: z(e.pubkey, i),
+		address: V(e.pubkey, i),
 		slug: i,
 		title: a,
 		description: e.content,
@@ -313,7 +313,7 @@ function se(e) {
 		guid: l
 	};
 }
-function ce(e) {
+function oe(e) {
 	if (!e) return;
 	let [t, n, r, i, a, o] = e.slice(1).map(Number);
 	if ([
@@ -333,14 +333,14 @@ function ce(e) {
 		audioEnd: o
 	};
 }
-function le(e) {
+function se(e) {
 	return e.tags.filter((e) => e[0] === "break").map((e) => ({
 		at: Number(e[1]),
 		byteOffset: e[2] === void 0 ? void 0 : Number(e[2])
 	})).filter((e) => Number.isFinite(e.at) && e.at > 0 && (e.byteOffset === void 0 || Number.isSafeInteger(e.byteOffset))).sort((e, t) => e.at - t.at);
 }
-var B = (e) => e && /^\d+(\.\d+)?$/.test(e) && Number(e) > 0 ? Number(e) : void 0;
-function ue(e) {
+var H = (e) => e && /^\d+(\.\d+)?$/.test(e) && Number(e) > 0 ? Number(e) : void 0;
+function ce(e) {
 	let i = n(e, "a"), a = n(e, "guid"), o = n(e, "title"), [, s, c = "audio/mpeg"] = t(e, "audio") ?? [];
 	if (e.kind !== 54 || !i?.startsWith(`${r.show}:${e.pubkey}:`) || !a || !o || !s?.startsWith("https://")) return;
 	let [, l, u] = t(e, "transcript") ?? [], d = n(e, "episode_type");
@@ -355,12 +355,12 @@ function ue(e) {
 		audio: {
 			url: s,
 			type: c,
-			size: B(n(e, "size")),
-			duration: B(n(e, "duration"))
+			size: H(n(e, "size")),
+			duration: H(n(e, "duration"))
 		},
 		image: n(e, "image"),
-		episode: B(n(e, "episode")),
-		season: B(n(e, "season")),
+		episode: H(n(e, "episode")),
+		season: H(n(e, "season")),
 		episodeType: d === "trailer" || d === "bonus" ? d : "full",
 		explicit: n(e, "explicit") === "true",
 		hls: n(e, "hls"),
@@ -368,74 +368,74 @@ function ue(e) {
 			url: l,
 			type: u ?? "text/plain"
 		} : void 0,
-		breaks: le(e),
-		mp3: ce(t(e, "mp3"))
+		breaks: se(e),
+		mp3: oe(t(e, "mp3"))
 	};
 }
-function de(e, t) {
+function le(e, t) {
 	let n = /* @__PURE__ */ new Map();
 	for (let r of e) {
-		let e = ue(r);
+		let e = ce(r);
 		if (!e || e.show !== t) continue;
 		let i = n.get(e.guid);
 		(!i || r.created_at > i.event.created_at) && n.set(e.guid, e);
 	}
 	return [...n.values()].sort((e, t) => t.published - e.published);
 }
-var V = (e) => e.replace(/[&<>"']/g, (e) => ({
+var U = (e) => e.replace(/[&<>"']/g, (e) => ({
 	"&": "&amp;",
 	"<": "&lt;",
 	">": "&gt;",
 	"\"": "&quot;",
 	"'": "&apos;"
-})[e]), H = (e, t) => t === void 0 || t === "" ? "" : `<${e}>${V(String(t))}</${e}>`, fe = (e) => e.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f￾￿]/g, "");
-function pe(e, t, n) {
-	let r = (e) => (/* @__PURE__ */ new Date(e * 1e3)).toUTCString(), i = e.subcategory ? `<itunes:category text="${V(e.category)}"><itunes:category text="${V(e.subcategory)}"/></itunes:category>` : `<itunes:category text="${V(e.category)}"/>`, a = e.ownerEmail ? `<itunes:owner>${H("itunes:name", e.ownerName ?? e.author)}${H("itunes:email", e.ownerEmail)}</itunes:owner>` : "", o = t.map((t) => [
+})[e]), W = (e, t) => t === void 0 || t === "" ? "" : `<${e}>${U(String(t))}</${e}>`, ue = (e) => e.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f￾￿]/g, "");
+function de(e, t, n) {
+	let r = (e) => (/* @__PURE__ */ new Date(e * 1e3)).toUTCString(), i = e.subcategory ? `<itunes:category text="${U(e.category)}"><itunes:category text="${U(e.subcategory)}"/></itunes:category>` : `<itunes:category text="${U(e.category)}"/>`, a = e.ownerEmail ? `<itunes:owner>${W("itunes:name", e.ownerName ?? e.author)}${W("itunes:email", e.ownerEmail)}</itunes:owner>` : "", o = t.map((t) => [
 		"<item>",
-		H("title", t.title),
-		H("description", t.description),
-		H("link", n.pageUrl(t)),
-		`<guid isPermaLink="false">${V(t.guid)}</guid>`,
-		H("pubDate", r(t.published)),
-		`<enclosure url="${V(n.enclosureUrl(t))}" length="${t.audio.size ?? 0}" type="${V(t.audio.type)}"/>`,
-		H("itunes:duration", t.audio.duration ? Math.round(t.audio.duration) : void 0),
-		H("itunes:episode", t.episode),
-		H("itunes:season", t.season),
-		H("itunes:episodeType", t.episodeType ?? "full"),
-		H("itunes:explicit", t.explicit || e.explicit ? "true" : "false"),
-		t.image ? `<itunes:image href="${V(t.image)}"/>` : "",
-		t.transcript ? `<podcast:transcript url="${V(t.transcript.url)}" type="${V(t.transcript.type)}"/>` : "",
-		t.hls ? `<podcast:alternateEnclosure type="application/x-mpegURL"><podcast:source uri="${V(t.hls)}"/></podcast:alternateEnclosure>` : "",
+		W("title", t.title),
+		W("description", t.description),
+		W("link", n.pageUrl(t)),
+		`<guid isPermaLink="false">${U(t.guid)}</guid>`,
+		W("pubDate", r(t.published)),
+		`<enclosure url="${U(n.enclosureUrl(t))}" length="${t.audio.size ?? 0}" type="${U(t.audio.type)}"/>`,
+		W("itunes:duration", t.audio.duration ? Math.round(t.audio.duration) : void 0),
+		W("itunes:episode", t.episode),
+		W("itunes:season", t.season),
+		W("itunes:episodeType", t.episodeType ?? "full"),
+		W("itunes:explicit", t.explicit || e.explicit ? "true" : "false"),
+		t.image ? `<itunes:image href="${U(t.image)}"/>` : "",
+		t.transcript ? `<podcast:transcript url="${U(t.transcript.url)}" type="${U(t.transcript.type)}"/>` : "",
+		t.hls ? `<podcast:alternateEnclosure type="application/x-mpegURL"><podcast:source uri="${U(t.hls)}"/></podcast:alternateEnclosure>` : "",
 		"</item>"
 	].join(""));
-	return fe([
+	return ue([
 		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
 		"<rss version=\"2.0\" xmlns:itunes=\"http://www.itunes.com/dtds/podcast-1.0.dtd\" xmlns:podcast=\"https://podcastindex.org/namespace/1.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">",
 		"<channel>",
-		`<atom:link href="${V(n.feedUrl)}" rel="self" type="application/rss+xml"/>`,
-		H("title", e.title),
-		H("link", e.link ?? n.pageUrl()),
-		H("language", e.language),
-		H("description", e.description),
-		H("itunes:author", e.author),
-		`<itunes:image href="${V(e.image)}"/>`,
-		`<image>${H("url", e.image)}${H("title", e.title)}${H("link", e.link ?? n.pageUrl())}</image>`,
+		`<atom:link href="${U(n.feedUrl)}" rel="self" type="application/rss+xml"/>`,
+		W("title", e.title),
+		W("link", e.link ?? n.pageUrl()),
+		W("language", e.language),
+		W("description", e.description),
+		W("itunes:author", e.author),
+		`<itunes:image href="${U(e.image)}"/>`,
+		`<image>${W("url", e.image)}${W("title", e.title)}${W("link", e.link ?? n.pageUrl())}</image>`,
 		i,
-		H("itunes:explicit", e.explicit ? "true" : "false"),
-		H("itunes:type", e.type ?? "episodic"),
+		W("itunes:explicit", e.explicit ? "true" : "false"),
+		W("itunes:type", e.type ?? "episodic"),
 		a,
-		H("copyright", e.copyright),
-		H("podcast:guid", e.guid),
-		e.ownerEmail ? `<podcast:locked owner="${V(e.ownerEmail)}">yes</podcast:locked>` : "",
-		H("generator", "Fairground"),
-		H("lastBuildDate", r(n.generatedAt ?? s())),
+		W("copyright", e.copyright),
+		W("podcast:guid", e.guid),
+		e.ownerEmail ? `<podcast:locked owner="${U(e.ownerEmail)}">yes</podcast:locked>` : "",
+		W("generator", "Fairground"),
+		W("lastBuildDate", r(n.generatedAt ?? s())),
 		...o,
 		"</channel>",
 		"</rss>"
 	].join("\n"));
 }
-var me = (e) => a(o(new TextEncoder().encode(e)));
-function he(t, n, r, a = "", o = Math.floor(Date.now() / 1e3)) {
+var fe = (e) => a(o(new TextEncoder().encode(e)));
+function pe(t, n, r, a = "", o = Math.floor(Date.now() / 1e3)) {
 	if (!t?.startsWith("Nostr ")) return { error: "missing Nostr authorization" };
 	let s;
 	try {
@@ -444,59 +444,63 @@ function he(t, n, r, a = "", o = Math.floor(Date.now() / 1e3)) {
 		return { error: "malformed authorization" };
 	}
 	let c = (e) => s.tags?.find((t) => t[0] === e)?.[1];
-	return s.kind !== 27235 || !e(s) ? { error: "authorization is not a valid signed request" } : Math.abs(o - s.created_at) > 60 ? { error: "authorization has expired" } : c("u") !== n || c("method") !== r.toUpperCase() ? { error: "authorization is for another request" } : a && c("payload") !== me(a) ? { error: "authorization doesn’t match the request body" } : { pubkey: s.pubkey };
+	return s.kind !== 27235 || !e(s) ? { error: "authorization is not a valid signed request" } : Math.abs(o - s.created_at) > 60 ? { error: "authorization has expired" } : c("u") !== n || c("method") !== r.toUpperCase() ? { error: "authorization is for another request" } : a && c("payload") !== fe(a) ? { error: "authorization doesn’t match the request body" } : { pubkey: s.pubkey };
 }
 // src/network.ts
-var ge = 2604, _e = (e) => e.kind === r.pqBinding && n(e, "alg") === "ml-dsa-65" && n(e, "key")?.length === ge;
-function U(e) {
-	return new Set(e.filter(_e).map((e) => e.pubkey));
+var me = 2604, he = (e) => e.kind === r.pqBinding && n(e, "alg") === "ml-dsa-65" && n(e, "key")?.length === me;
+function G(e) {
+	return new Set(e.filter(he).map((e) => e.pubkey));
 }
 // src/ramp.ts
-var W = {
+var K = {
 	sandbox: "https://api-sb.meld.io",
 	production: "https://api.meld.io"
-}, G = /^[A-Za-z0-9_-]{6,128}$/, K = (e) => `fairground-${e}-`, q = (e) => e && typeof e == "object" && !Array.isArray(e) ? e : {}, J = (e) => typeof e == "string" ? e : "";
-function ve(e) {
-	if (!W[e.environment]) throw Error("invalid Meld environment");
-	for (let t of [
-		e.buyProvider,
+}, q = /^[A-Za-z0-9_-]{6,128}$/, J = (e) => `fairground-${e}-`, Y = (e) => e && typeof e == "object" && !Array.isArray(e) ? e : {}, X = (e) => typeof e == "string" ? e : "";
+function ge(e) {
+	if (!K[e.environment]) throw Error("invalid Meld environment");
+	let t = [
 		e.sellProvider,
-		e.algoCurrencyCode,
 		e.usdcCurrencyCode,
 		e.sellPaymentMethod
-	]) if (!/^[A-Z0-9_:-]+$/.test(t)) throw Error("configure the approved Meld suppliers, payment method and Algorand currency IDs");
+	], n = t.every((e) => e !== void 0);
+	if (!n && t.some((e) => e !== void 0)) throw Error("configure all of the cash-out supplier, payment method and USDC currency ID, or none");
+	for (let r of [
+		e.buyProvider,
+		e.algoCurrencyCode,
+		...n ? t : []
+	]) if (!/^[A-Z0-9_:-]+$/.test(r)) throw Error("configure the approved Meld suppliers, payment method and Algorand currency IDs");
 	if (e.algoCurrencyCode === e.usdcCurrencyCode) throw Error("ALGO and Algorand USDC need distinct Meld currency IDs");
-	let t = e.fetch ?? ((...e) => fetch(...e)), n = e.checkoutOrigins ?? ["https://meldcrypto.com"], r = /* @__PURE__ */ new Map();
-	async function i(n, r) {
-		let i = await t(W[e.environment] + n, {
-			method: r === void 0 ? "GET" : "POST",
+	let r = e.fetch ?? ((...e) => fetch(...e)), i = e.checkoutOrigins ?? ["https://meldcrypto.com"], a = /* @__PURE__ */ new Map();
+	async function o(t, n) {
+		let i = await r(K[e.environment] + t, {
+			method: n === void 0 ? "GET" : "POST",
 			headers: {
 				Authorization: `BASIC ${e.apiKey}`,
 				"Meld-Version": "2026-02-03",
 				Accept: "application/json",
-				...r === void 0 ? {} : { "Content-Type": "application/json" }
+				...n === void 0 ? {} : { "Content-Type": "application/json" }
 			},
-			...r === void 0 ? {} : { body: JSON.stringify(r) },
+			...n === void 0 ? {} : { body: JSON.stringify(n) },
 			redirect: "error",
 			signal: AbortSignal.timeout(2e4)
 		});
 		if (!i.ok) {
-			let e = q(await i.json().catch(() => ({}))), t = /^[A-Z0-9_]{1,100}$/.test(J(e.code)) ? `: ${e.code}` : "", n = /^[A-Za-z0-9_-]{1,100}$/.test(J(e.requestId)) ? ` (reference ${e.requestId})` : "";
+			let e = Y(await i.json().catch(() => ({}))), t = /^[A-Z0-9_]{1,100}$/.test(X(e.code)) ? `: ${e.code}` : "", n = /^[A-Za-z0-9_-]{1,100}$/.test(X(e.requestId)) ? ` (reference ${e.requestId})` : "";
 			throw Error(`Meld could not complete this request (${i.status}${t})${n}`);
 		}
-		return q(await i.json());
+		return Y(await i.json());
 	}
-	async function a(e, t, n) {
-		let a = e.side === "BUY" ? "CRYPTO_ONRAMP" : "CRYPTO_OFFRAMP", o = new URLSearchParams({
-			category: a,
+	async function s(e, t, n, r) {
+		let i = e.side === "BUY" ? "CRYPTO_ONRAMP" : "CRYPTO_OFFRAMP", s = new URLSearchParams({
+			category: i,
 			country: e.countryCode,
 			type: "CRYPTO",
-			partner: n
-		}), s = `${o}:${t}`;
-		if ((r.get(s) ?? 0) > Date.now()) return;
-		let c = await i(`/network-partner/supported/currencies?${o}`), l = (Array.isArray(c.currencies) ? c.currencies : []).map(q).filter((e) => e.currencyCode === t);
-		if (!l.length || l.some((t) => !["ALGO", "ALGORAND"].includes(J(t.chainCode).toUpperCase()) || (e.asset === "USDC" ? String(t.contract) !== "31566704" : !!t.contract))) throw Error("Meld currency metadata does not uniquely identify the requested native Algorand asset");
-		r.set(s, Date.now() + 3e5);
+			partner: r
+		}), c = `${s}:${n}`;
+		if ((a.get(c) ?? 0) > Date.now()) return;
+		let l = await o(`/network-partner/supported/currencies?${s}`), u = (Array.isArray(l.currencies) ? l.currencies : []).map(Y).filter((e) => e.currencyCode === n);
+		if (!u.length || u.some((e) => !["ALGO", "ALGORAND"].includes(X(e.chainCode).toUpperCase()) || (t === "USDC" ? String(e.contract) !== "31566704" : !!e.contract))) throw Error("Meld currency metadata does not uniquely identify the requested native Algorand asset");
+		a.set(c, Date.now() + 3e5);
 	}
 	return {
 		async session(t) {
@@ -507,33 +511,44 @@ function ve(e) {
 				throw Error("invalid checkout amount");
 			}
 			let r = t.side === "BUY";
-			if (!r && t.asset !== "USDC") throw Error("cash out USDC on Algorand only");
-			let o = t.asset === "ALGO" ? e.algoCurrencyCode : e.usdcCurrencyCode, s = r ? e.buyProvider : e.sellProvider;
-			await a(t, o, s);
-			let c = r ? "CREDIT_DEBIT_CARD" : e.sellPaymentMethod, l = {
-				sourceCurrencyCode: r ? "USD" : o,
-				destinationCurrencyCode: r ? o : "USD"
-			}, f = await i("/payments/crypto/quote", {
-				...l,
-				countryCode: t.countryCode,
-				...t.subdivision ? { subdivision: t.subdivision } : {},
-				sourceAmount: t.amount,
-				paymentMethodType: c,
-				walletAddress: t.walletAddress,
-				externalCustomerId: t.customer,
-				serviceProviders: [s]
-			});
-			if (!(Array.isArray(f.quotes) ? f.quotes : []).map(q).find((e) => e.serviceProvider === s && e.transactionType === (r ? "CRYPTO_PURCHASE" : "CRYPTO_SELL") && e.sourceCurrencyCode === l.sourceCurrencyCode && e.destinationCurrencyCode === l.destinationCurrencyCode && e.paymentMethodType === c && Number(e.destinationAmount) > 0)) throw Error("No eligible Meld quote for this amount, location and Algorand asset. Try a different amount or contact support.");
-			let p = K(t.customer) + crypto.randomUUID(), m = await i("/crypto/session/widget", {
+			if (!r && !n) throw Error("cashing out isn’t set up yet");
+			if (!r && t.asset !== void 0 && t.asset !== "USDC") throw Error("cash out USDC on Algorand only");
+			if (t.receive !== void 0 && (!r || !Number.isFinite(t.receive) || t.receive <= 0 || t.receive > 1e9)) throw Error("invalid checkout request");
+			let a = r ? e.algoCurrencyCode : e.usdcCurrencyCode, c = r ? e.buyProvider : e.sellProvider;
+			await s(t, r ? "ALGO" : "USDC", a, c);
+			let l = r ? "CREDIT_DEBIT_CARD" : e.sellPaymentMethod, f = {
+				sourceCurrencyCode: r ? "USD" : a,
+				destinationCurrencyCode: r ? a : "USD"
+			}, p = async (e) => {
+				let n = await o("/payments/crypto/quote", {
+					...f,
+					countryCode: t.countryCode,
+					...t.subdivision ? { subdivision: t.subdivision } : {},
+					sourceAmount: e,
+					paymentMethodType: l,
+					walletAddress: t.walletAddress,
+					externalCustomerId: t.customer,
+					serviceProviders: [c]
+				}), i = (Array.isArray(n.quotes) ? n.quotes : []).map(Y).find((e) => e.serviceProvider === c && e.transactionType === (r ? "CRYPTO_PURCHASE" : "CRYPTO_SELL") && e.sourceCurrencyCode === f.sourceCurrencyCode && e.destinationCurrencyCode === f.destinationCurrencyCode && e.paymentMethodType === l && Number(e.destinationAmount) > 0);
+				if (!i) throw Error("No eligible Meld quote for this amount, location and Algorand asset. Try a different amount or contact support.");
+				return i;
+			}, m = t.amount, h = await p(m);
+			for (let e = 0; t.receive !== void 0 && Number(h.destinationAmount) < t.receive; e++) {
+				let n = Math.max(0, Number(h.totalFee) || 0), r = (m - n) / Number(h.destinationAmount), i = t.receive * r, a = Math.ceil((i + n) * 1.005 * 100) / 100;
+				if (e === 3 || !(r > 0) || !Number.isFinite(a)) throw Error("Meld couldn’t quote a card amount that covers this payment. Try again in a moment.");
+				if (a > i * 2 + 10) throw Error("Card fees would be more than this payment. Pay a larger amount, or pay another way.");
+				m = Math.max(a, m + .01), h = await p(m);
+			}
+			let g = J(t.customer) + crypto.randomUUID(), _ = await o("/crypto/session/widget", {
 				sessionType: t.side,
 				externalCustomerId: t.customer,
-				externalSessionId: p,
+				externalSessionId: g,
 				sessionData: {
-					...l,
+					...f,
 					countryCode: t.countryCode,
-					sourceAmount: String(t.amount),
-					paymentMethodType: c,
-					serviceProvider: s,
+					sourceAmount: String(m),
+					paymentMethodType: l,
+					serviceProvider: c,
 					walletAddress: t.walletAddress,
 					clientIpAddress: t.userIp,
 					redirectUrl: t.redirectURL,
@@ -546,45 +561,47 @@ function ve(e) {
 					],
 					...r ? {} : { redirectFlow: !0 }
 				}
-			}), h = new URL(J(m.widgetUrl));
-			if (h.protocol !== "https:" || h.username || h.password || !n.includes(h.origin)) throw Error("Meld returned an unexpected checkout origin");
-			if (!G.test(J(m.id)) || m.externalSessionId !== p || m.externalCustomerId !== t.customer) throw Error("Meld returned a different checkout session");
+			}), v = new URL(X(_.widgetUrl));
+			if (v.protocol !== "https:" || v.username || v.password || !i.includes(v.origin)) throw Error("Meld returned an unexpected checkout origin");
+			if (!q.test(X(_.id)) || _.externalSessionId !== g || _.externalCustomerId !== t.customer) throw Error("Meld returned a different checkout session");
 			return {
-				id: J(m.id),
-				externalSessionId: p,
-				url: h.href,
-				environment: e.environment
+				id: X(_.id),
+				externalSessionId: g,
+				url: v.href,
+				environment: e.environment,
+				amount: m
 			};
 		},
 		async order(t) {
-			if (!G.test(t)) throw Error("not a Meld session id");
-			let n = q((await i(`/payments/transactions/sessions/${encodeURIComponent(t)}`)).transaction), r = q(n.cryptoDetails);
-			if (!J(n.id) || n.sessionId !== t) throw Error("Meld returned a different transaction session");
-			let a = n.transactionType === "CRYPTO_SELL" ? "SELL" : n.transactionType === "CRYPTO_PURCHASE" ? "BUY" : "UNKNOWN", o = a === "SELL" ? n.sourceCurrencyCode : n.destinationCurrencyCode;
+			if (!q.test(t)) throw Error("not a Meld session id");
+			let r = Y((await o(`/payments/transactions/sessions/${encodeURIComponent(t)}`)).transaction), i = Y(r.cryptoDetails);
+			if (!X(r.id) || r.sessionId !== t) throw Error("Meld returned a different transaction session");
+			let a = r.transactionType === "CRYPTO_SELL" ? "SELL" : r.transactionType === "CRYPTO_PURCHASE" ? "BUY" : "UNKNOWN", s = a === "SELL" ? r.sourceCurrencyCode : r.destinationCurrencyCode;
 			return {
-				id: J(n.id),
+				id: X(r.id),
 				sessionId: t,
-				externalSessionId: J(n.externalSessionId),
-				status: J(n.status),
+				externalSessionId: X(r.externalSessionId),
+				status: X(r.status),
 				side: a,
-				cryptoCurrency: o === e.usdcCurrencyCode ? "USDC" : o === e.algoCurrencyCode ? "ALGO" : J(o),
-				network: o === e.usdcCurrencyCode || o === e.algoCurrencyCode ? "algorand" : "",
-				cryptoAmount: String((a === "SELL" ? n.sourceAmount : n.destinationAmount) ?? ""),
-				fiatAmount: Number(a === "SELL" ? n.destinationAmount : n.sourceAmount),
-				fiatCurrency: J(a === "SELL" ? n.destinationCurrencyCode : n.sourceCurrencyCode),
-				walletAddress: J(r.destinationWalletAddress),
-				sourceWalletAddress: J(r.sourceWalletAddress),
-				customer: J(n.externalCustomerId),
-				provider: J(n.serviceProvider),
+				cryptoCurrency: n && s === e.usdcCurrencyCode ? "USDC" : s === e.algoCurrencyCode ? "ALGO" : X(s),
+				network: n && s === e.usdcCurrencyCode || s === e.algoCurrencyCode ? "algorand" : "",
+				cryptoAmount: String((a === "SELL" ? r.sourceAmount : r.destinationAmount) ?? ""),
+				fiatAmount: Number(a === "SELL" ? r.destinationAmount : r.sourceAmount),
+				fiatCurrency: X(a === "SELL" ? r.destinationCurrencyCode : r.sourceCurrencyCode),
+				walletAddress: X(i.destinationWalletAddress),
+				sourceWalletAddress: X(i.sourceWalletAddress),
+				customer: X(r.externalCustomerId),
+				provider: X(r.serviceProvider),
 				environment: e.environment
 			};
 		},
-		sellProvider: e.sellProvider
+		sellProvider: e.sellProvider,
+		canSell: n
 	};
 }
-function ye(e, t) {
+function _e(e, t) {
 	if (e.side !== "SELL") return "that isn’t a cash-out order";
-	if (e.customer !== t || !e.externalSessionId.startsWith(K(t))) return "that order belongs to someone else or has no verified owner";
+	if (e.customer !== t || !e.externalSessionId.startsWith(J(t))) return "that order belongs to someone else or has no verified owner";
 	if (e.cryptoCurrency !== "USDC" || e.network !== "algorand" || e.fiatCurrency !== "USD") return "that order isn’t for USDC on Algorand to USD";
 	if (e.status !== "PENDING") return `that order isn’t waiting for payment (${e.status.toLowerCase().replace(/_/g, " ")})`;
 	if (!d(e.walletAddress) || !d(e.sourceWalletAddress) || e.walletAddress === e.sourceWalletAddress) return "that order has no valid provider deposit address";
@@ -596,7 +613,7 @@ function ye(e, t) {
 	if (!Number.isFinite(e.fiatAmount) || e.fiatAmount <= 0) return "that order has no fiat payout";
 }
 // src/safety.ts
-var Y = (e) => [
+var ve = (e) => [
 	e.content,
 	...e.tags.filter((e) => [
 		"title",
@@ -605,14 +622,14 @@ var Y = (e) => [
 		"alt"
 	].includes(e[0])).map((e) => e[1] ?? ""),
 	...e.tags.filter((e) => e[0] === "imeta").flatMap((e) => e.filter((e) => e.startsWith("alt ")).map((e) => e.slice(4)))
-].join(" ").trim(), X = (e) => `${Y(e)} ${e.tags.filter((e) => e[0] === "t").map((e) => `#${e[1]}`).join(" ")}`.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, ""), Z = /\b(teen(s|age|ager|agers)?|young(er)?|underage|minors?|child(ren)?|kids?|kiddies|pre-?teens?|infants?|babies|toddlers?|lolita|schoolgirls?|schoolboys?|schoolthot|pyt|(1[0-7]|[1-9]) ?(yo|y\/o|years? old))\b/, be = /\b(sex|sexy|nudes?|naked|porn\w*|xxx|nsfw|horny|blowjobs?|cum|dicks?|cocks?|pussy|tits?|boobs?|nipples?|lewd|rape\w*|cnc\w*|fetish\w*|onlyfans|explicit|erotic\w*|incest|bestiality|snapleak|nolimit|taboo|momson)\b/, xe = /\b(pthc|child ?porn\w*|csam|jailbait|loli|shota)\b/, Se = /(t\.me\/|telegram|dm me|\bcontents?\b|\bleaks?\b)/, Ce = /\b(porn\w*|xxx|nsfw|nudes?|naked|horny|blowjobs?|onlyfans|lewd|erotic\w*|cum|dicks?|cocks?|pussy|tits|boobs|nipples?|fetish\w*)\b/, we = /\b(bestiality|zoophil\w*)\b/, Te = /\b(revenge ?porn|hidden ?cams?|spy ?cams?|upskirts?|creepshots?|leaked ?nudes|deepfake ?(porn|nudes?))\b/, Ee = /\b(fag(got)?s?|homos|n[i1y]gg(a|as|er|ers|ah)|kikes?|retards?|trann(y|ies)|chinks?|spics?|wetbacks?|kys)\b|you('| ha)ve been warned|i('| wi)ll kill you|kill yourself/;
+].join(" ").trim(), Z = (e) => `${ve(e)} ${e.tags.filter((e) => e[0] === "t").map((e) => `#${e[1]}`).join(" ")}`.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, ""), ye = /\b(teen(s|age|ager|agers)?|young(er)?|underage|minors?|child(ren)?|kids?|kiddies|pre-?teens?|infants?|babies|toddlers?|lolita|schoolgirls?|schoolboys?|schoolthot|pyt|(1[0-7]|[1-9]) ?(yo|y\/o|years? old))\b/, be = /\b(sex|sexy|nudes?|naked|porn\w*|xxx|nsfw|horny|blowjobs?|cum|dicks?|cocks?|pussy|tits?|boobs?|nipples?|lewd|rape\w*|cnc\w*|fetish\w*|onlyfans|explicit|erotic\w*|incest|bestiality|snapleak|nolimit|taboo|momson)\b/, xe = /\b(pthc|child ?porn\w*|csam|jailbait|loli|shota)\b/, Se = /(t\.me\/|telegram|dm me|\bcontents?\b|\bleaks?\b)/, Ce = /\b(porn\w*|xxx|nsfw|nudes?|naked|horny|blowjobs?|onlyfans|lewd|erotic\w*|cum|dicks?|cocks?|pussy|tits|boobs|nipples?|fetish\w*)\b/, we = /\b(bestiality|zoophil\w*)\b/, Te = /\b(revenge ?porn|hidden ?cams?|spy ?cams?|upskirts?|creepshots?|leaked ?nudes|deepfake ?(porn|nudes?))\b/, Ee = /\b(fag(got)?s?|homos|n[i1y]gg(a|as|er|ers|ah)|kikes?|retards?|trann(y|ies)|chinks?|spics?|wetbacks?|kys)\b|you('| ha)ve been warned|i('| wi)ll kill you|kill yourself/;
 function De(e) {
-	let t = X(e);
-	return !!(xe.test(t) || Z.test(t) && be.test(t) || /\b(cp|pedo\w*)\b/.test(t) && (be.test(t) || Z.test(t) || Se.test(t)));
+	let t = Z(e);
+	return !!(xe.test(t) || ye.test(t) && be.test(t) || /\b(cp|pedo\w*)\b/.test(t) && (be.test(t) || ye.test(t) || Se.test(t)));
 }
 function Oe(e) {
 	if (De(e)) return !0;
-	let t = X(e);
+	let t = Z(e);
 	return we.test(t) || Te.test(t);
 }
 var ke = (e) => new Set([...e.content.matchAll(/#[\p{L}\p{N}_]+/gu)].map((e) => e[0].toLowerCase()).concat(e.tags.filter((e) => e[0] === "t").map((e) => `#${e[1]}`))).size;
@@ -627,7 +644,7 @@ function Ae(e) {
 }
 function Q(e, t) {
 	if (Oe(e)) return { block: !0 };
-	let n = X(e);
+	let n = Z(e);
 	return e.tags.some((e) => e[0] === "content-warning") || Ce.test(n) ? {
 		block: !1,
 		hide: "sexual"
@@ -637,7 +654,7 @@ function Q(e, t) {
 	} : ke(e) > 10 ? {
 		block: !1,
 		hide: "spam"
-	} : Ae(e.content) || Y(e).length < 2 ? {
+	} : Ae(e.content) || ve(e).length < 2 ? {
 		block: !1,
 		hide: "junk"
 	} : t?.bot ? {
@@ -681,7 +698,7 @@ async function $(t, n, r = WebSocket, i = 4e3) {
 function Ne(e, t) {
 	let n = e.mp3;
 	if (!n) return;
-	let r = e.audio.url, i = (e) => e.ads.map((e) => e.spot.mp3 && oe(e.spot.mp3, n) ? {
+	let r = e.audio.url, i = (e) => e.ads.map((e) => e.spot.mp3 && ie(e.spot.mp3, n) ? {
 		url: e.spot.url,
 		start: e.spot.mp3.audioStart,
 		end: e.spot.mp3.audioEnd
@@ -767,7 +784,7 @@ function Re(e) {
 		"Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges, ETag"
 	}, l = (t) => $(e.relays, t, i);
 	async function u(e, t) {
-		let n = z(e, t), [i, a, o, s] = await Promise.all([
+		let n = V(e, t), [i, a, o, s] = await Promise.all([
 			l({
 				kinds: [r.show],
 				authors: [e],
@@ -789,10 +806,10 @@ function Re(e) {
 				authors: [e]
 			})
 		]);
-		if (!U(s).has(e)) return;
-		let c = i.map(se).filter((e) => !!e).sort((e, t) => t.event.created_at - e.event.created_at)[0];
+		if (!G(s).has(e)) return;
+		let c = i.map(ae).filter((e) => !!e).sort((e, t) => t.event.created_at - e.event.created_at)[0];
 		if (!c || Q(c.event).block) return;
-		let u = de(a.filter((e) => !Q(e).block), n);
+		let u = le(a.filter((e) => !Q(e).block), n);
 		!c.explicit && [c.event, ...u.map((e) => e.event)].some((e) => {
 			let t = Q(e);
 			return !t.block && t.hide === "sexual";
@@ -836,7 +853,7 @@ function Re(e) {
 			...c,
 			"Content-Type": "text/plain"
 		}
-	}), p = e.ramp && ve({
+	}), p = e.ramp && ge({
 		fetch: n,
 		...e.ramp
 	}), m = (e, t = 200) => Response.json(e, {
@@ -847,8 +864,8 @@ function Re(e) {
 		}
 	});
 	async function h(t, n = "") {
-		let i = he(t.headers.get("Authorization"), t.url, t.method, n);
-		return "error" in i ? m({ error: i.error }, 401) : U(await l({
+		let i = pe(t.headers.get("Authorization"), t.url, t.method, n);
+		return "error" in i ? m({ error: i.error }, 401) : G(await l({
 			kinds: [r.pqBinding],
 			authors: [i.pubkey]
 		})).has(i.pubkey) ? e.blocked?.includes(i.pubkey) ? m({ error: "this account can’t use this gateway" }, 403) : i.pubkey : m({ error: "not a Fairground account" }, 403);
@@ -856,9 +873,10 @@ function Re(e) {
 	async function g(t, n, r) {
 		if (n === "/wallet/config" && t.method === "GET") return m({
 			ramp: !!p,
-			...e.ramp ? {
+			...e.ramp && p ? {
 				provider: "meld",
-				environment: e.ramp.environment
+				environment: e.ramp.environment,
+				sell: p.canSell
 			} : {}
 		});
 		if (n === "/ramp/session" && t.method === "POST") {
@@ -882,6 +900,8 @@ function Re(e) {
 			if (o.origin !== s.origin || o.pathname !== s.pathname) return m({ error: "return to this app only" }, 400);
 			if (!r.ip || r.ip === "0.0.0.0") return m({ error: "the gateway could not determine your IP address" }, 503);
 			if (typeof a.amount != "number" || !Number.isFinite(a.amount) || a.amount <= 0 || a.amount > 1e6) return m({ error: "enter a valid amount" }, 400);
+			if (a.receive !== void 0 && (a.side !== "BUY" || typeof a.receive != "number" || !Number.isFinite(a.receive) || a.receive <= 0 || a.receive > 1e9)) return m({ error: "bad request" }, 400);
+			if (a.side === "SELL" && !p.canSell) return m({ error: "cashing out isn’t set up on this gateway yet" }, 503);
 			let c = a.amount;
 			try {
 				let e = await p.session({
@@ -890,10 +910,11 @@ function Re(e) {
 					customer: i,
 					redirectURL: a.redirectURL,
 					userIp: r.ip,
-					asset: a.asset === "ALGO" ? "ALGO" : "USDC",
+					asset: a.side === "BUY" ? "ALGO" : "USDC",
 					amount: c,
 					countryCode: a.countryCode,
-					subdivision: a.subdivision
+					subdivision: a.subdivision,
+					receive: a.receive
 				});
 				return m(e);
 			} catch (e) {
@@ -909,7 +930,7 @@ function Re(e) {
 				let t = await p.order(i[1]);
 				return t.customer === e ? t.side === "SELL" && t.provider !== p.sellProvider ? m({ error: "cash-out supplier changed" }, 409) : m({
 					order: t,
-					problem: t.side === "SELL" ? ye(t, e) ?? null : null
+					problem: t.side === "SELL" ? _e(t, e) ?? null : null
 				}) : m({ error: "that order belongs to someone else" }, 403);
 			} catch (e) {
 				return m({ error: e.message }, 502);
@@ -975,7 +996,7 @@ function Re(e) {
 		if (!p) return f("page");
 		let m;
 		try {
-			let e = re(p[1]);
+			let e = te(p[1]);
 			if (e.type !== "npub") return f("show");
 			m = e.data;
 		} catch {
@@ -985,12 +1006,12 @@ function Re(e) {
 		if (e.blocked?.includes(m)) return f("show");
 		let _ = await d(m, h);
 		if (!_) return f("show");
-		let v = `${`${l.protocol}//${l.host}`}${t}/podcast/${R(m)}/${h}`;
+		let v = `${`${l.protocol}//${l.host}`}${t}/podcast/${B(m)}/${h}`;
 		if (!p[3]) {
-			let t = pe(_.show, _.episodes, {
+			let t = de(_.show, _.episodes, {
 				feedUrl: `${v}.xml`,
 				enclosureUrl: (e) => `${v}/${encodeURIComponent(e.guid)}.${Le(e.audio.type)}`,
-				pageUrl: (t) => t ? `${e.appUrl}#/media/${t.event.id}` : `${e.appUrl}#/show/${R(m)}/${h}`,
+				pageUrl: (t) => t ? `${e.appUrl}#/media/${t.event.id}` : `${e.appUrl}#/show/${B(m)}/${h}`,
 				generatedAt: a()
 			});
 			return new Response(o.method === "HEAD" ? null : t, { headers: {
