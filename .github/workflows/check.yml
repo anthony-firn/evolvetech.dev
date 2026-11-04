@@ -12,7 +12,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: node --test netlify/lib/evolve-inbox/test/inbox.test.mjs
+      - run: node --test netlify/lib/evolve-inbox/test/*.test.mjs
       - run: node --test tools/test_fairground_edge.mjs
       - run: node --test demos/probate/tests/*.test.mjs
       - run: python3 tools/test_jobs_csp.py

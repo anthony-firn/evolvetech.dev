@@ -11,8 +11,8 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 FILES = (
-    "src/inbox.mjs", "src/incoming.mjs", "src/mail-store.mjs",
-    "test/inbox.test.mjs", "LICENSE", "NOTICE",
+    "src/inbox.mjs", "src/incoming.mjs", "src/mail-store.mjs", "src/security.mjs",
+    "test/inbox.test.mjs", "test/security.test.mjs", "LICENSE", "NOTICE",
 )
 
 
