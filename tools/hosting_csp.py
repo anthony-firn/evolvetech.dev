@@ -16,3 +16,11 @@ def hosting_rules(zone, headers):
         yield rule
         if not any(item.get('Description') == description for item in working.get('EdgeRules', [])):
             working.setdefault('EdgeRules', []).append(rule)
+
+
+def wallet_setup_rule(zone, headers):
+    block = headers.split('/wallet-setup/*\n', 1)[1].split('\n\n', 1)[0]
+    policy = next(line.split(':', 1)[1].strip() for line in block.splitlines()
+                  if line.strip().startswith('Content-Security-Policy:'))
+    return make_rule(zone, policy, slug='wallet-setup', scope='/wallet-setup/',
+                     description='Wallet setup public status policy')

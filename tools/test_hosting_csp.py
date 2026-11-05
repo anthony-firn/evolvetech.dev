@@ -1,7 +1,7 @@
 import copy
 from pathlib import Path
 import unittest
-from hosting_csp import hosting_rules
+from hosting_csp import hosting_rules, wallet_setup_rule
 
 
 class HostingRules(unittest.TestCase):
@@ -25,6 +25,21 @@ class HostingRules(unittest.TestCase):
         self.assertIn("connect-src 'self' https:", rules[0]['ActionParameter2'])
         updated = list(hosting_rules({'EdgeRules': [template, *rules]}, headers))
         self.assertEqual([r['Guid'] for r in updated], [r['Guid'] for r in rules])
+
+    def test_wallet_walkthrough_uses_its_own_root_scope(self):
+        template = {'Guid': 'fairground', 'ActionType': 5, 'ActionParameter1': 'Content-Security-Policy',
+                    'OrderIndex': 3, 'TriggerMatchingType': 0,
+                    'Triggers': [{'Type': 0, 'PatternMatches': ['*/play/fairground/*'], 'PatternMatchingType': 0}]}
+        zone = {'EdgeRules': [template]}
+        headers = (Path(__file__).resolve().parents[1] / 'public/_headers').read_text()
+        rule = wallet_setup_rule(zone, headers)
+        self.assertEqual(rule['Triggers'][0]['PatternMatches'], ['*/wallet-setup/*'])
+        self.assertNotIn('Guid', rule)
+        self.assertIn('https://mainnet-idx.4160.nodely.dev', rule['ActionParameter2'])
+        rule['Guid'] = 'wallet-rule'
+        again = wallet_setup_rule({'EdgeRules': [template, rule]}, headers)
+        self.assertEqual(again['Guid'], 'wallet-rule')
+        self.assertEqual(template['Triggers'][0]['PatternMatches'], ['*/play/fairground/*'])
 
 
 if __name__ == '__main__':

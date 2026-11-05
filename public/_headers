@@ -20,3 +20,7 @@
   Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self' https:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'
   Access-Control-Allow-Origin: *
   Cache-Control: no-store
+
+/wallet-setup/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://mainnet-idx.4160.nodely.dev; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'
+  Cache-Control: no-store

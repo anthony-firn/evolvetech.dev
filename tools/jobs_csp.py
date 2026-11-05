@@ -10,7 +10,7 @@ def jobs_policy(headers):
                 if line.strip().startswith("Content-Security-Policy:"))
 
 
-def make_rule(zone, policy, slug="evolve-jobs", description=DESCRIPTION, header="Content-Security-Policy"):
+def make_rule(zone, policy, slug="evolve-jobs", description=DESCRIPTION, header="Content-Security-Policy", scope=None):
     rules = zone.get("EdgeRules", [])
     existing = next((rule for rule in rules if rule.get("Description") == description), None)
     template = existing or next((rule for rule in rules
@@ -23,9 +23,9 @@ def make_rule(zone, policy, slug="evolve-jobs", description=DESCRIPTION, header=
     rule = {key: copy.deepcopy(template[key]) for key in keys if key in template}
     if not existing:
         for trigger in rule["Triggers"]:
-            trigger["PatternMatches"] = [pattern.replace("fairground", slug)
+            trigger["PatternMatches"] = [pattern.replace("/play/fairground/", scope) if scope else pattern.replace("fairground", slug)
                                          for pattern in trigger.get("PatternMatches", [])]
-    if not any(slug in pattern for trigger in rule["Triggers"] for pattern in trigger.get("PatternMatches", [])):
+    if not any((scope or slug) in pattern for trigger in rule["Triggers"] for pattern in trigger.get("PatternMatches", [])):
         raise RuntimeError(f"{slug} edge rule must have its own URL trigger")
     rule.update(Description=description, Enabled=True,
                 OrderIndex=existing.get("OrderIndex", 0) if existing else max((x.get("OrderIndex", 0) for x in rules), default=0) + 1,

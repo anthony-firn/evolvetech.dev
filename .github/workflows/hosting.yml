@@ -41,6 +41,7 @@ jobs:
       - run: python3 tools/test_monitor.py
       - run: python3 tools/test_jobs_csp.py
       - run: python3 tools/test_hosting_csp.py
+      - run: node --test tools/test_wallet_setup.mjs
       - run: python3 tools/deploy.py
         env:
           BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}
