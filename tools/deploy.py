@@ -7,6 +7,7 @@ import subprocess
 from urllib.parse import quote
 from hosting import CONFIG as C, ROOT, bunny, request
 from jobs_csp import jobs_policy, make_rule
+from hosting_csp import hosting_rules
 
 
 def deploy_bunny():
@@ -15,6 +16,9 @@ def deploy_bunny():
     rule = make_rule(zone_config, policy)
     bunny("POST", f"/pullzone/{C['bunny_pull_zone']}/edgerules/addOrUpdate", rule)
     print("Bunny: configured Evolve Jobs' scoped browser/WASM CSP.")
+    for hosting_rule in hosting_rules(zone_config, (ROOT / "public/_headers").read_text()):
+        bunny("POST", f"/pullzone/{C['bunny_pull_zone']}/edgerules/addOrUpdate", hosting_rule)
+    print("Bunny: configured scoped Evolve Hosting CSP and public metadata CORS.")
     zone = bunny("GET", f"/storagezone/{C['bunny_storage_zone']}")
     files = [p for p in (ROOT / "public").rglob("*") if p.is_file() and not p.name.startswith("_")]
     def upload(path):

@@ -80,6 +80,7 @@ To reproduce this hosting arrangement in another account, create a Netlify site,
 
 | Path | Source | Built with |
 |---|---|---|
+| `/play/evolve-hosting/` | [evolve-hosting](https://github.com/anthony-firn/evolve-hosting) | Signed release workspace, static example mirror and Fairground support rail |
 | `/play/evolve-inbox/` | [evolve-inbox](https://github.com/anthony-firn/evolve-inbox) | Shared inbox reader with fictional messages; no live mailbox API |
 | `/play/emergence/` | emergence `web/` and Rust model crates | Rust `wasm32-unknown-unknown`, no JS runtime dependencies |
 | `/play/emergence/cad/` | emergence `web/cad/` + native engineering graph and CAD kernel | Local revisions, WebRTC peer sync, Rust checks and STL export |

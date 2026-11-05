@@ -15,6 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PLAY = ROOT / "public" / "play"
 DEMOS = {
+    "evolve-hosting": {"repo": "https://github.com/anthony-firn/evolve-hosting.git", "build": "node"},
     "evolve-jobs": {"repo": "https://github.com/anthony-firn/evolve-jobs.git", "build": "jobs"},
     "evolve-inbox": {"repo": "https://github.com/anthony-firn/evolve-inbox.git", "build": "node"},
     "pulse-pop": {"repo": "https://github.com/anthony-firn/pulse-pop.git", "build": "expo",

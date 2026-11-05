@@ -11,3 +11,6 @@
 node_modules/
 __pycache__/
 *.pyc
+
+!public/play/evolve-hosting/publisher.pub.pem
+!public/play/evolve-hosting/example/__evolve/publisher.pub.pem
