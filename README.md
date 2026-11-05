@@ -27,7 +27,7 @@ Open http://localhost:8080. Public assets are all under `public/`.
 
 The canonical website is **https://www.evolvetech.dev**. The bare domain redirects to it on both providers, preserving paths and query strings.
 
-- **Namecheap** remains the registrar; **Bunny** is authoritative DNS.
+- **Namecheap** remains the registrar; **Bunny** and **Route 53** are both authoritative DNS.
 - **Netlify** is the primary CDN with its own deployed files, on the Free plan (credit limits apply).
 - **Bunny CDN + Bunny Storage** holds an independently uploaded copy.
 - `hosting.json` contains resource identifiers and DNS targets, never credentials.
@@ -47,15 +47,15 @@ Only the `www` CNAME changes; the apex CNAME follows it through Bunny's flatteni
 
 **Timing limits:** GitHub scheduled jobs can be delayed or dropped (in practice this one has run every two to three hours), and some resolvers retain DNS answers beyond TTL. GitHub also automatically disables scheduled workflows in public repositories after 60 days without repository activity. The Lambda schedule covers both gaps, but it runs from one AWS region; neither scheduler is multi-region consensus monitoring. Switching has no guaranteed recovery time, and this low-cost arrangement can leave visitors affected for minutes.
 
-Bunny DNS remains a shared dependency. The monitor needs Bunny's API to read the recovery state, and does not change Route 53 when it cannot. Adding unrelated nameservers alone does not provide redundancy.
+**Route 53** (`route53_zone` in `hosting.json`, $0.50 a month) has been the second authoritative provider since November 2026; Namecheap delegates to Bunny's two nameservers and Route 53's four. Its zone mirrors the Bunny records, and the monitor keeps its `www` record on the same CDN as Bunny's. Any other record change must be made in both zones. Route 53 health checks were removed as too costly for this site (about $4.75 a month with HTTPS and text matching). Route 53 cannot flatten the apex to a non-AWS host, so its apex is an A record for Netlify's load balancer (75.2.60.5) and does not fail over.
 
-A second zone is staged in **Route 53** (`route53_zone` in `hosting.json`, $0.50 a month) but is not delegated yet. It mirrors the Bunny records; the monitor keeps its `www` record on the same CDN as Bunny's. Route 53 health checks were removed as too costly for this site (about $4.75 a month with HTTPS and text matching). Route 53 cannot flatten the apex to a non-AWS host, so its apex is an A record for Netlify's load balancer (75.2.60.5). Before adding its nameservers at Namecheap, the Bunny zone's apex NS set must list them, other record changes must be made in both zones, and the DNS-01 challenge must be visible from both providers.
+Switching still depends on Bunny's API: the monitor reads the recovery state there and does not change Route 53 when it cannot. Bunny does not allow NS records at a zone's root, so Bunny's own NS answer lists only its two nameservers (Route 53's and the `.dev` delegation list all six); a resolver that caches Bunny's answer uses only Bunny for up to its two-day TTL.
 
 ### HTTPS renewal while on standby
 
-Both CDNs receive custom Let's Encrypt certificates issued through **DNS-01**, independently of traffic routing. The daily certificate job uses the pinned Lego ACME client, keeps the account and private keys in a private, encrypted S3 object, renews when due, then installs on both providers. Private keys are never uploaded as GitHub artifacts or caches or placed in website storage.
+Both CDNs receive custom Let's Encrypt certificates issued through **DNS-01**, independently of traffic routing; `tools/acme_dns.py` publishes each challenge in both authoritative zones. The daily certificate job uses the pinned Lego ACME client, keeps the account and private keys in a private, encrypted S3 object, renews when due, then installs on both providers. Private keys are never uploaded as GitHub artifacts or caches or placed in website storage.
 
-AWS holds this small private certificate-state object and the staged Route 53 zone. GitHub assumes a role restricted to this repository's `main` branch using OIDC; no long-lived AWS keys are stored in GitHub. CloudFront account verification blocked the original hosting design, so CloudFront and its unused resources were removed. In November 2026 the certificate state moved to a new AWS account with a freshly issued certificate and ACME account.
+AWS holds this small private certificate-state object, the Route 53 zone and the Lambda monitor. GitHub assumes a role restricted to this repository's `main` branch using OIDC; no long-lived AWS keys are stored in GitHub. CloudFront account verification blocked the original hosting design, so CloudFront and its unused resources were removed. In November 2026 the certificate state moved to a new AWS account with a freshly issued certificate and ACME account.
 
 The private state bucket is not a website origin and is not exposed by either CDN. An AWS or GitHub outage can delay renewal, though an already installed unexpired certificate continues working. Check failed daily jobs and certificate expiration alerts. DNS-01 validation and provider installation have been exercised; future unattended renewal still needs continued observation.
 

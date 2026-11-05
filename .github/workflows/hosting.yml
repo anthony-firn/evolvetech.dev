@@ -98,3 +98,6 @@ jobs:
           EXEC_PROPAGATION_TIMEOUT: '1200'
           EXEC_POLLING_INTERVAL: '15'
           LEGO_RENEW_FORCE: ${{ inputs.force_renewal && 'true' || 'false' }}
+          # A forced renewal is a new order, not an ARI replacement: Let's Encrypt rejects "replaces" from any account
+          # other than the one that issued the current certificate, as happened after the November 2026 bootstrap.
+          LEGO_ARI_DISABLE: ${{ inputs.force_renewal && 'true' || 'false' }}
