@@ -8,10 +8,12 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
+from xml.sax.saxutils import escape
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = json.loads((ROOT / "hosting.json").read_text())
+ROUTE53_NS = "https://route53.amazonaws.com/doc/2013-04-01/"
 
 
 def request(method, url, data=None, headers=None):
@@ -63,3 +65,13 @@ def route53(method, path, params=None, body=b""):
             return ET.fromstring(response.read())
     except HTTPError as error:
         raise RuntimeError(f"{method} Route 53 {path} returned HTTP {error.code}") from None
+
+
+def route53_change(action, name, kind, value, ttl=60):
+    """Applies one single-value record change to the Route 53 zone. TXT values must already carry their quotes."""
+    body = (f'<?xml version="1.0" encoding="UTF-8"?><ChangeResourceRecordSetsRequest xmlns="{ROUTE53_NS}">'
+            f"<ChangeBatch><Changes><Change><Action>{action}</Action><ResourceRecordSet><Name>{escape(name)}</Name>"
+            f"<Type>{kind}</Type><TTL>{ttl}</TTL><ResourceRecords><ResourceRecord><Value>{escape(value)}</Value>"
+            "</ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch>"
+            "</ChangeResourceRecordSetsRequest>")
+    return route53("POST", f"/2013-04-01/hostedzone/{CONFIG['route53_zone']}/rrset", body=body.encode())

@@ -5,10 +5,10 @@ import json
 import socket
 import ssl
 import time
-from hosting import CONFIG as C, bunny, route53
+from hosting import CONFIG as C, ROUTE53_NS, bunny, route53, route53_change
 
 PREFIX = "evolvetech-monitor:"
-ROUTE53_NS = {"r": "https://route53.amazonaws.com/doc/2013-04-01/"}
+NS = {"r": ROUTE53_NS}
 
 
 # The homepage marker must survive copy changes: the October 2026 redesign removed the old one, and both CDNs then
@@ -61,19 +61,15 @@ def sync_route53(target, apply):
     path = f"/2013-04-01/hostedzone/{C['route53_zone']}/rrset"
     name = C["hostname"] + "."
     found = route53("GET", path, {"name": name, "type": "CNAME", "maxitems": 1})
-    record = found.find("r:ResourceRecordSets/r:ResourceRecordSet", ROUTE53_NS)
-    if record is None or record.findtext("r:Name", namespaces=ROUTE53_NS) != name:
+    record = found.find("r:ResourceRecordSets/r:ResourceRecordSet", NS)
+    if record is None or record.findtext("r:Name", namespaces=NS) != name:
         raise RuntimeError("Expected the www CNAME in Route 53; refusing to change ambiguous routing")
-    current = record.findtext("r:ResourceRecords/r:ResourceRecord/r:Value", namespaces=ROUTE53_NS).rstrip(".")
+    current = record.findtext("r:ResourceRecords/r:ResourceRecord/r:Value", namespaces=NS).rstrip(".")
     if current not in (C["netlify_target"], C["bunny_target"]):
         raise RuntimeError("Route 53 DNS target was manually changed; refusing to overwrite it")
     print(json.dumps({"route53_current": current, "next": target, "apply": apply}))
     if apply and current != target:
-        route53("POST", path, body=f"""<?xml version="1.0" encoding="UTF-8"?>
-<ChangeResourceRecordSetsRequest xmlns="{ROUTE53_NS['r']}"><ChangeBatch><Changes><Change><Action>UPSERT</Action>
-<ResourceRecordSet><Name>{name}</Name><Type>CNAME</Type><TTL>60</TTL>
-<ResourceRecords><ResourceRecord><Value>{target}</Value></ResourceRecord></ResourceRecords>
-</ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>""".encode())
+        route53_change("UPSERT", name, "CNAME", target)
 
 
 def run(apply=False, simulate_primary_failure=False):

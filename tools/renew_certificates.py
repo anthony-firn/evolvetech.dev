@@ -6,7 +6,7 @@ import subprocess
 import tarfile
 import tempfile
 from urllib.parse import urlencode
-from hosting import CONFIG as C, bunny, netlify
+from hosting import CONFIG as C, ROOT, bunny, netlify
 
 
 def main():
@@ -21,9 +21,11 @@ def main():
         acme = root / "acme"
         certdir = acme / "certificates"
         before = (certdir / "www.evolvetech.dev.crt").read_bytes()
+        # The challenge goes to both authoritative providers (Bunny and Route 53) through tools/acme_dns.py.
         subprocess.run([os.environ.get("LEGO_BINARY", "lego"), "run", "--path", str(acme),
-                        "--email", os.environ["ACME_EMAIL"], "--accept-tos", "--dns", "bunny",
-                        "--domains", "www.evolvetech.dev", "--domains", "evolvetech.dev"], check=True)
+                        "--email", os.environ["ACME_EMAIL"], "--accept-tos", "--dns", "exec",
+                        "--domains", "www.evolvetech.dev", "--domains", "evolvetech.dev"], check=True,
+                       env={**os.environ, "EXEC_PATH": str(ROOT / "tools/acme_dns.py")})
         certificate = (certdir / "www.evolvetech.dev.crt").read_bytes()
         # Save renewed keys before deployment so a failed provider upload is retryable.
         with tarfile.open(archive, "w:gz") as bundle:
