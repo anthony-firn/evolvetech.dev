@@ -39,17 +39,17 @@ The Bunny storage origin is independent of Netlify. Private household applicatio
 
 ### Automatic failover
 
-The hosting workflow schedules `tools/monitor.py --apply` approximately every five minutes. It checks both CDN endpoints directly using the real website hostname for TLS/SNI validation, plus the homepage and an uncached health file. It never follows public DNS to accidentally check only the active provider.
+`tools/monitor.py --apply` runs from two independent schedulers: the hosting workflow, nominally every five minutes, and an AWS Lambda function (`monitor_function` in `hosting.json`) started every minute by EventBridge Scheduler. Both run the same code; the deploy job updates the Lambda package through `tools/deploy_monitor.py`. The monitor checks both CDN endpoints directly using the real website hostname for TLS/SNI and certificate validation, plus the homepage and an uncached health file. It never follows public DNS to accidentally check only the active provider.
 
 Three primary failures within a run cause a switch to Bunny only if Bunny passes its checks. Both failures preserve the last DNS target and fail the workflow. Recovery requires ten minutes of observed primary health; a failure resets that period. A monitoring gap longer than fifteen minutes also resets recovery. A failed backup permits immediate return to a healthy primary.
 
-Only the `www` CNAME changes; the apex CNAME follows it through Bunny's flattening. TTL is 60 seconds. A compact recovery timestamp is stored in the record comment so the monitor needs no server or database. Unknown/manual DNS targets are preserved.
+Only the `www` CNAME changes; the apex CNAME follows it through Bunny's flattening. TTL is 60 seconds. A compact recovery timestamp is stored in the Bunny record comment so the monitor needs no server or database; the Route 53 `www` record is then set to the same CDN. Unknown/manual DNS targets are preserved in both zones. In November 2026 Bunny took over five minutes to serve changed records from its nameservers, which adds to every switch.
 
-**Timing limits:** GitHub scheduled jobs can be delayed or dropped, and some resolvers retain DNS answers beyond TTL. GitHub also automatically disables scheduled workflows in public repositories after 60 days without repository activity; this must be checked if the project becomes inactive. Switching is automatic while the workflow is enabled, but has no guaranteed recovery time. This low-cost arrangement can leave visitors affected for minutes. The monitor runs from one GitHub runner location; it is not multi-region consensus monitoring. For unattended operation on an inactive repository or a strict recovery target, replace the schedule with a dedicated independent monitoring service.
+**Timing limits:** GitHub scheduled jobs can be delayed or dropped (in practice this one has run every two to three hours), and some resolvers retain DNS answers beyond TTL. GitHub also automatically disables scheduled workflows in public repositories after 60 days without repository activity. The Lambda schedule covers both gaps, but it runs from one AWS region; neither scheduler is multi-region consensus monitoring. Switching has no guaranteed recovery time, and this low-cost arrangement can leave visitors affected for minutes.
 
-Bunny DNS remains a shared dependency. The monitor needs Bunny's API to update DNS. Adding a second authoritative DNS provider is a separate project, requiring synchronized zones and a tested routing policy; adding unrelated nameservers alone does not provide that.
+Bunny DNS remains a shared dependency. The monitor needs Bunny's API to read the recovery state, and does not change Route 53 when it cannot. Adding unrelated nameservers alone does not provide redundancy.
 
-A second zone is staged in **Route 53** (`route53_zone` in `hosting.json`) but is not delegated yet. It mirrors the Bunny records, and its `www` record is a failover pair driven by Route 53's own HTTPS health check on Netlify's `/health.json`, with Bunny as secondary. Route 53 cannot flatten the apex to a non-AWS host, so its apex is an A record for Netlify's load balancer (75.2.60.5). Before adding its nameservers at Namecheap, the Bunny zone's apex NS set must list them, record changes must be synchronized to both zones, and the DNS-01 challenge must be visible from both providers.
+A second zone is staged in **Route 53** (`route53_zone` in `hosting.json`, $0.50 a month) but is not delegated yet. It mirrors the Bunny records; the monitor keeps its `www` record on the same CDN as Bunny's. Route 53 health checks were removed as too costly for this site (about $4.75 a month with HTTPS and text matching). Route 53 cannot flatten the apex to a non-AWS host, so its apex is an A record for Netlify's load balancer (75.2.60.5). Before adding its nameservers at Namecheap, the Bunny zone's apex NS set must list them, other record changes must be made in both zones, and the DNS-01 challenge must be visible from both providers.
 
 ### HTTPS renewal while on standby
 
@@ -64,13 +64,14 @@ The private state bucket is not a website origin and is not exposed by either CD
 ```sh
 python3 tools/check_site.py
 python3 tools/test_monitor.py
-# Credentials supplied through environment, not command-line arguments:
+# Credentials supplied through environment, not command-line arguments (BUNNY_API_KEY plus AWS credentials,
+# e.g. eval "$(aws configure export-credentials --profile evolvetech --format env)"):
 python3 tools/monitor.py                       # read-only probe and decision
 python3 tools/monitor.py --apply               # persist routing decision
 python3 tools/monitor.py --simulate-primary-failure --apply  # controlled drill
 ```
 
-The controlled drill sends real visitors to the backup and resets recovery. Run only when both copies pass HTTPS checks. Later normal monitor runs restore the primary after the recovery interval. Disable the hosting workflow before a manual DNS override that must remain in place.
+The controlled drill sends real visitors to the backup and resets recovery. Run only when both copies pass HTTPS checks. Later normal monitor runs restore the primary after the recovery interval. Disable the hosting workflow and the `evolvetech-monitor` EventBridge schedule before a manual DNS override that must remain in place.
 
 Deploy, monitor, and certificate jobs can also be run from **GitHub Actions → Deploy and monitor hosting → Run workflow**. GitHub workflow notifications report failed checks; configure your account's notification preferences to receive them. No independent paging service is configured.
 

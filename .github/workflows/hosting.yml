@@ -20,6 +20,9 @@ concurrency:
 jobs:
   deploy:
     if: github.event_name == 'push' || inputs.task == 'deploy'
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -38,12 +41,26 @@ jobs:
         env:
           BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::103156383756:role/evolvetech-dev-github
+          aws-region: us-east-1
+      - run: python3 tools/deploy_monitor.py
   monitor:
     if: (github.event_name == 'schedule' && github.event.schedule == '2-59/5 * * * *') || inputs.task == 'monitor'
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     timeout-minutes: 4
     steps:
       - uses: actions/checkout@v4
+      # Bunny is updated before Route 53, so an AWS sign-in failure must not stop the monitor from running.
+      - uses: aws-actions/configure-aws-credentials@v4
+        continue-on-error: true
+        with:
+          role-to-assume: arn:aws:iam::103156383756:role/evolvetech-dev-github
+          aws-region: us-east-1
       - run: python3 tools/monitor.py --apply
         env:
           BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}

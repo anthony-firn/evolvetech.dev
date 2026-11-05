@@ -11,6 +11,6 @@
   "certificate_bucket": "evolvetech-dev-certificates-103156383756",
   "certificate_role": "arn:aws:iam::103156383756:role/evolvetech-dev-github",
   "route53_zone": "Z0149185AV75JWIJUZCX",
-  "route53_health_check": "8da1a549-cd4c-5102-05a6-5544878ea885",
+  "monitor_function": "evolvetech-monitor",
   "recovery_seconds": 600
 }
