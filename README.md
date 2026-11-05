@@ -49,11 +49,13 @@ Only the `www` CNAME changes; the apex CNAME follows it through Bunny's flatteni
 
 Bunny DNS remains a shared dependency. The monitor needs Bunny's API to update DNS. Adding a second authoritative DNS provider is a separate project, requiring synchronized zones and a tested routing policy; adding unrelated nameservers alone does not provide that.
 
+A second zone is staged in **Route 53** (`route53_zone` in `hosting.json`) but is not delegated yet. It mirrors the Bunny records, and its `www` record is a failover pair driven by Route 53's own HTTPS health check on Netlify's `/health.json`, with Bunny as secondary. Route 53 cannot flatten the apex to a non-AWS host, so its apex is an A record for Netlify's load balancer (75.2.60.5). Before adding its nameservers at Namecheap, the Bunny zone's apex NS set must list them, record changes must be synchronized to both zones, and the DNS-01 challenge must be visible from both providers.
+
 ### HTTPS renewal while on standby
 
 Both CDNs receive custom Let's Encrypt certificates issued through **DNS-01**, independently of traffic routing. The daily certificate job uses the pinned Lego ACME client, keeps the account and private keys in a private, encrypted S3 object, renews when due, then installs on both providers. Private keys are never uploaded as GitHub artifacts or caches or placed in website storage.
 
-AWS is used only for this small private certificate-state object. GitHub assumes a role restricted to this repository's `main` branch using OIDC; no long-lived AWS keys are stored in GitHub. CloudFront account verification blocked the original hosting design, so CloudFront and its unused resources were removed.
+AWS holds this small private certificate-state object and the staged Route 53 zone. GitHub assumes a role restricted to this repository's `main` branch using OIDC; no long-lived AWS keys are stored in GitHub. CloudFront account verification blocked the original hosting design, so CloudFront and its unused resources were removed. In November 2026 the certificate state moved to a new AWS account with a freshly issued certificate and ACME account.
 
 The private state bucket is not a website origin and is not exposed by either CDN. An AWS or GitHub outage can delay renewal, though an already installed unexpired certificate continues working. Check failed daily jobs and certificate expiration alerts. DNS-01 validation and provider installation have been exercised; future unattended renewal still needs continued observation.
 

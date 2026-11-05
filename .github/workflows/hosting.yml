@@ -52,12 +52,12 @@ jobs:
       contents: read
       id-token: write
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::727196131369:role/evolvetech-dev-github
+          role-to-assume: arn:aws:iam::103156383756:role/evolvetech-dev-github
           aws-region: us-east-1
       - name: Install ACME client
         run: |
@@ -72,3 +72,6 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
           LEGO_BINARY: /tmp/lego
+          # Bunny took over five minutes to serve changed challenge records in November 2026; Lego's default is 120 s.
+          BUNNY_PROPAGATION_TIMEOUT: '1200'
+          BUNNY_POLLING_INTERVAL: '15'

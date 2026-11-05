@@ -8,7 +8,9 @@
   "bunny_target": "evolvetech-dev.b-cdn.net",
   "netlify_site": "47757318-5e8d-493d-9d35-8a5caf132c64",
   "netlify_target": "evolvetech-dev.netlify.app",
-  "certificate_bucket": "evolvetech-dev-certificates-727196131369",
-  "certificate_role": "arn:aws:iam::727196131369:role/evolvetech-dev-github",
+  "certificate_bucket": "evolvetech-dev-certificates-103156383756",
+  "certificate_role": "arn:aws:iam::103156383756:role/evolvetech-dev-github",
+  "route53_zone": "Z0149185AV75JWIJUZCX",
+  "route53_health_check": "8da1a549-cd4c-5102-05a6-5544878ea885",
   "recovery_seconds": 600
 }
