@@ -1,5 +1,7 @@
 {
-  "source": "https://github.com/anthony-firn/emergence.git",
-  "commit": "4a0adbea1a3b2e73398de54a566b6047c96a5ebc",
-  "wasm_sha256": "0fdcbcb42668618218a0a91f1183664ecaa233845d8889e82c9a7cf5bf7bb57c"
+  "source": "https://github.com/anthony-firn/emergence",
+  "commit": "76854201c703f9d3f36cbfe44181e46149199b63",
+  "modified": false,
+  "wasm_sha256": "0fdcbcb42668618218a0a91f1183664ecaa233845d8889e82c9a7cf5bf7bb57c",
+  "wasm_commit": "4a0adbea1a3b2e73398de54a566b6047c96a5ebc"
 }
