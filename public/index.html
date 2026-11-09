@@ -41,9 +41,10 @@
         <div>
           <span class="status"><span class="pulse-dot" aria-hidden="true"></span>Lead Engineer · open to remote roles</span>
           <h1 id="hero-title">I build software that ships <em>and keeps running.</em></h1>
-          <p class="lede">I'm <strong>Anthony Firn</strong>, a software engineer working across <strong>full-stack products, cloud platforms, AI tooling and real-time graphics</strong>. Everything on this page is live, open source, and runs in your browser.</p>
+          <p class="lede">I’m <strong>Anthony Firn</strong>. I build APIs, developer tools and browser software, with working examples, public source, and documented tests and limits.</p>
           <div class="btn-row">
             <a class="btn primary" href="#work">See the work <span class="arrow" aria-hidden="true">→</span></a>
+            <a class="btn" href="/developers/">Developer quickstarts</a>
             <a class="btn" href="/resume/">Résumé</a>
             <a class="btn" href="https://github.com/anthony-firn">GitHub <span aria-hidden="true">↗</span></a>
           </div>
@@ -55,8 +56,8 @@
 
     <section class="proof" aria-label="At a glance">
       <div class="shell">
-        <div><b>9<span>×</span></b><p>Live tools and demos: forms, CAD, simulation, email, social, investing, games and mathematics</p></div>
-        <div><b>2<span>,000</span></b><p>Simulated 40-year markets behind every retirement strategy</p></div>
+        <div><b>2 <span>developer kits</span></b><p>Install the Inbox client or embed the local inference engine</p></div>
+        <div><b>JSON <span>CLI</span></b><p>Try fictional mail offline through the same client as live access</p></div>
         <div><b>2 <span>CDNs</span></b><p>Serve this site, with automatic DNS failover between them</p></div>
         <div><b>Rust <span>+ GPU</span></b><p>Physics, model validity and engineering design in Emergence</p></div>
       </div>
@@ -65,9 +66,30 @@
     <section class="section" id="work" aria-labelledby="work-title">
       <div class="shell">
         <div class="section-head reveal">
-          <div><p class="label">Selected work</p><h2 id="work-title">Proof, not promises.</h2></div>
-          <p>Each project is a working system with its source on GitHub. Open any of them in a new tab and try it — no install, no account.</p>
+          <div><p class="label">Selected work</p><h2 id="work-title">Developer tools and systems.</h2></div>
+          <p>Try the examples, install a client, and inspect the code and failure cases. Start with the <a href="/developers/">developer quickstarts</a>; the full project collection follows.</p>
         </div>
+
+        <article class="case reveal" aria-labelledby="case-evolve-inbox" data-glow="ember">
+          <div class="case-media">
+            <div class="browser">
+              <div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/evolve-inbox</span></div>
+              <a href="/play/evolve-inbox/"><img src="/assets/media/evolve-inbox-demo.jpg" width="1280" height="800" loading="lazy" alt="Evolve Inbox showing fictional messages, sender checks and a formatted email"></a>
+            </div>
+            <p class="media-note">Public demo with fictional messages. The real mailbox requires a password.</p>
+          </div>
+          <div class="case-body">
+            <p class="label">Email · Serverless · Open source</p>
+            <h3 id="case-evolve-inbox">Evolve Inbox</h3>
+            <p class="pitch">A small inbox for your own domain, built for EvolveTech. Read and search mail in your browser, then deploy your own with guided setup and delivery checks.</p>
+            <ul class="case-points">
+              <li>Search senders, recipients and subjects, filter attachments, and read formatted or plain-text mail with reported sender checks.</li>
+              <li>Install the dependency-free Fetch client and read-only CLI. Try fictional mail offline, then connect to your own inbox with typed errors, cancellation and delivery diagnostics.</li>
+            </ul>
+            <ul class="chips" aria-label="Built with"><li>JavaScript</li><li>Netlify Functions</li><li>Netlify Blobs</li><li>Forward Email</li></ul>
+            <div class="btn-row"><a class="btn primary" href="/play/evolve-inbox/">Try the demo <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/developers/inbox/">Client &amp; CLI quickstart</a><a class="btn" href="/projects/evolve-inbox/">Security &amp; delivery</a><a class="btn" href="https://github.com/anthony-firn/evolve-inbox/blob/main/docs/setup.md">Set up your own ↗</a><a class="btn" href="https://github.com/anthony-firn/evolve-inbox">Source ↗</a></div>
+          </div>
+        </article>
 
         <article class="case reveal" aria-labelledby="case-evolve-llm" data-glow="ember">
           <div class="case-media">
@@ -82,11 +104,64 @@
             <h3 id="case-evolve-llm">Evolve LLM</h3>
             <p class="pitch">Run open language models on your own GPU from a web page, including ones far larger than its memory. A Rust engine compiled to WebAssembly computes every token with WebGPU shaders; what does not fit on the GPU is read from storage as each token needs it.</p>
             <ul class="case-points">
-              <li>My own GGUF loader, 25 weight formats down to 1.56 bits, mixture-of-experts routing with an expert cache, DeepSeek’s latent attention, tokenizers and chat templates, for models up to Kimi K2’s trillion parameters.</li>
-              <li>Checked against transformers’ float32 logits and Hugging Face tokenizers; streamed runs match resident ones word for word. Web search is opt-in and runs from the browser.</li>
+              <li>Rust/WASM inference with 25 weight formats, mixture-of-experts routing and a GPU expert cache. The embedding SDK includes token streams, cancellation and TypeScript declarations.</li>
+              <li>Browser runs are checked for SmolLM2, Qwen, Llama and OLMoE. The largest catalog entries have architecture tests and have not been run end to end; their speed is unmeasured.</li>
             </ul>
             <ul class="chips" aria-label="Built with"><li>Rust</li><li>WebGPU / WGSL</li><li>WebAssembly</li><li>wgpu</li></ul>
-            <div class="btn-row"><a class="btn primary" href="/play/evolve-llm/">Open the chat <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/projects/evolve-llm/">Case study</a><a class="btn" href="https://github.com/anthony-firn/evolve-llm">Source ↗</a></div>
+            <div class="btn-row"><a class="btn primary" href="/play/evolve-llm/">Open the chat <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/developers/llm/">Embedding API</a><a class="btn" href="/projects/evolve-llm/">Verification &amp; benchmarks</a><a class="btn" href="https://github.com/anthony-firn/evolve-llm">Source ↗</a></div>
+          </div>
+        </article>
+
+        <article class="case reveal" aria-labelledby="case-evolve-hosting" data-glow="cyan">
+          <div class="case-media"><div class="browser"><div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/evolve-hosting</span></div><a href="/play/evolve-hosting/"><img src="/assets/media/evolve-hosting-demo.jpg" width="1280" height="900" loading="lazy" alt="Evolve Hosting showing a verified release, mirror locations and local hosting commands"></a></div></div>
+          <div class="case-body">
+            <p class="label">Distributed hosting · Developer tools · Open source</p>
+            <h3 id="case-evolve-hosting">Evolve Hosting</h3>
+            <p class="pitch">Publish a signed browser app, run a verified mirror, and support the people who keep it available. A small foundation for hosting projects on existing machines and shared infrastructure.</p>
+            <ul class="case-points"><li>A CLI verifies public files before activation, preserves the previous release and exports to static hosts.</li><li>Recorded recovery across two local processes, plus optional direct support using Fairground’s payment rail.</li></ul>
+            <ul class="chips" aria-label="Built with"><li>Node.js</li><li>Ed25519</li><li>Static mirrors</li></ul>
+            <div class="btn-row"><a class="btn primary" href="/play/evolve-hosting/">Open the workspace <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/projects/evolve-hosting/">Case study</a><a class="btn" href="/wallet-setup/">Wallet setup guide</a><a class="btn" href="https://github.com/anthony-firn/evolve-hosting">Source ↗</a></div>
+          </div>
+        </article>
+
+        <article class="case reveal" aria-labelledby="case-emergence" data-glow="cyan">
+          <div class="case-media">
+            <div class="browser">
+              <div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/emergence/cad</span></div>
+              <a href="/play/emergence/cad/#render"><img src="/assets/media/emergence-cad-render.webp" width="1360" height="1000" loading="lazy" alt="Emergence CAD: the inspection-drone example project assembled from Rust kernel meshes, with carbon arms, motor mounts, ESC heat sinks, the power board and rotor actuator discs"></a>
+            </div>
+          </div>
+          <div class="case-body">
+            <p class="label">Simulation &amp; design · Rust · CUDA</p>
+            <h3 id="case-emergence">Emergence</h3>
+            <p class="pitch">How much physics does the answer need? Start cheap, check the error, then unfold to a finer model. One pattern across fluids, light, rendering, materials, CPU design and CAD.</p>
+            <ul class="case-points">
+              <li>One typed command registry serves the browser, CLI and MCP server. Edits share undo and revision history across the project’s linked engineering domains.</li>
+              <li>See claimed and measured errors, uncertainty and unmet requirements alongside the result.</li>
+            </ul>
+            <ul class="chips" aria-label="Built with"><li>Rust</li><li>CUDA</li><li>WebAssembly</li><li>CAD</li></ul>
+            <div class="btn-row"><a class="btn primary" href="/play/emergence/cad/">Open CAD <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/play/emergence/cad/?example=drone#render">Drone example</a><a class="btn" href="/play/emergence/">Physics lab</a><a class="btn" href="/projects/emergence/">Case study</a></div>
+          </div>
+        </article>
+
+        <article class="case reveal" aria-labelledby="case-fairground" data-glow="ember">
+          <div class="case-media phone-stage">
+            <div class="phone">
+              <video data-autoplay muted loop playsinline preload="none" poster="/assets/media/fairground-poster.webp" width="430" height="860" aria-label="Fairground on a phone: picking topics, then the free King Gizzard & the Lizard Wizard album Polygondwanaland posted with every track playable in the feed, and the poster’s profile">
+                <source src="/assets/media/fairground.webm" type="video/webm"><source src="/assets/media/fairground.mp4" type="video/mp4">
+              </video>
+            </div>
+          </div>
+          <div class="case-body">
+            <p class="label">Decentralized social · Post-quantum cryptography</p>
+            <h3 id="case-fairground">Fairground</h3>
+            <p class="pitch">A social network with no company in the middle. Creators are paid directly, an AI on your own device ranks your feed, and every deal is a signed public record. One codebase for the web, iPhone and Android.</p>
+            <ul class="case-points">
+              <li>Sponsorship contracts signed with Schnorr plus ML-DSA-65, paid wallet to wallet in USDC and checked on the chain.</li>
+              <li>Anonymous audience surveys with RSA blind signatures, and server-free sign-in from an Argon2id-encrypted vault.</li>
+            </ul>
+            <ul class="chips" aria-label="Built with"><li>TypeScript</li><li>React</li><li>Nostr</li><li>Capacitor</li><li>Transformers.js</li></ul>
+            <div class="btn-row"><a class="btn primary" href="/play/fairground/">Open the app <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/projects/fairground/">Case study</a><a class="btn" href="/wallet-setup/">Wallet setup guide</a></div>
           </div>
         </article>
 
@@ -118,80 +193,6 @@
             <ul class="case-points"><li>Filter by published annual pay, currency, role, location and qualification keywords.</li><li>Early prototype: Lever discovery and standard application forms. Your résumé and application history stay local until you apply.</li></ul>
             <ul class="chips" aria-label="Built with"><li>Rust/WASM</li><li>Nostr</li><li>Browser extension</li></ul>
             <div class="btn-row"><a class="btn primary" href="/play/evolve-jobs/">Open job search <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/projects/evolve-jobs/">About the project</a><a class="btn" href="https://github.com/anthony-firn/evolve-jobs">Source ↗</a><a class="btn" href="/play/fairground/#/about">Support development</a><a class="btn" href="/wallet-setup/">Wallet setup guide</a></div>
-          </div>
-        </article>
-
-        <article class="case reveal" aria-labelledby="case-evolve-hosting" data-glow="cyan">
-          <div class="case-media"><div class="browser"><div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/evolve-hosting</span></div><a href="/play/evolve-hosting/"><img src="/assets/media/evolve-hosting-demo.jpg" width="1280" height="900" loading="lazy" alt="Evolve Hosting showing a verified release, mirror locations and local hosting commands"></a></div></div>
-          <div class="case-body">
-            <p class="label">Distributed hosting · Developer tools · Open source</p>
-            <h3 id="case-evolve-hosting">Evolve Hosting</h3>
-            <p class="pitch">Publish a signed browser app, run a verified mirror, and support the people who keep it available. A small foundation for hosting projects on existing machines and shared infrastructure.</p>
-            <ul class="case-points"><li>A CLI verifies public files before activation, preserves the previous release and exports to static hosts.</li><li>Recorded recovery across two local processes, plus optional direct support using Fairground’s payment rail.</li></ul>
-            <ul class="chips" aria-label="Built with"><li>Node.js</li><li>Ed25519</li><li>Static mirrors</li></ul>
-            <div class="btn-row"><a class="btn primary" href="/play/evolve-hosting/">Open the workspace <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/projects/evolve-hosting/">Case study</a><a class="btn" href="/wallet-setup/">Wallet setup guide</a><a class="btn" href="https://github.com/anthony-firn/evolve-hosting">Source ↗</a></div>
-          </div>
-        </article>
-
-        <article class="case reveal" aria-labelledby="case-evolve-inbox" data-glow="ember">
-          <div class="case-media">
-            <div class="browser">
-              <div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/evolve-inbox</span></div>
-              <a href="/play/evolve-inbox/"><img src="/assets/media/evolve-inbox-demo.jpg" width="1280" height="800" loading="lazy" alt="Evolve Inbox showing fictional messages, sender checks and a formatted email"></a>
-            </div>
-            <p class="media-note">Public demo with fictional messages. The real mailbox requires a password.</p>
-          </div>
-          <div class="case-body">
-            <p class="label">Email · Serverless · Open source</p>
-            <h3 id="case-evolve-inbox">Evolve Inbox</h3>
-            <p class="pitch">A small inbox for your own domain, built for EvolveTech. Read and search mail in your browser, then deploy your own with guided setup and delivery checks.</p>
-            <ul class="case-points">
-              <li>Search senders, recipients and subjects, filter attachments, and read formatted or plain-text mail with reported sender checks.</li>
-              <li>Generate private setup instructions, check DNS and deployment health, and handle delivery retries. Apache 2.0 source.</li>
-            </ul>
-            <ul class="chips" aria-label="Built with"><li>JavaScript</li><li>Netlify Functions</li><li>Netlify Blobs</li><li>Forward Email</li></ul>
-            <div class="btn-row"><a class="btn primary" href="/play/evolve-inbox/">Try the demo <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/projects/evolve-inbox/">Case study</a><a class="btn" href="https://github.com/anthony-firn/evolve-inbox/blob/main/docs/setup.md">Set up your own ↗</a><a class="btn" href="https://github.com/anthony-firn/evolve-inbox">Source ↗</a></div>
-          </div>
-        </article>
-
-        <article class="case reveal" aria-labelledby="case-emergence" data-glow="cyan">
-          <div class="case-media">
-            <div class="browser">
-              <div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/emergence/cad</span></div>
-              <a href="/play/emergence/cad/#render"><img src="/assets/media/emergence-cad-render.webp" width="1360" height="1000" loading="lazy" alt="Emergence CAD: the inspection-drone example project assembled from Rust kernel meshes, with carbon arms, motor mounts, ESC heat sinks, the power board and rotor actuator discs"></a>
-            </div>
-          </div>
-          <div class="case-body">
-            <p class="label">Simulation &amp; design · Rust · CUDA</p>
-            <h3 id="case-emergence">Emergence</h3>
-            <p class="pitch">How much physics does the answer need? Start cheap, check the error, then unfold to a finer model. One pattern across fluids, light, rendering, materials, CPU design and CAD.</p>
-            <ul class="case-points">
-              <li>Design across eight linked domains in the browser: flight, structure, boards, silicon, optics, air and buildings, solved together on Rust kernels. Example projects range from a drone to a server shelter.</li>
-              <li>See claimed and measured errors, uncertainty and unmet requirements alongside the result.</li>
-            </ul>
-            <ul class="chips" aria-label="Built with"><li>Rust</li><li>CUDA</li><li>WebAssembly</li><li>CAD</li></ul>
-            <div class="btn-row"><a class="btn primary" href="/play/emergence/cad/">Open CAD <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/play/emergence/cad/?example=drone#render">Drone example</a><a class="btn" href="/play/emergence/">Physics lab</a><a class="btn" href="/projects/emergence/">Case study</a></div>
-          </div>
-        </article>
-
-        <article class="case reveal" aria-labelledby="case-fairground" data-glow="ember">
-          <div class="case-media phone-stage">
-            <div class="phone">
-              <video data-autoplay muted loop playsinline preload="none" poster="/assets/media/fairground-poster.webp" width="430" height="860" aria-label="Fairground on a phone: picking topics, then the free King Gizzard & the Lizard Wizard album Polygondwanaland posted with every track playable in the feed, and the poster’s profile">
-                <source src="/assets/media/fairground.webm" type="video/webm"><source src="/assets/media/fairground.mp4" type="video/mp4">
-              </video>
-            </div>
-          </div>
-          <div class="case-body">
-            <p class="label">Decentralized social · Post-quantum cryptography</p>
-            <h3 id="case-fairground">Fairground</h3>
-            <p class="pitch">A social network with no company in the middle. Creators are paid directly, an AI on your own device ranks your feed, and every deal is a signed public record. One codebase for the web, iPhone and Android.</p>
-            <ul class="case-points">
-              <li>Sponsorship contracts signed with Schnorr plus ML-DSA-65, paid wallet to wallet in USDC and checked on the chain.</li>
-              <li>Anonymous audience surveys with RSA blind signatures, and server-free sign-in from an Argon2id-encrypted vault.</li>
-            </ul>
-            <ul class="chips" aria-label="Built with"><li>TypeScript</li><li>React</li><li>Nostr</li><li>Capacitor</li><li>Transformers.js</li></ul>
-            <div class="btn-row"><a class="btn primary" href="/play/fairground/">Open the app <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/projects/fairground/">Case study</a><a class="btn" href="/wallet-setup/">Wallet setup guide</a></div>
           </div>
         </article>
 

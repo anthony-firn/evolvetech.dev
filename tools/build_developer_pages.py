@@ -1,0 +1,57 @@
+"""Build executable developer quickstarts from the site's case-study template."""
+from pathlib import Path
+from build_pages import HEAD, section
+
+ROOT = Path(__file__).resolve().parents[1] / 'public'
+TEMPLATE = HEAD.replace('/projects/{slug}/', '/developers/{slug}/')
+
+
+def page(slug, title, lede, sections, demo, demo_text, repo, script=None):
+    text = TEMPLATE.format(slug=slug, title=title, description=lede, label='Developer quickstart', lede=lede,
+        demo=demo, demo_text=demo_text, repo=repo, poster='og.jpg', media='', sections='\n'.join(sections),
+        status='Versioned downloads; source and executable checks linked below', license='Apache 2.0', stack='JavaScript, TypeScript declarations, executable examples')
+    text = text.replace('/developers//', '/developers/')
+    text = text.replace('</head>', '<link rel="stylesheet" href="/assets/v2/developers.css">\n</head>')
+    if script: text = text.replace('</body>', f'<script type="module" src="{script}"></script>\n</body>')
+    out = ROOT / 'developers' / slug / 'index.html'; out.parent.mkdir(parents=True, exist_ok=True); out.write_text(text)
+
+
+def main():
+    page('inbox', 'Evolve Inbox developer kit',
+        'Read fictional mail through the same client used for a live inbox. Try it without an account, then connect the client to your own deployment.', [
+        section('Install and run', '<span class="release-meta">Client 0.3.0 · Node 22+ · dependency-free · downloadable npm-compatible tarball</span><pre><code id="inbox-install">npm install https://www.evolvetech.dev/developers/downloads/evolve-inbox-client-0.3.0.tgz\nnpx evolve-inbox --demo list</code></pre><button type="button" data-copy="inbox-install">Copy install commands</button>',
+            'This release is a versioned tarball, not a package published to the npm registry. The offline CLI needs no account or server. Its messages use reserved example domains.'),
+        section('Try the client here', 'These controls use the packaged Fetch client with fictional responses. They make no mailbox API requests and cannot access or modify the private EvolveTech inbox.',
+            '<div class="developer-console"><label for="inbox-operation">Example</label><select id="inbox-operation"><option value="list">List fictional messages</option><option value="get">Get a fictional message</option><option value="status">Read fixture status</option><option value="throttled">Handle a simulated 429</option></select><button type="button" id="inbox-run">Run example</button><p id="inbox-example-status" role="status">Ready. All responses are fixtures.</p><pre id="inbox-example-output" tabindex="0" aria-label="Example JSON output"></pre></div>'),
+        section('Use it from JavaScript or TypeScript', '<pre><code>import { createDemoClient } from \'evolve-inbox-client/demo\';\n\nconst inbox = createDemoClient();\nconst messages = await inbox.list();\nconsole.log(messages.map(message =&gt; message.subject));</code></pre>',
+            'The package includes TypeScript declarations. Live access uses createClient({ site, password }) from evolve-inbox-client. Set credentials on your server through the environment; keep them out of public browser bundles and committed code. Browser access to the live inbox is same-origin.'),
+        section('API and failure behavior', '<table><thead><tr><th>Method</th><th>Result</th></tr></thead><tbody><tr><td>status()</td><td>Readiness, storage and message count</td></tr><tr><td>list()</td><td>Message metadata</td></tr><tr><td>get(id)</td><td>Message body and attachments</td></tr><tr><td>delete(id)</td><td>Explicit deletion; absent from the CLI</td></tr></tbody></table>',
+            'Each method accepts { signal }. Requests have a timeout, refuse redirects and use a Bearer header. There are no automatic retries. InboxError carries a stable code, HTTP status and an optional retryAfter in seconds. Treat a lost deletion response as an uncertain outcome. The client parses JSON but does not fully validate an untrusted response schema.'),
+        section('Operate your own inbox', 'The CLI reads MAIL_SITE and MAIL_PASSWORD from its process environment. It accepts status, list and get ID, returns JSON, and exits nonzero on failure. Credentials are not accepted as command-line flags. Live list/get output contains private mail; keep it out of public logs.',
+            '<a href="https://github.com/anthony-firn/evolve-inbox/blob/main/docs/sdk-readme.md">Full client contract →</a> · <a href="https://github.com/anthony-firn/evolve-inbox/blob/main/docs/setup.md">Deploy and verify delivery →</a>'),
+        section('Security and test evidence', 'The server already has shared authentication throttling, credential-rotation grace deadlines, audit events that omit message content, and conditional index writes for concurrent deliveries. It is a single-owner inbox with a shared credential. Scoped per-agent keys and tenant isolation are not implemented.',
+            '<a href="https://github.com/anthony-firn/evolve-inbox/blob/main/docs/security.md">Threat model and failure cases →</a> · <a href="https://github.com/anthony-firn/evolve-inbox/blob/main/test/sdk-package.test.mjs">Fresh-install and offline CLI tests →</a> · <a href="https://github.com/anthony-firn/evolve-inbox/actions">Continuous integration →</a>',
+            '<a href="/developers/downloads/manifest.json">Download checksums and source commits →</a>')
+        ], '/developers/downloads/evolve-inbox-client-0.3.0.tgz', 'Download client 0.3.0', 'https://github.com/anthony-firn/evolve-inbox', '/developers/inbox/examples.mjs')
+    page('llm', 'Embed Evolve LLM',
+        'Stream local model output into your own interface through a dedicated worker. The example includes a scripted fixture that needs no GPU or model download.', [
+        section('Run the example', '<pre><code id="llm-install">unzip evolve-llm-browser-0.2.0.zip -d evolve-llm\npython3 -m http.server 8080 --directory evolve-llm\n# Open http://localhost:8080/examples/</code></pre><button type="button" data-copy="llm-install">Copy local run commands</button>',
+            '<a href="/play/evolve-llm/examples/">Open the embedding example →</a> Run its protocol fixture immediately, or explicitly download about 145 MB of SmolLM2 weights from Hugging Face for real GPU inference. Fixture text and timing are scripted; they are not an inference result or benchmark.',
+            'The bundle contains the SDK, TypeScript declarations, worker, WASM engine, licenses and example. Serve them on the same origin as your app. No prompts are sent to a provider by the SDK; internet search tools stay off.'),
+        section('Stream tokens', 'Add &lt;pre id=&quot;answer&quot;&gt;&lt;/pre&gt; to your page, then import the runtime from its directory.', '<pre><code>import { createEngine } from \'./evolve-llm/sdk.mjs\';\n\nconst engine = createEngine();\nconst answer = document.querySelector(\'#answer\');\ntry {\n  await engine.initialize();\n  await engine.load(\'smollm2-135m\');\n  for await (const event of engine.generate([\n    { role: \'user\', content: \'Explain WebGPU in one sentence.\' }\n  ], { maxTokens: 64 })) {\n    if (event.type === \'token\') {\n      answer.textContent += event.text;\n    }\n  }\n} finally {\n  engine.dispose();\n}</code></pre>'),
+        section('Control the lifecycle', 'initialize checks the GPU adapter; load accepts a catalog ID or local File objects. generate returns prefill, token and done events. reset clears chat state, and dispose releases the worker permanently. Each client allows one operation at a time.',
+            'Pass an AbortSignal to load or generate. Cancellation, a timeout, a worker failure, or breaking an unfinished stream unloads the model. Reload before the next generation. The default deadline is 120 seconds and can be extended explicitly. Stream buffering is bounded to 1,024 events; a slow consumer receives backpressure. Concurrent operations receive busy. There are no automatic generation retries.',
+            '<a href="https://github.com/anthony-firn/evolve-llm/blob/main/docs/embedding.md">Options, units and error codes →</a>'),
+        section('What has been run', '<table><thead><tr><th>Evidence</th><th>Scope</th></tr></thead><tbody><tr><td>Browser/native reply comparisons</td><td>SmolLM2 135M, Qwen2.5 0.5B, Qwen3 0.6B, Llama 3.2 1B and OLMoE 1B-7B</td></tr><tr><td>Large catalog architectures</td><td>Layout, tokenizer and reference tests; largest models have not run end to end</td></tr><tr><td>SDK protocol checks</td><td>Ordering, cancellation, cleanup, concurrency, timeouts and bounded buffering</td></tr><tr><td>Executable browser fixture</td><td>Real module worker and stream API; scripted output with no inference</td></tr></tbody></table>',
+            'WebGPU availability, storage, model licenses and hardware affect what you can run. Large catalog entries are architecture support, not proof of end-to-end execution or measured speed. Catalog URLs currently use their main revision; retain pinned local model files for reproducible weights.',
+            '<a href="/projects/evolve-llm/">Existing measured performance and engine verification →</a> · <a href="https://github.com/anthony-firn/evolve-llm/blob/main/tests/sdk_browser_test.py">Browser SDK test →</a> · <a href="/developers/downloads/manifest.json">Download checksums and engine provenance →</a>')
+        ], '/developers/downloads/evolve-llm-browser-0.2.0.zip', 'Download browser runtime 0.2.0', 'https://github.com/anthony-firn/evolve-llm', '/developers/copy.mjs')
+    page('', 'Build with EvolveTech', 'Install a client, run an example and inspect its failure behavior. These developer guides connect the public demos to reusable code.', [
+        section('Email client and CLI', '<a href="/developers/inbox/">Evolve Inbox quickstart →</a> Install the dependency-free client, read fictional messages without an account, then connect it to your own inbox.'),
+        section('Local inference SDK', '<a href="/developers/llm/">Evolve LLM embedding guide →</a> Use a dedicated worker and an async stream. Run the scripted fixture without a GPU or download, or explicitly load a real model.'),
+        section('Signed release tooling', '<a href="/projects/evolve-hosting/">Evolve Hosting →</a> Verify a signed static app, inspect rollback behavior and run the local mirror CLI. The recovery drill records two local processes; it does not establish independently operated production mirrors.'),
+        section('Engineering evidence', '<a href="/projects/evolve-inbox/">Inbox security and delivery →</a> · <a href="/projects/evolve-llm/">LLM reference checks and measured speed →</a> · <a href="/projects/emergence/">Emergence commands and cross-domain models →</a>')
+        ], '/developers/inbox/', 'Start with the Inbox client', 'https://github.com/anthony-firn')
+
+
+if __name__ == '__main__': main()

@@ -226,3 +226,25 @@ The companion helpers are maintained in [`demos/probate/`](demos/probate/README.
 They use official PDF templates and browser-only answer storage; no personal case information is bundled.
 The separate petition sources remain in `~/Dev/de111` and `~/Dev/de221` and are rebuilt using `tools/build_demos.py`
 with `--local-source`. Do not edit only the copies in `public/play/`; those are generated outputs.
+
+
+## Developer kits
+
+The public quickstarts live at `/developers/`, with executable fictional inbox
+examples and a same-origin LLM runtime example. SDK downloads are npm-compatible
+tarballs or static runtime ZIPs; no package-registry publication is claimed.
+`public/developers/downloads/manifest.json` records file sizes, SHA-256 checksums
+and source commits. The LLM artifact separately records its reused engine commit.
+
+Regenerate from clean, committed checkouts:
+
+```sh
+python3 tools/sync_developer_kits.py --inbox-source /path/to/evolve-inbox --llm-source /path/to/evolve-llm
+python3 tools/build_developer_pages.py
+python3 tools/build_pages.py
+python3 tools/check_site.py
+```
+
+The sync copies only an explicit SDK allowlist and identified runtime files. It
+never reads mailbox settings or private messages. The live inbox handler remains
+pinned independently under `netlify/lib/evolve-inbox/`.

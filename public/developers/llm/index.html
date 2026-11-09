@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Embed Evolve LLM — Anthony Firn</title>
+  <meta name="description" content="Stream local model output into your own interface through a dedicated worker. The example includes a scripted fixture that needs no GPU or model download.">
+  <link rel="canonical" href="https://www.evolvetech.dev/developers/llm/">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Embed Evolve LLM — Anthony Firn">
+  <meta property="og:description" content="Stream local model output into your own interface through a dedicated worker. The example includes a scripted fixture that needs no GPU or model download.">
+  <meta property="og:url" content="https://www.evolvetech.dev/developers/llm/">
+  <meta property="og:image" content="https://www.evolvetech.dev/assets/media/og.jpg">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#06080d">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f6fa">
+  <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+  <link rel="preload" href="/assets/fonts/space-grotesk.woff2" as="font" type="font/woff2" crossorigin>
+  <script src="/assets/v2/theme.js"></script>
+  <link rel="stylesheet" href="/assets/v2/style.css">
+  <script type="module" src="/assets/v2/main.js"></script>
+<link rel="stylesheet" href="/assets/v2/developers.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="shell">
+      <a class="brand" href="/" aria-label="Anthony Firn, home"><span class="monogram" aria-hidden="true">AF</span><span><strong>Anthony Firn</strong><small>EvolveTech</small></span></a>
+      <nav class="nav" aria-label="Main"><a href="/#work">Work</a><a href="/#engineering">Engineering</a><a href="/#experience">Experience</a><a href="/resume/">Résumé</a><a class="nav-cta" href="/#contact">Contact</a><button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></nav>
+    </div>
+  </header>
+  <main id="main" class="shell">
+    <section class="page-hero">
+      <a class="crumb" href="/#work">← All work</a>
+      <p class="label">Developer quickstart</p>
+      <h1>Embed Evolve LLM</h1>
+      <p class="lede">Stream local model output into your own interface through a dedicated worker. The example includes a scripted fixture that needs no GPU or model download.</p>
+      <div class="btn-row"><a class="btn primary" href="/developers/downloads/evolve-llm-browser-0.2.0.zip">Download browser runtime 0.2.0 <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="https://github.com/anthony-firn/evolve-llm">Source on GitHub ↗</a></div>
+    </section>
+    
+    <div class="prose">
+      <section><h2>Run the example</h2><p><pre><code id="llm-install">unzip evolve-llm-browser-0.2.0.zip -d evolve-llm
+python3 -m http.server 8080 --directory evolve-llm
+# Open http://localhost:8080/examples/</code></pre><button type="button" data-copy="llm-install">Copy local run commands</button></p><p><a href="/play/evolve-llm/examples/">Open the embedding example →</a> Run its protocol fixture immediately, or explicitly download about 145 MB of SmolLM2 weights from Hugging Face for real GPU inference. Fixture text and timing are scripted; they are not an inference result or benchmark.</p><p>The bundle contains the SDK, TypeScript declarations, worker, WASM engine, licenses and example. Serve them on the same origin as your app. No prompts are sent to a provider by the SDK; internet search tools stay off.</p></section>
+      <section><h2>Stream tokens</h2><p>Add &lt;pre id=&quot;answer&quot;&gt;&lt;/pre&gt; to your page, then import the runtime from its directory.</p><p><pre><code>import { createEngine } from './evolve-llm/sdk.mjs';
+
+const engine = createEngine();
+const answer = document.querySelector('#answer');
+try {
+  await engine.initialize();
+  await engine.load('smollm2-135m');
+  for await (const event of engine.generate([
+    { role: 'user', content: 'Explain WebGPU in one sentence.' }
+  ], { maxTokens: 64 })) {
+    if (event.type === 'token') {
+      answer.textContent += event.text;
+    }
+  }
+} finally {
+  engine.dispose();
+}</code></pre></p></section>
+      <section><h2>Control the lifecycle</h2><p>initialize checks the GPU adapter; load accepts a catalog ID or local File objects. generate returns prefill, token and done events. reset clears chat state, and dispose releases the worker permanently. Each client allows one operation at a time.</p><p>Pass an AbortSignal to load or generate. Cancellation, a timeout, a worker failure, or breaking an unfinished stream unloads the model. Reload before the next generation. The default deadline is 120 seconds and can be extended explicitly. Stream buffering is bounded to 1,024 events; a slow consumer receives backpressure. Concurrent operations receive busy. There are no automatic generation retries.</p><p><a href="https://github.com/anthony-firn/evolve-llm/blob/main/docs/embedding.md">Options, units and error codes →</a></p></section>
+      <section><h2>What has been run</h2><p><table><thead><tr><th>Evidence</th><th>Scope</th></tr></thead><tbody><tr><td>Browser/native reply comparisons</td><td>SmolLM2 135M, Qwen2.5 0.5B, Qwen3 0.6B, Llama 3.2 1B and OLMoE 1B-7B</td></tr><tr><td>Large catalog architectures</td><td>Layout, tokenizer and reference tests; largest models have not run end to end</td></tr><tr><td>SDK protocol checks</td><td>Ordering, cancellation, cleanup, concurrency, timeouts and bounded buffering</td></tr><tr><td>Executable browser fixture</td><td>Real module worker and stream API; scripted output with no inference</td></tr></tbody></table></p><p>WebGPU availability, storage, model licenses and hardware affect what you can run. Large catalog entries are architecture support, not proof of end-to-end execution or measured speed. Catalog URLs currently use their main revision; retain pinned local model files for reproducible weights.</p><p><a href="/projects/evolve-llm/">Existing measured performance and engine verification →</a> · <a href="https://github.com/anthony-firn/evolve-llm/blob/main/tests/sdk_browser_test.py">Browser SDK test →</a> · <a href="/developers/downloads/manifest.json">Download checksums and engine provenance →</a></p></section>
+      <dl class="facts"><div><dt>Status</dt><dd>Versioned downloads; source and executable checks linked below</dd></div><div><dt>License</dt><dd>Apache 2.0</dd></div><div><dt>Built with</dt><dd>JavaScript, TypeScript declarations, executable examples</dd></div></dl>
+    </div>
+  </main>
+  <footer class="site-footer"><div class="shell"><span>© 2026 Anthony Firn · EvolveTech</span><nav aria-label="Footer"><a href="/">Home</a><a href="/resume/">Résumé</a><a href="https://github.com/anthony-firn">GitHub</a></nav></div></footer>
+<script type="module" src="/developers/copy.mjs"></script>
+</body>
+</html>

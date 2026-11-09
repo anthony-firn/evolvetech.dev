@@ -1,0 +1,19 @@
+{
+  "schema": "evolvetech.developer-downloads.v1",
+  "artifacts": [
+    {
+      "file": "evolve-inbox-client-0.3.0.tgz",
+      "bytes": 9177,
+      "sha256": "ba8bdeef20a51800da1481e1a574b34de9ea48100fdce1cc2046e79ab88b8007",
+      "source": "https://github.com/anthony-firn/evolve-inbox",
+      "commit": "5666660e51f4280d2ced6bf4bf828b777cc71fe8"
+    },
+    {
+      "file": "evolve-llm-browser-0.2.0.zip",
+      "bytes": 989216,
+      "sha256": "b2f3dad8b2f911424a3002d4fe71d385714916b1dd45651d3a2791466d421297",
+      "source": "https://github.com/anthony-firn/evolve-llm",
+      "commit": "9b647da8ff6f19c044f0982c13ae030472750817"
+    }
+  ]
+}
