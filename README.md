@@ -127,18 +127,20 @@ Bunny Storage serves unknown extensions as `application/octet-stream`, so a furt
 Evolve LLM runs GGUF language models on the visitor's GPU at `/play/evolve-llm/`, with its own
 [public repository](https://github.com/anthony-firn/evolve-llm) and `/projects/evolve-llm/` case study.
 A Rust engine compiled to WebAssembly drives WebGPU from a module worker. Models download directly from
-Hugging Face into the browser's origin-private file system; no model files are hosted here and no prompt
-leaves the device.
+Hugging Face into the browser's origin-private file system; no model files are hosted here. Models larger
+than the visitor's GPU memory read the rest of their weights from that storage while they run.
 
 Rebuild with `python3 tools/build_demos.py evolve-llm --local-source ~/Dev/evolve-llm`. This needs Rust
-with `wasm32-unknown-unknown`, `wasm-bindgen-cli` matching the project's `Cargo.lock`, Node.js and Python 3.
-The build runs the project's tests first; its GPU and model tests run only when the machine has a GPU and
-GGUF files in `$EVOLVE_LLM_MODELS`. `BUILD.json` records the commit and WebAssembly hash.
+with `wasm32-unknown-unknown`, `wasm-bindgen-cli` matching the project's `Cargo.lock`, Node.js and Python 3;
+`wasm-opt` makes the engine smaller when installed. The build runs the project's tests first; its GPU and
+model tests run only when the machine has a GPU and GGUF files in `$EVOLVE_LLM_MODELS`. `BUILD.json`
+records the commit and WebAssembly hash.
 
-`public/_headers` gives the app a scoped CSP: `'wasm-unsafe-eval'`, `worker-src 'self'` and connections
-only to `huggingface.co` and its `*.hf.co` download hosts. `tools/deploy.py` mirrors it as a Bunny edge
-rule through `tools/llm_csp.py`; change both together. On Linux, Chrome exposes WebGPU only with its
-WebGPU and Vulkan flags, which the page explains.
+`public/_headers` gives the app a scoped CSP: `'wasm-unsafe-eval'`, `worker-src 'self'`, and connections
+only to `huggingface.co` and its `*.hf.co` download hosts plus, for the opt-in web search, Wikipedia,
+`api.duckduckgo.com` and Jina (`r.jina.ai`, `s.jina.ai`). `tools/deploy.py` mirrors it as a Bunny edge rule
+through `tools/llm_csp.py`; change both together. On Linux, Chrome exposes WebGPU only with its WebGPU and
+Vulkan flags, which the page explains.
 
 ## Evolve Jobs
 

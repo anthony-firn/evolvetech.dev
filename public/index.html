@@ -73,17 +73,17 @@
           <div class="case-media">
             <div class="browser">
               <div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/evolve-llm</span></div>
-              <a href="/play/evolve-llm/"><img src="/assets/media/evolve-llm-chat.webp" width="1280" height="860" loading="lazy" alt="Evolve LLM running Llama 3.2 1B on the GPU in Chrome: three coffee-shop names, then a haiku, beside the model picker"></a>
+              <a href="/play/evolve-llm/"><img src="/assets/media/evolve-llm-moe.webp" width="1280" height="860" loading="lazy" alt="Evolve LLM running OLMoE 1B-7B with a 1 GB GPU budget: three sleep tips and a note that 61% of the experts were already on the GPU, beside the list of large models"></a>
             </div>
-            <p class="media-note">A real conversation with Llama 3.2 1B, computed on the GPU inside Chrome.</p>
+            <p class="media-note">A 7-billion-parameter mixture-of-experts model in Chrome with 1 GB of GPU memory, reading the experts each token chooses from storage.</p>
           </div>
           <div class="case-body">
             <p class="label">AI inference · Rust · WebGPU</p>
             <h3 id="case-evolve-llm">Evolve LLM</h3>
-            <p class="pitch">Run open language models on your own GPU from a web page. Nothing to install, no account and no server: a Rust engine compiled to WebAssembly computes every token with WebGPU shaders, and your messages stay on your device.</p>
+            <p class="pitch">Run open language models on your own GPU from a web page, including ones far larger than its memory. A Rust engine compiled to WebAssembly computes every token with WebGPU shaders; what does not fit on the GPU is read from storage as each token needs it.</p>
             <ul class="case-points">
-              <li>My own GGUF loader, decoders for 15 weight formats, WGSL kernels, tokenizers and chat templates. The same Rust crate also runs natively on Vulkan.</li>
-              <li>Checked against Hugging Face tokenizers and transformers’ float32 logits. Replies in the browser match the native build word for word.</li>
+              <li>My own GGUF loader, 25 weight formats down to 1.56 bits, mixture-of-experts routing with an expert cache, DeepSeek’s latent attention, tokenizers and chat templates, for models up to Kimi K2’s trillion parameters.</li>
+              <li>Checked against transformers’ float32 logits and Hugging Face tokenizers; streamed runs match resident ones word for word. Web search is opt-in and runs from the browser.</li>
             </ul>
             <ul class="chips" aria-label="Built with"><li>Rust</li><li>WebGPU / WGSL</li><li>WebAssembly</li><li>wgpu</li></ul>
             <div class="btn-row"><a class="btn primary" href="/play/evolve-llm/">Open the chat <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/projects/evolve-llm/">Case study</a><a class="btn" href="https://github.com/anthony-firn/evolve-llm">Source ↗</a></div>

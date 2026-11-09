@@ -1,11 +1,12 @@
-import { MODELS, cacheKey, formatBytes, hfUrl, parseHfReference } from './models.js';
+import { LARGE, MODELS, cacheKey, formatBytes, hfUrl, listRepo, parseHfReference, resolveParts, splitParts } from './models.js';
 import { renderMarkdown, splitThinking } from './markdown.js';
+import { stripToolCalls } from './tools.js';
 
 const $ = (id) => document.getElementById(id);
 const app = $('app');
 const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
 
-const DEFAULTS = { system: '', temperature: 0.7, top_p: 0.95, top_k: 40, min_p: 0.05, repeat_penalty: 1.1, maxTokens: 1024, ctx: 4096, thinking: true, gpu: 'high-performance' };
+const DEFAULTS = { system: '', temperature: 0.7, top_p: 0.95, top_k: 40, min_p: 0.05, repeat_penalty: 1.1, maxTokens: 1024, ctx: 4096, thinking: true, gpu: 'high-performance', gpuMemory: 'auto', internet: false, jinaKey: '' };
 const SUGGESTIONS = [
   'Explain WebGPU to a curious 12-year-old.',
   'Write a haiku about running AI on my own laptop.',
@@ -126,13 +127,15 @@ function cachedEntry(key) {
 
 function catalogEntry(m) {
   const key = cacheKey(m.repo, m.file);
-  return { kind: 'hf', id: m.id, key, repo: m.repo, file: m.file, revision: 'main', url: hfUrl(m.repo, m.file), bytes: m.bytes, name: m.name };
+  const split = Boolean(splitParts(m.file));
+  return { kind: 'hf', id: m.id, key, repo: m.repo, file: m.file, revision: 'main', url: hfUrl(m.repo, m.file), bytes: m.bytes, name: m.name, resolve: split };
 }
 
+const ALL = [...MODELS, ...LARGE];
+
 function renderModels() {
-  const list = $('model-list');
   const busy = state.phase === 'loading' || state.phase === 'generating' || !state.adapter?.ok;
-  const items = MODELS.map((m) => {
+  const item = (m) => {
     const key = cacheKey(m.repo, m.file);
     const cached = cachedEntry(key);
     const saved = cached?.complete && cached.stored === cached.bytes;
@@ -144,6 +147,7 @@ function renderModels() {
       saved && !running ? el('span', { class: 'tag ok', text: 'Saved' }) : null,
       partial ? el('span', { class: 'tag', text: `Paused at ${Math.round((cached.stored / cached.bytes) * 100)}%` }) : null,
       m.recommended && !saved && !running ? el('span', { class: 'tag rec', text: 'Recommended' }) : null,
+      m.params ? el('span', { class: 'tag', text: m.params }) : null,
       el('span', { class: 'tag', text: `${m.maker} · ${m.license}` }),
     ];
     const button = el('button', {
@@ -162,15 +166,18 @@ function renderModels() {
       })));
     }
     return li;
-  });
+  };
+  const items = MODELS.map(item);
+  $('large-list').replaceChildren(...LARGE.map(item));
+  const list = $('model-list');
   // Downloads that are not in the catalog.
   for (const c of state.cache.models) {
-    if (MODELS.some((m) => cacheKey(m.repo, m.file) === c.key)) continue;
+    if (ALL.some((m) => cacheKey(m.repo, m.file) === c.key)) continue;
     const running = state.loaded?.key === c.key;
-    const entry = { kind: 'hf', id: c.key, key: c.key, repo: c.repo, file: c.file, revision: c.revision || 'main', url: c.url, bytes: c.bytes, name: c.file };
+    const entry = { kind: 'hf', id: c.key, key: c.key, repo: c.repo, file: c.file, revision: c.revision || 'main', url: c.url, bytes: c.bytes, name: c.file, parts: c.parts?.length > 1 ? c.parts.map((p) => ({ ...p, url: hfUrl(c.repo, p.file, c.revision || 'main') })) : null };
     items.push(el('li', {},
       el('button', { class: 'model', type: 'button', disabled: busy || running, 'aria-current': running ? 'true' : null, onclick: () => startLoad(entry) },
-        el('span', { class: 'row' }, el('span', { class: 'name', text: c.file.replace(/\.gguf$/i, '') }), el('span', { class: 'size', text: formatBytes(c.bytes) })),
+        el('span', { class: 'row' }, el('span', { class: 'name', text: c.file.split('/').pop().replace(/(-\d{5}-of-\d{5})?\.gguf$/i, '') }), el('span', { class: 'size', text: formatBytes(c.bytes) })),
         el('span', { class: 'note', text: c.repo }),
         el('span', { class: 'meta' }, running ? el('span', { class: 'tag run', text: 'Running' }) : el('span', { class: 'tag ok', text: c.complete ? 'Saved' : 'Partial' }))),
       running ? null : el('div', { class: 'model-actions' }, el('button', { class: 'remove', type: 'button', disabled: busy, text: 'Remove download', onclick: () => worker.postMessage({ type: 'removeCache', key: c.key }) }))));
@@ -205,13 +212,14 @@ function renderStorage() {
 
 let loadStarted = 0;
 
-function startLoad(source) {
+async function startLoad(source) {
   if (!state.adapter?.ok) return;
   closeDrawer();
   if (state.phase === 'generating') return;
   // A file from disk that is one of the catalog models gets its friendly name.
-  const known = source.kind === 'file' ? MODELS.find((m) => m.file.toLowerCase() === source.file.name.toLowerCase()) : null;
-  const label = known ? known.name : source.kind === 'file' ? source.file.name.replace(/\.gguf$/i, '') : source.name;
+  const first = source.kind === 'file' ? source.files[0].name : '';
+  const known = source.kind === 'file' ? ALL.find((m) => m.file.split('/').pop().toLowerCase() === first.toLowerCase()) : null;
+  const label = known ? known.name : source.kind === 'file' ? first.replace(/(-\d{5}-of-\d{5})?\.gguf$/i, '') : source.name;
   state.loading = { label, key: known ? cacheKey(known.repo, known.file) : source.key, id: known ? known.id : source.id, kind: source.kind };
   state.loaded = null;
   state.messages = [];
@@ -225,7 +233,17 @@ function startLoad(source) {
   loadStarted = performance.now();
   setPhase('loading');
   if (source.kind === 'hf') remember('evolve-llm-last', source.id);
-  worker.postMessage({ type: 'load', source, ctx: Number(state.settings.ctx), gpu: state.settings.gpu });
+  if (source.kind === 'hf' && (source.resolve || !source.bytes) && !source.parts) {
+    // Split models and pasted files: ask Hugging Face for every part and its size first.
+    try {
+      const r = await resolveParts(source.repo, source.file, source.revision);
+      source = { ...source, bytes: r.bytes, parts: r.parts.length > 1 ? r.parts : null, url: r.parts[0].url };
+    } catch (e) {
+      onError({ during: 'load', message: e.message });
+      return;
+    }
+  }
+  worker.postMessage({ type: 'load', source, ctx: Number(state.settings.ctx), gpu: state.settings.gpu, gpuMemory: state.settings.gpuMemory });
 }
 
 function setStep(step, skipDownload = false) {
@@ -245,11 +263,11 @@ function setProgress(loaded, total, detail) {
   $('loading-detail').textContent = detail;
 }
 
-function onProgress({ phase, loaded, total, rate }) {
+function onProgress({ phase, loaded, total, rate, part, parts }) {
   const bar = $('loading-bar');
   bar.classList.toggle('indeterminate', phase === 'prepare');
   if (phase === 'download') {
-    $('loading-step').textContent = 'Downloading from Hugging Face';
+    $('loading-step').textContent = parts > 1 ? `Downloading part ${part} of ${parts} from Hugging Face` : 'Downloading from Hugging Face';
     setStep('download');
     const left = rate > 0 ? (total - loaded) / rate : 0;
     setProgress(loaded, total, `${formatBytes(loaded)} of ${formatBytes(total)} · ${formatBytes(rate)}/s${left > 1 ? ` · about ${formatDuration(left)} left` : ''}`);
@@ -279,7 +297,12 @@ function onLoaded({ model, chat, source }) {
   const cfg = model.config;
   const types = Object.keys(model.weight_types).join(', ');
   $('ready-title').textContent = `${label} is running on your GPU`;
-  $('ready-meta').textContent = `${formatParams(model.parameters)} parameters · ${types} · ${cfg.n_layer} layers · ${chat.context.toLocaleString()}-token context · ${formatBytes(chat.weight_bytes + chat.state_bytes)} of GPU memory · ready in ${secs.toFixed(1)} s`;
+  const active = model.active_parameters < model.parameters * 0.9 ? `, ${formatParams(model.active_parameters)} active per token` : '';
+  const pl = chat.placement || {};
+  const where = pl.streaming
+    ? ` · ${formatBytes(chat.weight_bytes + chat.state_bytes)} on the GPU, ${formatBytes(pl.streamed_bytes)} read from storage as needed${pl.expert_slots ? ` (an expert cache of ${pl.expert_slots.toLocaleString()} of ${pl.experts_total.toLocaleString()} experts)` : ` (${pl.resident_layers} of ${cfg.n_layer} layers on the GPU)`}`
+    : ` · ${formatBytes(chat.weight_bytes + chat.state_bytes)} of GPU memory`;
+  $('ready-meta').textContent = `${formatParams(model.parameters)} parameters${active} · ${types} · ${cfg.n_layer} layers · ${chat.context.toLocaleString()}-token context${where} · ready in ${secs.toFixed(1)} s`;
   $('suggestions').replaceChildren(...SUGGESTIONS.map((s) => el('button', { type: 'button', text: s, onclick: () => send(s) })));
   $('status-line').textContent = 'Replies are generated on this device. Responses can be wrong; check anything important.';
   setPhase('ready');
@@ -287,7 +310,8 @@ function onLoaded({ model, chat, source }) {
 }
 
 function formatParams(n) {
-  return n >= 1e9 ? `${(n / 1e9).toFixed(1)}B` : `${Math.round(n / 1e6)}M`;
+  if (n >= 1e12) return `${(n / 1e12).toFixed(2)}T`;
+  return n >= 1e9 ? `${(n / 1e9).toFixed(n >= 1e11 ? 0 : 1)}B` : `${Math.round(n / 1e6)}M`;
 }
 
 // ---- Conversation ----
@@ -308,9 +332,32 @@ function copyText(text, button) {
   navigator.clipboard?.writeText(text).then(done, () => {});
 }
 
+function safeHref(url) {
+  try {
+    const u = new URL(url);
+    return u.protocol === 'https:' || u.protocol === 'http:' ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
+function stepNode(step) {
+  const what = step.name === 'web_search'
+    ? `Searched the web for “${step.args?.query || ''}”`
+    : `Read ${String(step.args?.url || '').replace(/^https?:\/\//, '').slice(0, 80)}`;
+  if (!step.done) return el('li', { class: 'running', text: what });
+  const links = (step.sources || []).map((s) => {
+    const href = safeHref(s.url);
+    return el('li', {}, href ? el('a', { href, target: '_blank', rel: 'noopener noreferrer', text: s.title || href }) : el('span', { text: s.title || '' }));
+  });
+  if (!links.length) return el('li', { text: `${what} · nothing found` });
+  return el('li', {}, el('details', {}, el('summary', { text: `${what} · ${links.length} ${links.length === 1 ? 'source' : 'sources'}` }), el('ol', {}, ...links)));
+}
+
 function fillAssistant(bubble, m) {
-  const parts = splitThinking(m.content);
+  const parts = splitThinking(stripToolCalls(m.content));
   const nodes = [];
+  if (m.steps?.length) nodes.push(el('ul', { class: 'web-steps', 'aria-label': 'Web activity' }, ...m.steps.map(stepNode)));
   for (const p of parts) {
     if (p.kind === 'think') {
       const words = p.text.trim().split(/\s+/).filter(Boolean).length;
@@ -373,8 +420,15 @@ function conversation() {
   const msgs = [];
   const system = state.settings.system.trim();
   if (system) msgs.push({ role: 'system', content: system });
-  for (const m of state.messages) if (!m.error && (m.role === 'user' || m.role === 'assistant')) msgs.push({ role: m.role, content: m.content });
+  for (const m of state.messages) if (!m.error && (m.role === 'user' || m.role === 'assistant')) msgs.push({ role: m.role, content: m.role === 'assistant' ? stripToolCalls(m.content) : m.content });
   return msgs;
+}
+
+function syncWebToggle() {
+  const on = Boolean(state.settings.internet);
+  const b = $('web-toggle');
+  b.setAttribute('aria-pressed', String(on));
+  b.title = on ? 'Web search is on: search terms go to Wikipedia, DuckDuckGo and Jina' : 'Let the model search the web';
 }
 
 function send(text) {
@@ -405,13 +459,27 @@ function runGeneration() {
     options: { date: [now.getFullYear(), now.getMonth() + 1, now.getDate()], enable_thinking: Boolean(s.thinking) },
     sampler: { temperature: Number(s.temperature), top_p: Number(s.top_p), top_k: Number(s.top_k), min_p: Number(s.min_p), repeat_penalty: Number(s.repeat_penalty), repeat_last_n: 64, seed: (Math.random() * 2 ** 32) >>> 0 },
     maxTokens: Number(s.maxTokens),
+    internet: { enabled: Boolean(s.internet), jinaKey: s.jinaKey || '' },
   });
 }
 
 function onPrefill(p) {
   if (!state.live) return;
-  state.live.prefill = p;
+  state.live.prefill ??= p;
   if (p.dropped) state.live.dropped = p.dropped;
+}
+
+function onTool(msg, done) {
+  const m = state.live;
+  if (!m) return;
+  m.steps ??= [];
+  if (done) {
+    const step = [...m.steps].reverse().find((s) => !s.done && s.name === msg.name) || m.steps[m.steps.length - 1];
+    if (step) Object.assign(step, { done: true, sources: msg.sources });
+  } else {
+    m.steps.push({ name: msg.name, args: msg.args, done: false });
+  }
+  scheduleLiveRender();
 }
 
 function onDone(d) {
@@ -421,7 +489,9 @@ function onDone(d) {
   const rate = d.tokens > 0 && d.ms > 0 ? (d.tokens / (d.ms / 1000)).toFixed(1) : '0';
   const prompt = p.computed ? ` · read ${p.computed} prompt tokens in ${(p.ms / 1000).toFixed(2)} s${p.reused ? ` (${p.reused} reused)` : ''}` : '';
   const why = d.reason === 'stopped' ? ' · stopped' : d.reason === 'length' ? ' · reached the reply limit' : '';
-  m.stats = `${d.tokens} tokens · ${rate} tokens/s${prompt}${why}`;
+  const st = d.stream || {};
+  const stream = st.bytes_read ? ` · read ${formatBytes(st.bytes_read)} from storage${st.expert_requests ? `, ${Math.round((100 * st.expert_hits) / st.expert_requests)}% of experts already on the GPU` : ''}` : '';
+  m.stats = `${d.tokens} tokens · ${rate} tokens/s${prompt}${why}${stream}`;
   if (!m.content.trim()) m.content = d.reason === 'stopped' ? '' : '(no reply)';
   state.live = null;
   $('status-line').textContent = `Context: ${d.used.toLocaleString()} of ${d.context.toLocaleString()} tokens used`;
@@ -471,6 +541,12 @@ worker.onmessage = (event) => {
         scheduleLiveRender();
       }
       break;
+    case 'tool': onTool(msg, false); break;
+    case 'tool-result': onTool(msg, true); break;
+    case 'round':
+      // The model's next turn after a tool result replaces the tool-call text.
+      if (state.live) { state.live.content = ''; scheduleLiveRender(); }
+      break;
     case 'done': onDone(msg); break;
     case 'error': onError(msg); break;
     case 'unloaded': break;
@@ -505,6 +581,14 @@ $('composer').addEventListener('submit', (e) => {
   send(text);
 });
 $('stop').addEventListener('click', () => worker.postMessage({ type: 'stop' }));
+$('web-toggle').addEventListener('click', () => {
+  state.settings.internet = !state.settings.internet;
+  saveSettings();
+  syncWebToggle();
+  $('status-line').textContent = state.settings.internet
+    ? 'Web search is on. Search terms and pages the model opens go to Wikipedia, DuckDuckGo and Jina Reader; the conversation stays here.'
+    : 'Web search is off. Nothing leaves this device.';
+});
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && state.phase === 'generating') worker.postMessage({ type: 'stop' });
 });
@@ -519,27 +603,48 @@ $('new-chat').addEventListener('click', () => {
   prompt.focus();
 });
 $('start-recommended').addEventListener('click', () => {
-  const last = MODELS.find((m) => m.id === recall('evolve-llm-last'));
+  const last = ALL.find((m) => m.id === recall('evolve-llm-last'));
   startLoad(catalogEntry(last || MODELS.find((m) => m.recommended)));
 });
-$('hf-form').addEventListener('submit', (e) => {
+const HF_HELP = $('hf-help').textContent;
+
+function hfSource(ref, file) {
+  const first = splitParts(file)?.[0] || file;
+  const key = cacheKey(ref.repo, first, ref.revision);
+  return { kind: 'hf', id: key, key, repo: ref.repo, file: first, revision: ref.revision, url: hfUrl(ref.repo, first, ref.revision), bytes: 0,
+    name: first.split('/').pop().replace(/(-\d{5}-of-\d{5})?\.gguf$/i, ''), resolve: true };
+}
+
+$('hf-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const help = $('hf-help');
+  const results = $('hf-results');
+  results.hidden = true;
   try {
     const ref = parseHfReference($('hf-input').value);
     help.classList.remove('error');
-    help.textContent = 'Llama, Mistral, Qwen2, Qwen3 and SmolLM layouts. Q4, Q5, Q6, Q8, IQ4 and F16 weights.';
-    const key = cacheKey(ref.repo, ref.file, ref.revision);
-    startLoad({ kind: 'hf', id: key, key, ...ref, url: hfUrl(ref.repo, ref.file, ref.revision), bytes: 0, name: ref.file.split('/').pop().replace(/\.gguf$/i, '') });
+    help.textContent = HF_HELP;
+    if (ref.file) {
+      startLoad(hfSource(ref, ref.file));
+      return;
+    }
+    help.textContent = `Looking up ${ref.repo}…`;
+    const groups = await listRepo(ref.repo, ref.revision);
+    if (!groups.length) throw new Error('That repository has no GGUF files.');
+    help.textContent = `${groups.length} GGUF ${groups.length === 1 ? 'model' : 'models'} in ${ref.repo}. Choose one:`;
+    results.replaceChildren(...groups.map((g) => el('li', {}, el('button', { type: 'button', onclick: () => startLoad(hfSource(ref, g.file)) },
+      el('span', { class: 'name', text: g.file.split('/').pop().replace(/(-\d{5}-of-\d{5})?\.gguf$/i, '') }),
+      el('span', { class: 'size', text: `${formatBytes(g.bytes)}${g.parts.length > 1 ? ` · ${g.parts.length} files` : ''}` })))));
+    results.hidden = false;
   } catch (err) {
     help.classList.add('error');
     help.textContent = err.message;
   }
 });
 $('file-input').addEventListener('change', (e) => {
-  const file = e.target.files?.[0];
+  const files = [...(e.target.files || [])].sort((a, b) => a.name.localeCompare(b.name));
   e.target.value = '';
-  if (file) startLoad({ kind: 'file', file, key: null, id: null });
+  if (files.length) startLoad({ kind: 'file', files, key: null, id: null });
 });
 
 // Drawer on narrow screens.
@@ -564,12 +669,18 @@ function fillSettings() {
   }
   form.elements.ctx.value = String(s.ctx);
   form.elements.gpu.value = s.gpu;
+  form.elements.gpuMemory.value = String(s.gpuMemory);
   form.elements.thinking.checked = Boolean(s.thinking);
+  form.elements.internet.checked = Boolean(s.internet);
+  form.elements.jinaKey.value = s.jinaKey || '';
 }
 form.addEventListener('input', (e) => {
   const t = e.target;
   if (!t.name) return;
-  if (t.type === 'checkbox') state.settings[t.name] = t.checked;
+  if (t.type === 'checkbox') {
+    state.settings[t.name] = t.checked;
+    if (t.name === 'internet') syncWebToggle();
+  }
   else if (t.type === 'range') {
     state.settings[t.name] = Number(t.value);
     form.elements[`${t.name}Out`].value = t.value;
@@ -582,15 +693,17 @@ form.addEventListener('input', (e) => {
   saveSettings();
 });
 form.addEventListener('change', (e) => {
-  if ((e.target.name === 'ctx' || e.target.name === 'gpu') && state.loaded) $('status-line').textContent = 'This setting applies the next time a model loads.';
+  if (['ctx', 'gpu', 'gpuMemory'].includes(e.target.name) && state.loaded) $('status-line').textContent = 'This setting applies the next time a model loads.';
 });
 $('open-settings').addEventListener('click', () => { fillSettings(); dialog.showModal(); });
 $('reset-settings').addEventListener('click', () => {
   state.settings = { ...DEFAULTS };
   saveSettings();
   fillSettings();
+  syncWebToggle();
   worker.postMessage({ type: 'adapter', gpu: state.settings.gpu });
 });
 
 setPhase('starting');
+syncWebToggle();
 worker.postMessage({ type: 'hello', gpu: state.settings.gpu });

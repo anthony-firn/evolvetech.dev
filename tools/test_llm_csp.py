@@ -18,6 +18,11 @@ class LlmPolicy(unittest.TestCase):
         self.assertIn("worker-src 'self'", policy)
         self.assertIn('https://huggingface.co', policy)
         self.assertIn('https://*.hf.co', policy)
+        # Opt-in web access: search and page reading, and nothing broader.
+        for host in ('https://*.wikipedia.org', 'https://api.duckduckgo.com', 'https://r.jina.ai', 'https://s.jina.ai'):
+            self.assertIn(host, policy)
+        connect = next(d for d in policy.split(';') if d.strip().startswith('connect-src')).split()[1:]
+        self.assertEqual(len(connect), 8, connect)
         self.assertNotIn('connect-src https:', policy)
         self.assertNotIn("'unsafe-eval'", policy.replace("'wasm-unsafe-eval'", ''))
         self.assertNotIn("'unsafe-inline'", policy)
