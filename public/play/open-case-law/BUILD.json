@@ -1,0 +1,8 @@
+{
+  "application": "Open Case Law",
+  "license": "MIT",
+  "corpus_included": false,
+  "private_research_included": false,
+  "source_files": 21,
+  "browser_data_storage": "tab memory; user-initiated exports only"
+}
