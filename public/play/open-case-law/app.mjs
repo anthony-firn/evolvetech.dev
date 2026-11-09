@@ -9,6 +9,7 @@ function message(text,error=false){$('message').textContent=text;$('message').cl
 function tab(id){document.querySelectorAll('.panel').forEach(n=>n.hidden=n.id!==id);document.querySelectorAll('[data-tab]').forEach(n=>{n.classList.toggle('active',n.dataset.tab===id);if(n.dataset.tab===id)n.setAttribute('aria-current','page');else n.removeAttribute('aria-current');});}
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
 function link(text,url){const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.referrerPolicy='no-referrer';return a;}
+function otherCopy(doc){return 'https://www.google.com/search?'+new URLSearchParams({q:'\"'+doc.title+'\" '+(doc.citation||'')+' '+(doc.date||'').slice(0,4)+' opinion'});}
 function download(name,contents,type='application/json'){const url=URL.createObjectURL(new Blob([contents],{type}));const a=el('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function workspace(){return {schema:'open-case-law-workspace-v1',sources:docs,notes};}
 async function persist(){
@@ -29,7 +30,7 @@ function sourceCard(doc,{saved=false,excerpt=''}={}){
   if(excerpt||doc.content_type==='snippet')card.append(el('p',excerpt||doc.text,'preview'));
   if(doc.content_type==='snippet')card.append(el('p','Search preview · Read the original before relying on this case.','hint'));
   const actions=el('div',undefined,'actions');
-  if(safeURL(doc.url)){const a=link('Read original ↗',safeURL(doc.url));a.className='button';actions.append(a);}
+  if(safeURL(doc.url)){const a=link('Read original ↗',safeURL(doc.url));a.className='button';actions.append(a);actions.append(link('Find another copy ↗',otherCopy(doc)));}
   const view=el('button',saved?'Notes & saved text':'Preview & notes');view.onclick=()=>openSource(docs.find(d=>d.id===doc.id)||doc);actions.append(view);
   const save=el('button',docs.some(d=>d.id===doc.id)?'Saved ✓':'Save case');save.dataset.save=doc.id;save.disabled=docs.some(d=>d.id===doc.id);save.onclick=async()=>{try{await ready;await mergeSources([doc],{preserve:true});message('Case saved. Find it in Saved cases.');await persist();}catch(e){message(e.message,true);}};if(!saved)actions.append(save);
   if(saved){const remove=el('button','Remove');remove.onclick=async()=>{if(!confirm('Remove this case and its notes from this browser?'))return;docs=docs.filter(d=>d.id!==doc.id);notes=notes.filter(n=>n.source.id!==doc.id);render();message('Case removed.');await persist();};actions.append(remove);}
@@ -57,7 +58,7 @@ function renderCaseNotes(){
 function refreshReader(){
   $('reader-title').textContent=reading.title;$('reader-meta').textContent=[reading.citation,reading.court,reading.date].filter(Boolean).join(' · ');$('reader-text').textContent=reading.text;
   $('reader-kind').textContent=reading.content_type==='snippet'?'Search preview only. It may contain a dissent or a procedural order. Read the original opinion; this preview cannot be saved as a verified quotation.':reading.content_type==='research_summary'?'Research summary. Add actual source text before quoting.':'Text supplied by you · '+(reading.content_type==='full_text'?'Complete opinion':'Selected passage')+'. Verify against the original and review surrounding context.';
-  const url=safeURL(reading.url);$('reader-original').hidden=!url;if(url)$('reader-original').href=url;updateSavedButtons();renderCaseNotes();
+  const url=safeURL(reading.url);$('reader-original').hidden=!url;if(url)$('reader-original').href=url;$('reader-alternative').href=otherCopy(reading);updateSavedButtons();renderCaseNotes();
 }
 function openSource(doc){
   reading=doc;$('text-form').hidden=true;$('note-form').hidden=true;$('note-form').reset();$('note-message').textContent='';refreshReader();if(!$('reader').open)$('reader').showModal();
