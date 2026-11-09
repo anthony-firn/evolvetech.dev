@@ -18,6 +18,7 @@ DEMOS = {
     "evolve-hosting": {"repo": "https://github.com/anthony-firn/evolve-hosting.git", "build": "node"},
     "evolve-jobs": {"repo": "https://github.com/anthony-firn/evolve-jobs.git", "build": "jobs"},
     "evolve-inbox": {"repo": "https://github.com/anthony-firn/evolve-inbox.git", "build": "node"},
+    "evolve-llm": {"repo": "https://github.com/anthony-firn/evolve-llm.git", "build": "llm"},
     "pulse-pop": {"repo": "https://github.com/anthony-firn/pulse-pop.git", "build": "expo",
                   "description": "Play Pulse Pop, a quick touch game built with Expo and React Native, in your browser."},
     "emberwake": {"repo": "https://github.com/anthony-firn/emberwake.git", "build": "godot",
@@ -154,6 +155,19 @@ def build_jobs(src, name):
     return src / "dist" / "site"
 
 
+def build_llm(src, name):
+    """Test the Rust WebGPU engine and its browser modules, then compile it to WebAssembly with the app.
+
+    GPU and model tests run when this machine has a GPU and GGUF files in $EVOLVE_LLM_MODELS;
+    otherwise they skip themselves and only the fixture and unit tests run.
+    """
+    run("cargo", "test", "--release", cwd=src)
+    run("node", "--test", "tests/web.test.mjs", cwd=src)
+    out = src / "dist"
+    run(sys.executable, "tools/build_web.py", "--out", str(out), cwd=src)
+    return out
+
+
 def build_static(src, name):
     """A buildless browser tool: run the project's own tests, then publish its web/ folder as is."""
     run("npm", "test", cwd=src)
@@ -182,9 +196,11 @@ def build_demo(src, name):
             if path.is_file():
                 digest.update(filename.encode() + b"\0" + path.read_bytes() + b"\0")
         provenance.update(modified=True, working_tree_sha256=digest.hexdigest())
-    out = {"expo": build_expo, "godot": build_godot, "pyodide": build_pyodide, "data": build_data, "vite": build_vite, "node": build_node, "jobs": build_jobs, "rust": build_rust, "static": build_static}[demo["build"]](src, name)
+    out = {"expo": build_expo, "godot": build_godot, "pyodide": build_pyodide, "data": build_data, "vite": build_vite, "node": build_node, "jobs": build_jobs, "rust": build_rust, "static": build_static, "llm": build_llm}[demo["build"]](src, name)
     if demo["build"] == "rust":
         provenance["wasm_sha256"] = hashlib.sha256((out / "emergence_web.wasm").read_bytes()).hexdigest()
+    if demo["build"] == "llm":
+        provenance["wasm_sha256"] = hashlib.sha256((out / "pkg" / "evolve_llm_bg.wasm").read_bytes()).hexdigest()
     if "description" in demo:
         page = out / "index.html"
         head = (f'<meta name="description" content="{demo["description"]}">'

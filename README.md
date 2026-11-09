@@ -82,6 +82,7 @@ To reproduce this hosting arrangement in another account, create a Netlify site,
 | Path | Source | Built with |
 |---|---|---|
 | `/play/evolve-hosting/` | [evolve-hosting](https://github.com/anthony-firn/evolve-hosting) | Signed release workspace, static example mirror and Fairground support rail |
+| `/play/evolve-llm/` | [evolve-llm](https://github.com/anthony-firn/evolve-llm) | Rust engine compiled to WebAssembly, WGSL kernels on WebGPU; models download from Hugging Face |
 | `/play/evolve-inbox/` | [evolve-inbox](https://github.com/anthony-firn/evolve-inbox) | Shared inbox reader with fictional messages; no live mailbox API |
 | `/play/emergence/` | emergence `web/` and Rust model crates | Rust `wasm32-unknown-unknown`, no JS runtime dependencies |
 | `/play/emergence/cad/` | emergence `web/cad/` + native engineering graph and CAD kernel | Local revisions, WebRTC peer sync, Rust checks and STL export |
@@ -120,6 +121,24 @@ Bunny edge rule; the rest of the site keeps the strict policy. Change both toget
 host (`https:`) and a local Ollama, and images and video from `https:`. It needs a matching Bunny edge rule too.
 Bunny Storage serves unknown extensions as `application/octet-stream`, so a further edge rule sets `text/javascript` for
 `*.mjs` (Pyodide's modules); browsers refuse to run module scripts with any other type.
+
+## Evolve LLM
+
+Evolve LLM runs GGUF language models on the visitor's GPU at `/play/evolve-llm/`, with its own
+[public repository](https://github.com/anthony-firn/evolve-llm) and `/projects/evolve-llm/` case study.
+A Rust engine compiled to WebAssembly drives WebGPU from a module worker. Models download directly from
+Hugging Face into the browser's origin-private file system; no model files are hosted here and no prompt
+leaves the device.
+
+Rebuild with `python3 tools/build_demos.py evolve-llm --local-source ~/Dev/evolve-llm`. This needs Rust
+with `wasm32-unknown-unknown`, `wasm-bindgen-cli` matching the project's `Cargo.lock`, Node.js and Python 3.
+The build runs the project's tests first; its GPU and model tests run only when the machine has a GPU and
+GGUF files in `$EVOLVE_LLM_MODELS`. `BUILD.json` records the commit and WebAssembly hash.
+
+`public/_headers` gives the app a scoped CSP: `'wasm-unsafe-eval'`, `worker-src 'self'` and connections
+only to `huggingface.co` and its `*.hf.co` download hosts. `tools/deploy.py` mirrors it as a Bunny edge
+rule through `tools/llm_csp.py`; change both together. On Linux, Chrome exposes WebGPU only with its
+WebGPU and Vulkan flags, which the page explains.
 
 ## Evolve Jobs
 

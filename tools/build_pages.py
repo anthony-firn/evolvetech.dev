@@ -76,6 +76,36 @@ def callout(title, text):
 
 
 PAGES = [
+    dict(slug="evolve-llm", title="Evolve LLM", poster="evolve-llm-chat.webp",
+         label="AI inference · Rust · WebGPU · WebAssembly",
+         description="Run open language models on your own GPU from a web page. A Rust inference engine compiled to WebAssembly computes every token with WebGPU shaders.",
+         lede="Open a page, pick a model and chat with it on your own graphics card. There is nothing to install and no account, and no server sees your messages. A Rust engine compiled to WebAssembly computes every token with WebGPU compute shaders.",
+         demo="/play/evolve-llm/", demo_text="Open the chat", repo="https://github.com/anthony-firn/evolve-llm",
+         media='<figure class="case-media reveal"><div class="browser"><div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/evolve-llm</span></div><img src="/assets/media/evolve-llm-chat.webp" width="1280" height="860" alt="Evolve LLM running Llama 3.2 1B on the GPU in Chrome: three coffee-shop names, then a haiku, beside the model picker"></div><figcaption>Llama 3.2 1B in Chrome on an Intel integrated GPU through WebGPU. The second answer reused 202 tokens of the conversation already in the cache.</figcaption></figure>',
+         status="Early release; tested in Chrome on Linux with NVIDIA and Intel GPUs", license="Apache 2.0 (each model keeps its own license)", stack="Rust, wgpu, WGSL compute shaders, WebAssembly, WebGPU, JavaScript, Python and PyTorch for reference tests",
+         sections=[
+             section("Why I built it", "Running a language model locally usually means installing a runtime, drivers and a model manager, then learning which file to download. Browsers already ship a GPU programming interface. I wanted a single link that takes anyone from nothing to a private, local model in a minute, on hardware they already own."),
+             section("Try it", '<a href="/play/evolve-llm/">Open the chat →</a> Pick a model from the list: SmolLM2 135M is a 145 MB first test, and Qwen2.5 0.5B is the recommended start. The file downloads once from Hugging Face into the browser’s private storage and loads from there next time, even offline. You can paste any single-file GGUF on Hugging Face or open one from your disk.', "WebGPU is needed: Chrome or Edge on Windows, macOS, ChromeOS and Android; Safari 26; Firefox on Windows. On Linux, Chrome needs its WebGPU flag. The page says what to do when WebGPU is missing."),
+             section("An engine, not a wrapper", "No machine-learning framework is involved. I wrote the GGUF parser, the decoders for 15 weight formats, the transformer forward pass as WGSL compute shaders, two tokenizer families and the chat-template renderer in Rust. The same crate runs natively through wgpu on Vulkan, Metal or Direct3D 12, and compiles to WebAssembly for the browser’s WebGPU.", bullets=[
+                 "Weights stream to the GPU in 16 MB slices and are repacked on the way into word-aligned layouts, so the browser never holds the whole model in memory. Five- and six-bit weights keep their size, with their extra bits in a separate plane.",
+                 "Separate kernels handle one token at a time and whole prompts in tiles, with grouped-query attention, rotary embeddings, an f16 key-value cache and a streaming softmax.",
+                 "Each new turn computes only the part of the conversation that is not already cached, so follow-up questions start quickly.",
+                 "A module worker keeps the page responsive. Downloads resume after a dropped connection, and the only network destination is Hugging Face.",
+             ]),
+             section("Checked against reference implementations", "Speed means nothing if the numbers are wrong, so the engine is tested against independent code:", bullets=[
+                 "Dequantization of every supported format matches gguf-py’s NumPy implementation.",
+                 "Tokenizers produce the same token ids as Hugging Face’s originals on 17 difficult strings across five models, and chat prompts match transformers’ template rendering exactly.",
+                 "Final-token logits for SmolLM2, Qwen2.5, Qwen3 and Llama 3.2 match transformers’ float32 PyTorch run on the same weights: same top token, top-20 logits within 0.2% of the range.",
+                 "In Chrome under the production security policy, greedy replies match the native Vulkan build word for word.",
+             ]),
+             section("Measured speed", "I measured on a laptop running its battery power profile. The profile held the RTX 3050 at its lowest clocks, so the integrated Intel GPU was the faster of the two. Chrome kept within about 15% of the native build.", bullets=[
+                 "SmolLM2 135M: about 70 tokens per second in Chrome on the Intel GPU (82 natively).",
+                 "Qwen2.5 0.5B: about 35 tokens per second in Chrome (40 natively), and 415 prompt tokens per second natively.",
+                 "Llama 3.2 1B: about 22 tokens per second in Chrome (23 natively).",
+                 "On the capped RTX 3050, Chrome and native ran at the same speed, limited by the memory bandwidth the power profile allowed.",
+             ]),
+             section("Limits", "This is an early release. It runs Llama, Mistral, Qwen2, Qwen3 and SmolLM layouts; Gemma, Phi, mixture-of-experts models and images are not supported yet. Very large models are limited by the GPU memory a browser allows. Speed has not been tuned against llama.cpp or WebLLM, and models can be wrong, so check anything important."),
+         ]),
     dict(slug="evolve-hosting", title="Evolve Hosting", poster="evolve-hosting-demo.jpg",
          label="Distributed hosting · Developer tools · Open source",
          description="Signed static app releases, verified mirrors, safe rollback and optional direct support through Fairground.",

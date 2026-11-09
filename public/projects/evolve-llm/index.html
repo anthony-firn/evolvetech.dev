@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Evolve LLM — Anthony Firn</title>
+  <meta name="description" content="Run open language models on your own GPU from a web page. A Rust inference engine compiled to WebAssembly computes every token with WebGPU shaders.">
+  <link rel="canonical" href="https://www.evolvetech.dev/projects/evolve-llm/">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Evolve LLM — Anthony Firn">
+  <meta property="og:description" content="Run open language models on your own GPU from a web page. A Rust inference engine compiled to WebAssembly computes every token with WebGPU shaders.">
+  <meta property="og:url" content="https://www.evolvetech.dev/projects/evolve-llm/">
+  <meta property="og:image" content="https://www.evolvetech.dev/assets/media/evolve-llm-chat.webp">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#06080d">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f6fa">
+  <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+  <link rel="preload" href="/assets/fonts/space-grotesk.woff2" as="font" type="font/woff2" crossorigin>
+  <script src="/assets/v2/theme.js"></script>
+  <link rel="stylesheet" href="/assets/v2/style.css">
+  <script type="module" src="/assets/v2/main.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="shell">
+      <a class="brand" href="/" aria-label="Anthony Firn, home"><span class="monogram" aria-hidden="true">AF</span><span><strong>Anthony Firn</strong><small>EvolveTech</small></span></a>
+      <nav class="nav" aria-label="Main"><a href="/#work">Work</a><a href="/#engineering">Engineering</a><a href="/#experience">Experience</a><a href="/resume/">Résumé</a><a class="nav-cta" href="/#contact">Contact</a><button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></nav>
+    </div>
+  </header>
+  <main id="main" class="shell">
+    <section class="page-hero">
+      <a class="crumb" href="/#work">← All work</a>
+      <p class="label">AI inference · Rust · WebGPU · WebAssembly</p>
+      <h1>Evolve LLM</h1>
+      <p class="lede">Open a page, pick a model and chat with it on your own graphics card. There is nothing to install and no account, and no server sees your messages. A Rust engine compiled to WebAssembly computes every token with WebGPU compute shaders.</p>
+      <div class="btn-row"><a class="btn primary" href="/play/evolve-llm/">Open the chat <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="https://github.com/anthony-firn/evolve-llm">Source on GitHub ↗</a></div>
+    </section>
+    <figure class="case-media reveal"><div class="browser"><div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/evolve-llm</span></div><img src="/assets/media/evolve-llm-chat.webp" width="1280" height="860" alt="Evolve LLM running Llama 3.2 1B on the GPU in Chrome: three coffee-shop names, then a haiku, beside the model picker"></div><figcaption>Llama 3.2 1B in Chrome on an Intel integrated GPU through WebGPU. The second answer reused 202 tokens of the conversation already in the cache.</figcaption></figure>
+    <div class="prose">
+      <section><h2>Why I built it</h2><p>Running a language model locally usually means installing a runtime, drivers and a model manager, then learning which file to download. Browsers already ship a GPU programming interface. I wanted a single link that takes anyone from nothing to a private, local model in a minute, on hardware they already own.</p></section>
+      <section><h2>Try it</h2><p><a href="/play/evolve-llm/">Open the chat →</a> Pick a model from the list: SmolLM2 135M is a 145 MB first test, and Qwen2.5 0.5B is the recommended start. The file downloads once from Hugging Face into the browser’s private storage and loads from there next time, even offline. You can paste any single-file GGUF on Hugging Face or open one from your disk.</p><p>WebGPU is needed: Chrome or Edge on Windows, macOS, ChromeOS and Android; Safari 26; Firefox on Windows. On Linux, Chrome needs its WebGPU flag. The page says what to do when WebGPU is missing.</p></section>
+      <section><h2>An engine, not a wrapper</h2><p>No machine-learning framework is involved. I wrote the GGUF parser, the decoders for 15 weight formats, the transformer forward pass as WGSL compute shaders, two tokenizer families and the chat-template renderer in Rust. The same crate runs natively through wgpu on Vulkan, Metal or Direct3D 12, and compiles to WebAssembly for the browser’s WebGPU.</p><ul><li>Weights stream to the GPU in 16 MB slices and are repacked on the way into word-aligned layouts, so the browser never holds the whole model in memory. Five- and six-bit weights keep their size, with their extra bits in a separate plane.</li><li>Separate kernels handle one token at a time and whole prompts in tiles, with grouped-query attention, rotary embeddings, an f16 key-value cache and a streaming softmax.</li><li>Each new turn computes only the part of the conversation that is not already cached, so follow-up questions start quickly.</li><li>A module worker keeps the page responsive. Downloads resume after a dropped connection, and the only network destination is Hugging Face.</li></ul></section>
+      <section><h2>Checked against reference implementations</h2><p>Speed means nothing if the numbers are wrong, so the engine is tested against independent code:</p><ul><li>Dequantization of every supported format matches gguf-py’s NumPy implementation.</li><li>Tokenizers produce the same token ids as Hugging Face’s originals on 17 difficult strings across five models, and chat prompts match transformers’ template rendering exactly.</li><li>Final-token logits for SmolLM2, Qwen2.5, Qwen3 and Llama 3.2 match transformers’ float32 PyTorch run on the same weights: same top token, top-20 logits within 0.2% of the range.</li><li>In Chrome under the production security policy, greedy replies match the native Vulkan build word for word.</li></ul></section>
+      <section><h2>Measured speed</h2><p>I measured on a laptop running its battery power profile. The profile held the RTX 3050 at its lowest clocks, so the integrated Intel GPU was the faster of the two. Chrome kept within about 15% of the native build.</p><ul><li>SmolLM2 135M: about 70 tokens per second in Chrome on the Intel GPU (82 natively).</li><li>Qwen2.5 0.5B: about 35 tokens per second in Chrome (40 natively), and 415 prompt tokens per second natively.</li><li>Llama 3.2 1B: about 22 tokens per second in Chrome (23 natively).</li><li>On the capped RTX 3050, Chrome and native ran at the same speed, limited by the memory bandwidth the power profile allowed.</li></ul></section>
+      <section><h2>Limits</h2><p>This is an early release. It runs Llama, Mistral, Qwen2, Qwen3 and SmolLM layouts; Gemma, Phi, mixture-of-experts models and images are not supported yet. Very large models are limited by the GPU memory a browser allows. Speed has not been tuned against llama.cpp or WebLLM, and models can be wrong, so check anything important.</p></section>
+      <dl class="facts"><div><dt>Status</dt><dd>Early release; tested in Chrome on Linux with NVIDIA and Intel GPUs</dd></div><div><dt>License</dt><dd>Apache 2.0 (each model keeps its own license)</dd></div><div><dt>Built with</dt><dd>Rust, wgpu, WGSL compute shaders, WebAssembly, WebGPU, JavaScript, Python and PyTorch for reference tests</dd></div></dl>
+    </div>
+  </main>
+  <footer class="site-footer"><div class="shell"><span>© 2026 Anthony Firn · EvolveTech</span><nav aria-label="Footer"><a href="/">Home</a><a href="/resume/">Résumé</a><a href="https://github.com/anthony-firn">GitHub</a></nav></div></footer>
+</body>
+</html>

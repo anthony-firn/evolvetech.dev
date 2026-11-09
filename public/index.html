@@ -69,6 +69,27 @@
           <p>Each project is a working system with its source on GitHub. Open any of them in a new tab and try it — no install, no account.</p>
         </div>
 
+        <article class="case reveal" aria-labelledby="case-evolve-llm" data-glow="ember">
+          <div class="case-media">
+            <div class="browser">
+              <div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/evolve-llm</span></div>
+              <a href="/play/evolve-llm/"><img src="/assets/media/evolve-llm-chat.webp" width="1280" height="860" loading="lazy" alt="Evolve LLM running Llama 3.2 1B on the GPU in Chrome: three coffee-shop names, then a haiku, beside the model picker"></a>
+            </div>
+            <p class="media-note">A real conversation with Llama 3.2 1B, computed on the GPU inside Chrome.</p>
+          </div>
+          <div class="case-body">
+            <p class="label">AI inference · Rust · WebGPU</p>
+            <h3 id="case-evolve-llm">Evolve LLM</h3>
+            <p class="pitch">Run open language models on your own GPU from a web page. Nothing to install, no account and no server: a Rust engine compiled to WebAssembly computes every token with WebGPU shaders, and your messages stay on your device.</p>
+            <ul class="case-points">
+              <li>My own GGUF loader, decoders for 15 weight formats, WGSL kernels, tokenizers and chat templates. The same Rust crate also runs natively on Vulkan.</li>
+              <li>Checked against Hugging Face tokenizers and transformers’ float32 logits. Replies in the browser match the native build word for word.</li>
+            </ul>
+            <ul class="chips" aria-label="Built with"><li>Rust</li><li>WebGPU / WGSL</li><li>WebAssembly</li><li>wgpu</li></ul>
+            <div class="btn-row"><a class="btn primary" href="/play/evolve-llm/">Open the chat <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/projects/evolve-llm/">Case study</a><a class="btn" href="https://github.com/anthony-firn/evolve-llm">Source ↗</a></div>
+          </div>
+        </article>
+
         <article class="case reveal" aria-labelledby="case-probate">
           <div class="case-media">
             <div class="helper-preview">

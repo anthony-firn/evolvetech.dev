@@ -1,0 +1,5 @@
+{
+  "wasm_bytes": 3135568,
+  "wasm_sha256": "fa9389503b8c103b6bb99d1055a456cd1754c45faa2af04a66dbf5d4e8b9d2b0",
+  "wasm_bindgen": "0.2.130"
+}
