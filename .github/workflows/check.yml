@@ -18,5 +18,7 @@ jobs:
       - run: python3 tools/test_jobs_csp.py
       - run: python3 tools/test_hosting_csp.py
       - run: python3 tools/test_llm_csp.py
+      - run: python3 tools/test_case_law_csp.py
+      - run: node --test netlify/lib/open-case-law/search.test.mjs tools/test_case_law_engine.mjs
       - run: node --test tools/test_wallet_setup.mjs
       - run: python3 tools/check_site.py

@@ -3,6 +3,6 @@
   "license": "MIT",
   "corpus_included": false,
   "private_research_included": false,
-  "source_files": 21,
-  "browser_data_storage": "tab memory; user-initiated exports only"
+  "source_files": 27,
+  "browser_data_storage": "browser IndexedDB; user-initiated backups; search queries sent to CourtListener via EvolveTech"
 }
