@@ -9,11 +9,11 @@
       "commit": "5666660e51f4280d2ced6bf4bf828b777cc71fe8"
     },
     {
-      "file": "evolve-llm-browser-0.2.0.zip",
-      "bytes": 989216,
-      "sha256": "b2f3dad8b2f911424a3002d4fe71d385714916b1dd45651d3a2791466d421297",
+      "file": "evolve-llm-browser-0.3.0.zip",
+      "bytes": 1485405,
+      "sha256": "8835ca95e39321f0a974eda7d20d588fd4d6ce3dd2fdb2da99c9e57baf293b69",
       "source": "https://github.com/anthony-firn/evolve-llm",
-      "commit": "9b647da8ff6f19c044f0982c13ae030472750817"
+      "commit": "eb0b0287ea68bd76ba9c28ae5220cfda0f89eda7"
     }
   ]
 }

@@ -27,7 +27,7 @@ def sync(inbox, llm):
         packed = json.loads(subprocess.check_output(['node', str(inbox / 'tools/pack-sdk.mjs'), str(out)], cwd=inbox, text=True))
         inbox_file = Path(packed['file'])
         subprocess.run(['python3', str(llm / 'tools/package_sdk.py'), '--runtime', str(PUBLIC / 'play/evolve-llm/pkg'), '--out', str(out)], cwd=llm, check=True)
-        llm_file = out / 'evolve-llm-browser-0.2.0.zip'
+        llm_file = out / 'evolve-llm-browser-0.3.0.zip'
         # This exact allowlist is sufficient for browser fixtures. No server code is copied.
         names = ['src/client.mjs', 'src/client.d.mts', 'src/demo-client.mjs', 'src/demo-client.d.mts', 'demo/messages.mjs']
         with tarfile.open(inbox_file) as archive:
@@ -39,7 +39,7 @@ def sync(inbox, llm):
         with zipfile.ZipFile(llm_file) as archive:
             provenance = json.loads(archive.read('BUILD.json'))
             if provenance['modified'] or provenance['commit'] != llm_commit: raise ValueError('SDK source provenance does not match')
-            names = ['sdk.mjs', 'sdk.d.mts', 'examples/index.html', 'examples/example.mjs', 'examples/example.css', 'examples/fixture-worker.mjs']
+            names = [name for name in provenance['files_sha256'] if name not in ['LICENSE', 'NOTICE', 'README.md', 'WORKBENCH.md'] and not name.startswith('pkg/')]
             for filename in names:
                 dest = PUBLIC / 'play/evolve-llm' / filename
                 dest.parent.mkdir(parents=True, exist_ok=True); dest.write_bytes(archive.read(filename))
