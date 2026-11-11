@@ -4,7 +4,7 @@
     "@earendil-works/pi-ai@1.5.1",
     "@earendil-works/pi-schema@1.5.1"
   ],
-  "bytes": 86493,
+  "bytes": 86682,
   "shell_wasm_sha256": "af35d8544dc84fb42228de1e225897ecd79576aebbc15856b6f77258d3fbea15",
-  "bundle_sha256": "78035fc6db18f86ce3b266c74e2a3d1ee734bb7dbb9cf1b35700e2a8c490b8d4"
+  "bundle_sha256": "51255762d43a0ff550173a7c016ef019876fa5117fa0b94595e6f5dc80df8a68"
 }
