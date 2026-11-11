@@ -1,6 +1,6 @@
 {
   "source": "https://github.com/anthony-firn/evolve-llm",
-  "commit": "2f7f3cee8a318c09d51202ba7bd9c38e8d6c93f8",
+  "commit": "354741390e1b3655b161dd06497f2b699ba5422d",
   "engine_commit": "7b732e2c6dd097d2a62d27cbcde4573d9ffdc308",
   "wasm_sha256": "cf3a2dbcf2d7d2e901b32f4d03041d347abff48de026c4165c3b458e634ed3b1"
 }

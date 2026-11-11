@@ -1,6 +1,6 @@
 from pathlib import Path
 import unittest
-from llm_csp import llm_rule
+from llm_csp import llm_rule, preview_rules
 
 
 class LlmPolicy(unittest.TestCase):
@@ -27,6 +27,19 @@ class LlmPolicy(unittest.TestCase):
         self.assertNotIn("'unsafe-eval'", policy.replace("'wasm-unsafe-eval'", ''))
         self.assertNotIn("'unsafe-inline'", policy)
         self.assertIn("form-action 'none'", policy)
+
+    def test_preview_policy_is_isolated_and_denies_network_and_same_origin(self):
+        zone = {'EdgeRules': [{'Description':'Fairground', 'ActionType':5, 'ActionParameter1':'Content-Security-Policy',
+                'OrderIndex':2, 'Triggers':[{'PatternMatches':['*/play/fairground/*']}]}]}
+        rules = list(preview_rules(zone, (Path(__file__).resolve().parents[1] / 'public/_headers').read_text()))
+        policy = rules[0]['ActionParameter2']
+        self.assertIn("sandbox allow-scripts",policy)
+        self.assertNotIn('allow-same-origin',policy)
+        self.assertIn("connect-src 'none'",policy)
+        self.assertIn("frame-src 'none'",policy)
+        self.assertIn("script-src 'unsafe-inline'",policy)
+        self.assertEqual(rules[1]['ActionParameter2'],'SAMEORIGIN')
+        self.assertEqual(rules[0]['Triggers'][0]['PatternMatches'],['*/play/evolve-llm/preview/*'])
 
     def test_existing_rule_keeps_its_identity(self):
         existing = {'Guid': 'kept', 'Description': 'Evolve LLM WebGPU and model download policy', 'ActionType': 5,
