@@ -10,10 +10,10 @@
     },
     {
       "file": "evolve-llm-browser-0.4.0.zip",
-      "bytes": 1502811,
-      "sha256": "5fc0f78a8f1c28b3180d288797630a9fc00ae7bf970aea8d145512a0be5b8583",
+      "bytes": 1502947,
+      "sha256": "fa913eff2c6e1e430b1af685db899b59a7549fc7e499eabc2cf2efb0d4012137",
       "source": "https://github.com/anthony-firn/evolve-llm",
-      "commit": "65079733e02e5bd543f919b62dc039b8704e9589"
+      "commit": "47b99f15b57008f691afed5e37661063f9ec34be"
     }
   ]
 }
