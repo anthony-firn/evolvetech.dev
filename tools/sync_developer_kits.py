@@ -27,7 +27,7 @@ def sync(inbox, llm):
         packed = json.loads(subprocess.check_output(['node', str(inbox / 'tools/pack-sdk.mjs'), str(out)], cwd=inbox, text=True))
         inbox_file = Path(packed['file'])
         subprocess.run(['python3', str(llm / 'tools/package_sdk.py'), '--runtime', str(PUBLIC / 'play/evolve-llm/pkg'), '--out', str(out)], cwd=llm, check=True)
-        llm_file = out / 'evolve-llm-browser-0.3.0.zip'
+        llm_file = out / 'evolve-llm-browser-0.3.1.zip'
         # This exact allowlist is sufficient for browser fixtures. No server code is copied.
         names = ['src/client.mjs', 'src/client.d.mts', 'src/demo-client.mjs', 'src/demo-client.d.mts', 'demo/messages.mjs']
         with tarfile.open(inbox_file) as archive:
