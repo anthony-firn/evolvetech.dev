@@ -51,7 +51,7 @@ class DeveloperKits(unittest.TestCase):
             self.assertEqual(live['commit'],meta['commit'])
             self.assertEqual(live['engine_commit'],meta['engine_commit'])
             self.assertEqual(hashlib.sha256((ROOT/'play/evolve-llm/pkg/evolve_llm_bg.wasm').read_bytes()).hexdigest(),meta['wasm_sha256'])
-            for name in ['sdk.mjs','sdk.d.mts','worker.js','tool-transport.mjs','model-readers.mjs','preview-client.mjs','preview/index.html','examples/snake.html','tools.js','network.js','workbench.mjs','shell-worker.mjs','pi-agent.bundle.mjs','shell-pkg/shell_bg.wasm','examples/example.mjs','examples/fixture-worker.mjs']:
+            for name in ['sdk.mjs','sdk.d.mts','worker.js','chat-development.mjs','tool-transport.mjs','model-readers.mjs','preview-client.mjs','preview/index.html','examples/snake.html','tools.js','network.js','workbench.mjs','shell-worker.mjs','pi-agent.bundle.mjs','shell-pkg/shell_bg.wasm','examples/example.mjs','examples/fixture-worker.mjs']:
                 self.assertEqual((ROOT/'play/evolve-llm'/name).read_bytes(),archive.read(name))
 
     def test_homepage_prioritizes_relevant_work_and_guides_are_discoverable(self):
