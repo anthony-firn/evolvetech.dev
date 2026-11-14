@@ -1,0 +1,21 @@
+{
+  "files": [
+    "DejaVuSans.ttf",
+    "DroidSansFallbackFull.ttf",
+    "LiberationMono-Bold.ttf",
+    "LiberationMono-Regular.ttf",
+    "LiberationSans-Bold.ttf",
+    "LiberationSans-BoldItalic.ttf",
+    "LiberationSans-Italic.ttf",
+    "LiberationSans-Regular.ttf",
+    "LiberationSerif-Bold.ttf",
+    "LiberationSerif-BoldItalic.ttf",
+    "LiberationSerif-Italic.ttf",
+    "LiberationSerif-Regular.ttf"
+  ],
+  "licenses": [
+    "DEJAVU-LICENSE.txt",
+    "DROID-LICENSE.txt",
+    "LIBERATION-OFL.txt"
+  ]
+}

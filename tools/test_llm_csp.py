@@ -22,8 +22,13 @@ class LlmPolicy(unittest.TestCase):
         for host in ('https://*.wikipedia.org', 'https://api.duckduckgo.com', 'https://r.jina.ai', 'https://s.jina.ai'):
             self.assertIn(host, policy)
         connect = next(d for d in policy.split(';') if d.strip().startswith('connect-src')).split()[1:]
-        self.assertEqual(len(connect), 8, connect)
-        self.assertNotIn('connect-src https:', policy)
+        # The WASM browser: Tor's consensus snapshot, WebSockets to the Snowflake bridge, Nostr and
+        # community relays (hosts unknown in advance), and a relay on the visitor's own computer.
+        for source in ('https://raw.githubusercontent.com', 'wss:', 'ws://127.0.0.1:*', 'ws://localhost:*'):
+            self.assertIn(source, connect)
+        self.assertEqual(len(connect), 12, connect)
+        self.assertNotIn('https:', connect)
+        self.assertNotIn('ws:', connect)
         self.assertNotIn("'unsafe-eval'", policy.replace("'wasm-unsafe-eval'", ''))
         self.assertNotIn("'unsafe-inline'", policy)
         self.assertIn("form-action 'none'", policy)
