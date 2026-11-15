@@ -84,7 +84,10 @@ export class NodeClient {
           cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer', mode: 'cors',
         });
       } catch {
-        throw new NodeError(0, `Could not reach ${nodeLabel(this.url)}`);
+        const local = /^http:\/\/(localhost|127\.0\.0\.1)(:|$)/.test(this.url);
+        throw new NodeError(0, local && globalThis.location?.protocol === 'https:'
+          ? `Could not reach ${nodeLabel(this.url)}. Browsers ask before a website may talk to apps on your computer: allow access to “apps and services on this device” when asked, or open Evolve Health from the node itself at ${this.url}/.`
+          : `Could not reach ${nodeLabel(this.url)}`);
       }
       status = res.status;
       outHeaders = { 'eh-expires': res.headers.get('eh-expires') };
