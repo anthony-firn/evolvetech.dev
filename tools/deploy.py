@@ -10,6 +10,7 @@ from jobs_csp import jobs_policy, make_rule
 from hosting_csp import hosting_rules, wallet_setup_rule
 from llm_csp import llm_rule, preview_rules
 from case_law_csp import case_law_rule
+from health_csp import health_rule
 
 
 def deploy_bunny():
@@ -37,6 +38,10 @@ def deploy_bunny():
     bunny("POST", f"/pullzone/{C['bunny_pull_zone']}/edgerules/addOrUpdate",
           case_law_rule(zone_config, (ROOT / "public/_headers").read_text()))
     print("Bunny: configured Open Case Law's scoped public search policy.")
+    zone_config = bunny("GET", f"/pullzone/{C['bunny_pull_zone']}")
+    bunny("POST", f"/pullzone/{C['bunny_pull_zone']}/edgerules/addOrUpdate",
+          health_rule(zone_config, (ROOT / "public/_headers").read_text()))
+    print("Bunny: configured Evolve Health's scoped encrypted-records policy.")
     zone = bunny("GET", f"/storagezone/{C['bunny_storage_zone']}")
     files = [p for p in (ROOT / "public").rglob("*") if p.is_file() and not p.name.startswith("_")]
     def upload(path):

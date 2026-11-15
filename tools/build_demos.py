@@ -15,6 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PLAY = ROOT / "public" / "play"
 DEMOS = {
+    "evolve-health": {"repo": "https://github.com/anthony-firn/evolve-health.git", "build": "health"},
     "evolve-hosting": {"repo": "https://github.com/anthony-firn/evolve-hosting.git", "build": "node"},
     "evolve-jobs": {"repo": "https://github.com/anthony-firn/evolve-jobs.git", "build": "jobs"},
     "evolve-inbox": {"repo": "https://github.com/anthony-firn/evolve-inbox.git", "build": "node"},
@@ -168,6 +169,20 @@ def build_llm(src, name):
     return out
 
 
+def build_health(src, name):
+    """Encrypted health records: run the Node tests (crypto vectors, sync, membership, FHIR, importers), then
+    publish the buildless web/ folder as is. The Argon2id WebAssembly is committed and checked by those tests."""
+    run("npm", "ci", "--no-audit", "--no-fund", cwd=src)
+    run("npm", "test", cwd=src)
+    out = Path(tempfile.mkdtemp()) / "web"
+    shutil.copytree(src / "web", out)
+    # The site copy names its canonical address; self-hosted copies of the repo do not.
+    for page, path in ((out / "index.html", f"/play/{name}/"), (out / "share" / "index.html", f"/play/{name}/share/")):
+        link = f'<link rel="canonical" href="https://www.evolvetech.dev{path}">'
+        page.write_text(page.read_text().replace("</head>", f"{link}\n</head>", 1))
+    return out
+
+
 def build_static(src, name):
     """A buildless browser tool: run the project's own tests, then publish its web/ folder as is."""
     run("npm", "test", cwd=src)
@@ -196,9 +211,11 @@ def build_demo(src, name):
             if path.is_file():
                 digest.update(filename.encode() + b"\0" + path.read_bytes() + b"\0")
         provenance.update(modified=True, working_tree_sha256=digest.hexdigest())
-    out = {"expo": build_expo, "godot": build_godot, "pyodide": build_pyodide, "data": build_data, "vite": build_vite, "node": build_node, "jobs": build_jobs, "rust": build_rust, "static": build_static, "llm": build_llm}[demo["build"]](src, name)
+    out = {"expo": build_expo, "godot": build_godot, "pyodide": build_pyodide, "data": build_data, "vite": build_vite, "node": build_node, "jobs": build_jobs, "rust": build_rust, "static": build_static, "llm": build_llm, "health": build_health}[demo["build"]](src, name)
     if demo["build"] == "rust":
         provenance["wasm_sha256"] = hashlib.sha256((out / "emergence_web.wasm").read_bytes()).hexdigest()
+    if demo["build"] == "health":
+        provenance["wasm_sha256"] = hashlib.sha256((out / "src" / "lib" / "argon2.wasm").read_bytes()).hexdigest()
     if demo["build"] == "llm":
         provenance["wasm_sha256"] = hashlib.sha256((out / "pkg" / "evolve_llm_bg.wasm").read_bytes()).hexdigest()
     if "description" in demo:

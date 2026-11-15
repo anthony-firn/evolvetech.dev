@@ -81,6 +81,7 @@ To reproduce this hosting arrangement in another account, create a Netlify site,
 
 | Path | Source | Built with |
 |---|---|---|
+| `/play/evolve-health/` | [evolve-health](https://github.com/anthony-firn/evolve-health) | Buildless web app; Argon2id compiled from Rust to WebAssembly; tests run before publishing |
 | `/play/evolve-hosting/` | [evolve-hosting](https://github.com/anthony-firn/evolve-hosting) | Signed release workspace, static example mirror and Fairground support rail |
 | `/play/evolve-llm/` | [evolve-llm](https://github.com/anthony-firn/evolve-llm) | Rust engine compiled to WebAssembly, WGSL kernels on WebGPU; models download from Hugging Face |
 | `/play/evolve-inbox/` | [evolve-inbox](https://github.com/anthony-firn/evolve-inbox) | Shared inbox reader with fictional messages; no live mailbox API |
@@ -141,6 +142,26 @@ only to `huggingface.co` and its `*.hf.co` download hosts plus, for the opt-in w
 `api.duckduckgo.com` and Jina (`r.jina.ai`, `s.jina.ai`). `tools/deploy.py` mirrors it as a Bunny edge rule
 through `tools/llm_csp.py`; change both together. On Linux, Chrome exposes WebGPU only with its WebGPU and
 Vulkan flags, which the page explains.
+
+## Evolve Health
+
+Evolve Health is the encrypted personal health record at `/play/evolve-health/`, with its own
+[public repository](https://github.com/anthony-firn/evolve-health) and `/projects/evolve-health/` case study.
+Records for people and pets are encrypted in the browser (Argon2id in WebAssembly plus a Secret Key,
+AES-256-GCM, Ed25519, X25519) and sync through storage nodes that people run themselves; this site hosts
+only the static app and no node, and stores no health data. *Explore with sample data* builds a fictional
+household in the tab's memory. The share viewer is `/play/evolve-health/share/`; share keys stay in the
+URL fragment.
+
+Rebuild with `python3 tools/build_demos.py evolve-health --local-source ~/Dev/evolve-health`. The build
+runs the project's Node tests (`npm ci && npm test`), copies `web/` and adds canonical links for this site.
+`BUILD.json` records the commit and the Argon2id WebAssembly hash.
+
+`public/_headers` gives the app a scoped CSP: `default-src 'none'`, `'wasm-unsafe-eval'`, Trusted Types
+(`require-trusted-types-for 'script'; trusted-types evolve-health`) and `connect-src 'self' https:
+http://localhost:* http://127.0.0.1:*`, because people choose their own sync nodes. `tools/deploy.py`
+mirrors it as a Bunny edge rule through `tools/health_csp.py`; change both together. The app's own
+`<meta name="referrer">` keeps `no-referrer` on both providers.
 
 ## Evolve Jobs
 

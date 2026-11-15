@@ -1,0 +1,11 @@
+{
+  "name": "Evolve Health",
+  "short_name": "Evolve Health",
+  "description": "Encrypted health records for you, your family and your pets.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f7f5",
+  "theme_color": "#0f6b63",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
