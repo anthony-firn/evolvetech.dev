@@ -269,3 +269,11 @@ python3 tools/check_site.py
 The sync copies only an explicit SDK allowlist and identified runtime files. It
 never reads mailbox settings or private messages. The live inbox handler remains
 pinned independently under `netlify/lib/evolve-inbox/`.
+
+## One-time donation wallet mining
+
+The operator-only [WASM bootstrap miner](tools/bootstrap-miner/README.md) can mine RandomX locally
+and use unMineable's ALGO payout route for the configured receiving fund. Run
+`node tools/bootstrap-miner/server.mjs`, open `http://127.0.0.1:8773`, and explicitly start mining.
+It is not included in the public website and never starts on a site visit. Pool credits must reach
+the provider's payout threshold before ALGO can arrive; the fund owner still signs its USDC opt-in.

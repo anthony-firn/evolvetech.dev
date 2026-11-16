@@ -1,0 +1,42 @@
+{
+  "randomx_source": "https://github.com/aa022/RandomX-bonanza",
+  "commit": "25741e126a687e39d715f3b921192e6125f450f2",
+  "ws_version": "8.20.1",
+  "changes": [
+    "Worker CPU duty-cycle control and actual hash counts",
+    "Known-answer check in light mode before pool login, then selected mining mode",
+    "Fixed-address localhost Stratum bridge and on-chain stop conditions"
+  ],
+  "files_sha256": {
+    "vendor/randomx/RandomX.LICENSE": "7d85758a95990168395d0940b2a103b6be0c2eba3995f00cbb59d23a86c2214e",
+    "vendor/randomx/package.json": "dbf8353f77358bc12169b7bb7301e1978d5b503e002ee927229a8993672818fc",
+    "vendor/randomx/CC0-LICENSE": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+    "vendor/randomx/LICENSE": "b820c77b0f0ef54ec3bc8c4306e3d84f04a032aa80e1d2d2a07eb55364d69d7b",
+    "vendor/randomx/randomx_st.js": "8c066278243e927ead89ce1d1bac3e94ead42fa75f52d3f706e9d5b3135f6599",
+    "vendor/randomx/randomx.wasm": "29aff01b220f3ecc2105e0ff209ef120fb48efffa9e15b347baf6d1e676da9b6",
+    "vendor/randomx/randomx_st.wasm": "bfd29c57deb0aba258d4781a1653de7dc1ceffca00cd9fc2e9dfa08e5c1432fc",
+    "vendor/randomx/randomx.js": "21d38abd037679a88e77b301b52f59c0de609369934c2fcb2a1c479c5e49d389",
+    "vendor/ws/browser.js": "010da44addea1d88b2b732540c3f1fd0cbcb28926b96623d4c64222e0ead2d0e",
+    "vendor/ws/package.json": "c642fa2a61006bd082f620bbaab30df014340f96c429bbe97c718df5bad3c968",
+    "vendor/ws/wrapper.mjs": "fe154662301fd558f935f9c217fccbe7a7dac02ff39e648a000589403ff27c7f",
+    "vendor/ws/LICENSE": "2b29dcfe0d6471f7e8c92c5fb38c9f93edee10330937055440192f1832b1ecef",
+    "vendor/ws/index.js": "924564d5be26d59b9682c4263f68320e48dde7240bd2d1ad17ec305537429dd2",
+    "vendor/ws/README.md": "bb979132f3cbff08ce47f36d041e18071f8f534d01f591c0b129ba7abf1e480e",
+    "vendor/ws/lib/stream.js": "a56fcb6e2b152097ee820b6f5410b1f71e59819b45d08d9f8bda588fe39070ec",
+    "vendor/ws/lib/extension.js": "852564f0f6b460287043803eae732666fb5610f676874354fc89f06aa4e986ed",
+    "vendor/ws/lib/permessage-deflate.js": "02c31796f0132a335d4efe7b7adcebadbb69543a1ce65ae04aaccc3530e27ab9",
+    "vendor/ws/lib/buffer-util.js": "8b0a45739132f82e25ea13163780abf547ccfe989267f3eb7abb475beec92da3",
+    "vendor/ws/lib/constants.js": "391e823142b8b370e55a2fd32b022deaf03b8415c56000009674ebc86a0b4f86",
+    "vendor/ws/lib/event-target.js": "c45d3c6e12d170c860c0c3f1a050aa0f864d9806632b609a1e607d675aba128c",
+    "vendor/ws/lib/websocket.js": "e2308419b4f64007a79095e4eda12ee5db6ddcea7ca89dfc301666ad686e1874",
+    "vendor/ws/lib/limiter.js": "e0469d4b83f6ba764b15f80e1766b75c136fbff68f048f4c050f0b1c7f065f69",
+    "vendor/ws/lib/validation.js": "41ce8e83d0d434132e1704895fedb91f6703a701b42d91c80954ab29b2845593",
+    "vendor/ws/lib/subprotocol.js": "be3f6323d6f549568577dcba9004c1479d95c65a7abb0fe0c582875b9fac0b7c",
+    "vendor/ws/lib/sender.js": "d0791d30c3defd44dcabbddb879a901c757993fea2c00a7ffea01d53b23b4b77",
+    "vendor/ws/lib/receiver.js": "7b9f6afc1fffb5c98d768d7d3d6fc1b709f28b45c6ae2682ff255075394323d9",
+    "vendor/ws/lib/websocket-server.js": "88139775699dbc17474a074cc92f6682cb5968022db6ec856e6e46a5dc341c61",
+    "web/miner-worker.js": "fd9700d98a0bebd765605223c13f6afaf2583c299ce683fecd2d3c9dd6dde211"
+  },
+  "ws_registry_integrity": "sha512-It4dO0K5v//JtTXuPkfEOaI3uUN87iYPnqo/ZzqCoG3g8uhA66QUMs/SrM0YK7/NAu+r4LMh/9dq2A7k+rHs+w==",
+  "ws_source": "https://registry.npmjs.org/ws/-/ws-8.20.1.tgz"
+}
