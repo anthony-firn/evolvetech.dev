@@ -29,8 +29,8 @@ HEAD = """<!doctype html>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-header">
     <div class="shell">
-      <a class="brand" href="/" aria-label="Anthony Firn, home"><span class="monogram" aria-hidden="true">AF</span><span><strong>Anthony Firn</strong><small>EvolveTech</small></span></a>
-      <nav class="nav" aria-label="Main"><a href="/#work">Work</a><a href="/#engineering">Engineering</a><a href="/#experience">Experience</a><a href="/resume/">Résumé</a><a class="nav-cta" href="/#contact">Contact</a><button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></nav>
+      <a class="brand" href="/" aria-label="Anthony Firn, home"><span class="monogram" aria-hidden="true">AF</span><span><strong>Anthony Firn</strong><small>Lead Software Engineer</small></span></a>
+      <nav class="nav" aria-label="Main"><a href="/#work">Work</a><a href="/#how-i-build">How I build</a><a href="/#experience">Experience</a><a href="/resume/">Résumé</a><a class="nav-cta" href="/#contact">Contact</a><button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></nav>
     </div>
   </header>
   <main id="main" class="shell">
@@ -44,10 +44,11 @@ HEAD = """<!doctype html>
     {media}
     <div class="prose">
 {sections}
+      <p class="built-note">Built with AI coding agents, which wrote most of the code and tests. <a href="/#how-i-build">How I work →</a></p>
       <dl class="facts"><div><dt>Status</dt><dd>{status}</dd></div><div><dt>License</dt><dd>{license}</dd></div><div><dt>Built with</dt><dd>{stack}</dd></div></dl>
     </div>
   </main>
-  <footer class="site-footer"><div class="shell"><span>© 2026 Anthony Firn · EvolveTech</span><nav aria-label="Footer"><a href="/">Home</a><a href="/resume/">Résumé</a><a href="https://github.com/anthony-firn">GitHub</a></nav></div></footer>
+  <footer class="site-footer"><div class="shell"><span>© 2026 Anthony Firn</span><nav aria-label="Footer"><a href="/">Home</a><a href="/resume/">Résumé</a><a href="https://github.com/anthony-firn">GitHub</a></nav></div></footer>
 </body>
 </html>
 """
@@ -120,10 +121,7 @@ PAGES = [
          sections=[
              section("Why I built it", "Running a language model locally usually means installing a runtime, drivers and a model manager, then learning which file fits your hardware. Browsers already ship a GPU programming interface. I wanted a single link that takes anyone from nothing to a private, local model in a minute, on hardware they already own, and that does not stop at the size of their GPU's memory."),
              section("Try it", '<a href="/play/evolve-llm/">Open the chat →</a> Pick a model: SmolLM2 135M is a 145 MB first test and Qwen2.5 0.5B the recommended start. Large models are listed separately, from OLMoE (7 billion parameters) to Kimi K2 (one trillion). Files download once from Hugging Face into the browser’s private storage, part by part for split models, and load from there next time, even offline. You can also browse any Hugging Face repository or open files from your disk.', "WebGPU is needed: Chrome or Edge on Windows, macOS, ChromeOS and Android; Safari 26; Firefox on Windows. On Linux, Chrome needs its WebGPU flag. The largest models also need tens to hundreds of gigabytes of free disk space for the browser to store them."),
-             section("Embed the engine", '<a href="/developers/llm/">SDK and executable quickstart →</a> Download a same-origin browser runtime with TypeScript declarations. Initialize a worker, load a model, then consume token events through an async iterator. Cancellation and timeouts release the worker, concurrent calls fail explicitly, and stream buffering is bounded.', 'The example has a scripted protocol fixture that needs no GPU or weights and a separate real-inference button with an explicit model download. The SDK browser test also runs the actual WASM engine with a local SmolLM2 file and checks streaming and cancellation. <a href="https://github.com/anthony-firn/evolve-llm/blob/main/docs/embedding.md">Read the API contract and error behavior →</a>'),
-             section("A local workspace with Pi", '<a href="/play/evolve-llm/">Open the app →</a> Load a model and ask the main chat to build an app or game. Auto selects development requests, Chat answers without editing files, and Build always uses Pi. Snake starts from a labeled working starter. Results include saved files and an isolated playable preview; follow-up requests use the same workspace. Terminal also supports file and text commands in a Rust/WASM sandbox. Real Pi agent core reuses the loaded weights and displays file, shell and research tool results. Files persist in the browser and can be imported or exported.', 'Web access explicitly enables public searches and page reads through external providers. The workspace has no host processes or host files. It supports a bounded shell subset; small models need review. <a href="/developers/llm/">Setup, self-hosting and execution limits →</a>'),
-             section("A browser you and Pi share", '<a href="/play/evolve-llm/">Open the app →</a> The Browser button opens a web browser engine compiled to WebAssembly: HTML and the DOM from Blitz, Firefox’s Stylo CSS engine, Taffy layout, Boa JavaScript and rustls TLS, running in a worker and drawn on a canvas. It loads real sites and keeps cookies and logins on your device. You and Pi use the same live page: Pi reads it as a numbered outline, acts with ordinary clicks and keystrokes, asks before buying or posting, and never types passwords.', 'Nothing is hosted for it. A web page cannot open network connections, so the engine contains a Tor client, the Tor Project’s Arti, and reaches sites through the Tor network over Snowflake. TLS still runs inside the engine, so no relay or exit can read pages or passwords. Tor is slower, typically 4 to 40 seconds a page, and some sites block it; you can run <code>evolve-relay</code> on your computer for speed or pick a community relay announced on Nostr. JavaScript is interpreted, so script-heavy apps are slow. <a href="https://github.com/anthony-firn/evolve-llm/blob/main/docs/browser.md">How the browser works →</a>'),
-             section("The inference engine", "No machine-learning framework is involved. I wrote the GGUF parser, decoders for 25 weight formats down to 1.56 bits per weight, the transformer forward pass as WGSL compute shaders, three tokenizer families and the chat-template renderer in Rust. The same crate runs natively through wgpu on Vulkan, Metal or Direct3D 12, and compiles to a 2.5 MB WebAssembly engine for the browser’s WebGPU.", bullets=[
+             section("The inference engine", "No machine-learning framework is involved. The engine has its own GGUF parser, decoders for 25 weight formats down to 1.56 bits per weight, the transformer forward pass as WGSL compute shaders, three tokenizer families and a chat-template renderer, all in Rust. The same crate runs natively through wgpu on Vulkan, Metal or Direct3D 12, and compiles to a 2.5 MB WebAssembly engine for the browser’s WebGPU.", bullets=[
                  "Dense models (Llama, Mistral, Qwen2 and 3, SmolLM) and mixture-of-experts models (Qwen3-MoE, Mixtral, OLMoE, DeepSeek V2 and V3, Kimi K2), from single or split GGUF files.",
                  "Expert routing with softmax or sigmoid scores, DeepSeek’s selection bias and group limit; prompts are grouped by expert so each expert’s weights are read once per 32 tokens.",
                  "DeepSeek’s multi-head latent attention caches one compressed vector per token, 576 values instead of 40,960, and serves four heads per cache read.",
@@ -144,6 +142,8 @@ PAGES = [
                  "Llama 3.2 1B: about 22 tokens per second in Chrome.",
                  "OLMoE 1B-7B, 7 billion parameters with 1.3 billion active: 15 to 16 tokens per second resident, and 67 to 92 prompt tokens per second natively.",
              ]),
+             section("Embed the engine", '<a href="/developers/llm/">SDK and executable quickstart →</a> Download a same-origin browser runtime with TypeScript declarations. Initialize a worker, load a model, then consume token events through an async iterator. Cancellation and timeouts release the worker, concurrent calls fail explicitly, and stream buffering is bounded.', 'The example has a scripted protocol fixture that needs no GPU or weights and a separate real-inference button with an explicit model download. The SDK browser test also runs the actual WASM engine with a local SmolLM2 file and checks streaming and cancellation. <a href="https://github.com/anthony-firn/evolve-llm/blob/main/docs/embedding.md">Read the API contract and error behavior →</a>'),
+             section("Also in the app", "The same page has two early experiments built on the engine. A coding workspace lets the local model build small apps and games with the open-source Pi coding agent, in a sandboxed shell that runs entirely in the browser. A web browser engine compiled to WebAssembly lets you and the model use the same live page; it reaches sites through Tor, so it needs no server of mine. Both are slow on small models and need review.", '<a href="/developers/llm/">Workspace setup and limits →</a> · <a href="https://github.com/anthony-firn/evolve-llm/blob/main/docs/browser.md">How the browser works →</a>'),
              section("Limits", "This is an early release. The largest catalog models, Qwen3 235B and Coder 480B, DeepSeek V3.1 and Kimi K2, use architectures, formats, tokenizers and templates verified here, but my test laptop lacks the disk space to run them end to end, so their speed is unmeasured; expect seconds per token. Hybrid linear-attention models, the newest generation of the largest open models, are not supported yet, nor are Gemma, Phi and images. Streaming in the browser is slower than native. Speed has not been tuned against llama.cpp or WebLLM, and models can be wrong, so check anything important."),
          ]),
     dict(slug="evolve-hosting", title="Evolve Hosting", poster="evolve-hosting-demo.jpg",
@@ -301,6 +301,20 @@ PAGES = [
                  "Validation uses different random seeds from the search, so winners are not just tuned to their own test data.",
                  "Before publishing, the repository history was audited and rewritten to remove a private household's planning data."]),
          ]),
+    dict(slug="open-case-law", title="Open Case Law", poster="open-case-law.webp",
+         label="Legal research · JavaScript · Python · MIT",
+         description="Open-source legal research: search U.S. case law, save exact passages with their sources, and keep evidence notebooks, in the browser or with a Python CLI.",
+         lede="Search U.S. court opinions, save exact passages with their sources, and keep the evidence behind an argument. A browser workspace and a Python command-line tool.",
+         demo="/play/open-case-law/", demo_text="Open the workspace", repo="/play/open-case-law/open-case-law-source.zip", repo_text="Download source (MIT)",
+         media='<figure class="case-media reveal"><div class="browser"><div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/open-case-law</span></div><img src="/assets/media/open-case-law.webp" width="1280" height="800" alt="The Open Case Law workspace: a case search box with court filters and example searches"></div></figure>',
+         status="Live case search, saved cases and a local CLI", license="MIT", stack="Browser JavaScript; Python standard library and SQLite FTS5",
+         sections=[
+             section("Find real cases without an account", "Search CourtListener’s public case-law feed by keywords, case name or citation. Narrow by court, open the original opinion, and save a case with one click. The feed returns up to 20 recent matches, newest first; continue on CourtListener for relevance sorting and more results. Advanced local search and phrase matching are also available."),
+             section("Separate evidence from interpretation", "Record support, contrary evidence and factual distinctions. Label a passage as a holding, judicial reasoning, party argument or commentary. Exact quotes are checked against imported source text and saved with a source snapshot and SHA-256 hash. Export sources and notebooks as JSON or Markdown."),
+             section("Your research stays with you", "Saved cases, imported opinion text and notes stay in this browser and save automatically to IndexedDB. Download a backup to move your work to another device. Search queries are sent to EvolveTech and CourtListener and may appear in provider logs. Imported documents and notes are not uploaded."),
+             section("A deeper local toolkit", "The standard-library Python CLI adds SQLite FTS5, citation tracing, source-version comparison, research leads, evidence matrices and authority audits. Its authenticated CourtListener API features require your own access; browser search uses the public feed without a key. No personal research or case corpus is bundled with the public release."),
+             section("Review remains essential", "This tool measures wording relevance and organizes a researcher’s assessments. It does not authenticate sources, verify later treatment, certify controlling authority or guarantee exhaustive research. Read the complete opinion and confirm publication, disposition and applicability."),
+         ]),
     dict(slug="emberwake", title="Emberwake", poster="emberwake-poster.webp",
          label="Games · Godot 4 · Blender · WebAssembly",
          description="Emberwake is a 3D action roguelike made with Godot and Blender, playable in the browser.",
@@ -355,7 +369,10 @@ def main():
     for page in PAGES:
         out = ROOT / "projects" / page["slug"] / "index.html"
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(HEAD.format(**{**page, "sections": "\n".join(page["sections"])}))
+        text = HEAD.format(**{**page, "sections": "\n".join(page["sections"])})
+        if "repo_text" in page:
+            text = text.replace(">Source on GitHub ↗<", f">{page['repo_text']}<", 1)
+        out.write_text(text)
         print("wrote", out.relative_to(ROOT))
 
 

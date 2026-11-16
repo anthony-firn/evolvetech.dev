@@ -194,7 +194,7 @@ Evolve Inbox is the standalone open-source version of this site's mail function.
 
 The live handler is pinned under `netlify/lib/evolve-inbox/`, including its upstream commit, file hashes, license and backend tests. Update it from a committed checkout with `python3 tools/sync_inbox.py --source /path/to/evolve-inbox`, then run `npm ci` and `node --test netlify/lib/evolve-inbox/test/inbox.test.mjs`. The sync command copies only an explicit allowlist of committed code, tests and license files. The function keeps the existing `mail` store and credentials, with EvolveTech branding and domain defaults. Production deployment and public-site checks run the backend tests before publishing.
 
-Create `public/projects/<slug>/index.html`, add a directory entry on the homepage and update `public/sitemap.xml`.
+Add a case study to `PAGES` in `tools/build_pages.py` and run it, then update `public/sitemap.xml`. The homepage features three projects (their order is pinned by `tools/test_developer_kits.py`) and lists a few more under More projects; replace an entry rather than adding one, so the page stays focused. Case studies say they were built with AI coding agents, and the homepage's How I build section explains how.
 Give the project a truthful status and link to its own repository or live service when available.
 Do not add invented projects as placeholders. Keep personal data, market-data caches and signed application packages out of this website repo.
 

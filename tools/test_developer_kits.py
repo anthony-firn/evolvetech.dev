@@ -57,9 +57,9 @@ class DeveloperKits(unittest.TestCase):
     def test_homepage_prioritizes_relevant_work_and_guides_are_discoverable(self):
         home=(ROOT/'index.html').read_text()
         self.assertEqual(re.findall(r'<article class="case[^>]*aria-labelledby="([^"]+)"',home)[:3],
-            ['case-evolve-inbox','case-evolve-llm','case-evolve-hosting'])
-        for path in ['/developers/inbox/','/developers/llm/']:
-            self.assertIn('href="'+path+'"',home)
+            ['case-evolve-llm','case-evolve-health','case-retirement'])
+        for page,path in [('projects/evolve-inbox/index.html','/developers/inbox/'),('projects/evolve-llm/index.html','/developers/llm/')]:
+            self.assertIn('href="'+path+'"',(ROOT/page).read_text())
         llm=(ROOT/'developers/llm/index.html').read_text()
         self.assertIn('largest models have not run end to end',llm)
         self.assertIn('scripted',llm)

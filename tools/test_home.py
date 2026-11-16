@@ -106,6 +106,36 @@ def check_projection(page):
     print(f"Projection maximum error: {maximum:.6g} CSS pixels", flush=True)
 
 
+
+def video_checks(browser, url):
+    """Case-study demo videos play only while on screen and visible, and show controls under reduced motion."""
+    errors = []
+    context = browser.new_context(viewport={"width": 1440, "height": 900}, color_scheme="dark")
+    page = context.new_page()
+    page.on("pageerror", lambda error: errors.append(str(error)))
+    page.goto(url + "projects/retirement/", wait_until="networkidle")
+    page.evaluate("document.documentElement.style.scrollBehavior='auto'")
+    # Play an actual on-screen demo, then verify hidden tabs stop decoding it.
+    video = page.locator("video[data-autoplay]").first
+    video.scroll_into_view_if_needed()
+    page.wait_for_function("() => !document.querySelector('video[data-autoplay]').paused")
+    page.evaluate("""() => {
+      window.testHidden = true;
+      Object.defineProperty(document, 'hidden', {configurable:true, get:() => window.testHidden});
+      document.dispatchEvent(new Event('visibilitychange'));
+    }""")
+    assert video.evaluate("v => v.paused"), "Hidden video kept playing"
+    page.evaluate("testHidden=false; document.dispatchEvent(new Event('visibilitychange'))")
+    page.wait_for_function("() => !document.querySelector('video[data-autoplay]').paused")
+    page.evaluate("scrollTo(0, document.documentElement.scrollHeight)")
+    page.wait_for_function("() => document.querySelector('video[data-autoplay]').paused")
+
+    page.emulate_media(reduced_motion="reduce")
+    page.wait_for_timeout(150)
+    assert page.locator("video[data-autoplay]").evaluate_all("videos => videos.every(v => v.controls)"), "Reduced-motion videos need controls"
+    assert not errors, errors
+    context.close()
+
 def checks(browser, url):
     errors = []
     context = browser.new_context(viewport={"width": 1440, "height": 900}, device_scale_factor=2, color_scheme="dark")
@@ -128,27 +158,11 @@ def checks(browser, url):
     page.wait_for_timeout(180)
     assert frame_count(page) > before, "Hero did not resume after scrolling back"
 
-    # Play an actual on-screen demo, then verify hidden tabs stop decoding it.
-    video = page.locator("video[data-autoplay]").first
-    video.scroll_into_view_if_needed()
-    page.wait_for_function("() => !document.querySelector('video[data-autoplay]').paused")
-    page.evaluate("""() => {
-      window.testHidden = true;
-      Object.defineProperty(document, 'hidden', {configurable:true, get:() => window.testHidden});
-      document.dispatchEvent(new Event('visibilitychange'));
-    }""")
-    assert video.evaluate("v => v.paused"), "Hidden video kept playing"
-    page.evaluate("testHidden=false; document.dispatchEvent(new Event('visibilitychange'))")
-    page.wait_for_function("() => !document.querySelector('video[data-autoplay]').paused")
-    page.evaluate("scrollTo(0, 0)")
-    page.wait_for_function("() => document.querySelector('video[data-autoplay]').paused")
-
     # Browser preference changes must take effect without reloading.
     page.emulate_media(reduced_motion="reduce")
     stable(page)
     page.locator("[data-theme-toggle]").click()
     stable(page)
-    assert page.locator("video[data-autoplay]").evaluate_all("videos => videos.every(v => v.controls)"), "Reduced-motion videos need controls"
     page.emulate_media(reduced_motion="no-preference")
     page.wait_for_timeout(180)
     before = frame_count(page)
@@ -292,6 +306,7 @@ def main():
     with local_site() as url, sync_playwright() as playwright:
         with playwright.chromium.launch(executable_path=args.executable, args=flags) as browser:
             checks(browser, url)
+            video_checks(browser, url)
             if args.benchmark:
                 gpu = browser.new_browser_cdp_session().send("SystemInfo.getInfo")["gpu"]
                 print(json.dumps({"gpu_devices": gpu["devices"], "features": gpu["featureStatus"]}), flush=True)
