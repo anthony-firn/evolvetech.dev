@@ -6,7 +6,7 @@ Checked 2026-11-17 UTC (2026-11-16 local). The objective is the earliest spendab
 
 The best verified direct mining route is native PearlPow on the RTX 3050 plus native RandomX on the CPU. For faster access to a small payout, use the same mining algorithms but receive **Nano**, then make **one quoted Nano-to-ALGO conversion** into the fixed donation fund. This avoids accumulating a 10 ALGO pool minimum. It does not depend on speculative trading profits.
 
-The Nano route is prepared locally. It activates after the operator supplies their own service credentials through the hidden-input setup console. The direct ALGO configuration remains active until authenticated setup succeeds.
+The Nano route was activated on this machine after registering the provider accounts through the owned Evolve Inbox and verifying authenticated API access. Its ordinary target is 0.7 NANO. Credentials and wallet recovery material remain outside the repository. The direct ALGO configuration is preserved as the pre-activation fallback. No ALGO payout had arrived at activation.
 
 ## Measured hardware configuration
 
