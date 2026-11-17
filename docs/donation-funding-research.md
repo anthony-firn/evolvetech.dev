@@ -6,7 +6,7 @@ Checked 2026-11-17 UTC (2026-11-16 local). The objective is the earliest spendab
 
 The best verified direct mining route is native PearlPow on the RTX 3050 plus native RandomX on the CPU. For faster access to a small payout, use the same mining algorithms but receive **Nano**, then make **one quoted Nano-to-ALGO conversion** into the fixed donation fund. This avoids accumulating a 10 ALGO pool minimum. It does not depend on speculative trading profits.
 
-The Nano route was activated on this machine after registering the provider accounts through the owned Evolve Inbox and verifying authenticated API access. Its ordinary target is 0.7 NANO. Credentials and wallet recovery material remain outside the repository. The direct ALGO configuration is preserved as the pre-activation fallback. No ALGO payout had arrived at activation.
+The Nano route was activated on this machine after registering the provider accounts through the owned Evolve Inbox and verifying authenticated API access. Its target follows the live swap minimum plus 5%, rounded upward to eight Nano decimals. Credentials and wallet recovery material remain outside the repository. The direct ALGO configuration is preserved as the pre-activation fallback. No ALGO payout had arrived at activation.
 
 ## Measured hardware configuration
 
@@ -32,7 +32,7 @@ These are short comparative samples, not proof of a universal optimum. A roughly
 | Route | Verified requirement | Consequence for this fund |
 |---|---|---|
 | unMineable → native ALGO | **10 ALGO** minimum | Simplest route; at the measured spot estimate about 40 hours of continuous mining, plus payout handling. |
-| unMineable → Nano → ALGO | **0.001 NANO** pool minimum; current swap minimum around **0.55–0.62 XNO** | The prepared target is **0.7 NANO**, increasing only if a fresh minimum requires it, with a one-Nano swap cap. Potentially around 10–12 mining hours at the observed rates, plus pool payout and swap processing. |
+| unMineable → Nano → ALGO | **0.001 NANO** pool minimum; current swap minimum around **0.55–0.62 XNO** | The target follows the **live minimum plus 5%**, with a one-Nano swap cap and at least 0.3 ALGO quoted output. Time depends on live pool credits, swap limits, payout and swap processing. |
 | MoneroOcean → XMR → ALGO | Public configuration: **0.003 XMR** minimum; variable payout fee policy up to **0.0004 XMR** | Requires a Monero wallet and conversion, and the minimum's value was higher than the direct ALGO threshold at research time. Not selected for the smallest bootstrap. |
 | P2Pool → XMR → ALGO | Published practical minimum around **0.00027 XMR**, 0% pool fee | Open decentralized pool, but CPU-oriented RandomX, PPLNS variance, node setup and an additional conversion remain. A small minimum does not guarantee an early payout. |
 | Mining-Dutch | Payout batches every 15 minutes; optional conversion | Could not verify an ALGO payout currency or PearlPow route in its current published catalog. Not treated as a working replacement. |

@@ -18,10 +18,13 @@ test('exact Nano amounts and live minimum/fee checks', () => {
   assert.equal(display(decimal('0.700000000000000000000000000001')), '0.700000000000000000000000000001');
   assert.throws(() => decimal('1e-3'));
   assert.throws(() => decimal('-1'));
-  assert.equal(planQuote({min: 0.6171, max: 100}, {amountFrom: 0.7, amountTo: 1.4}, decimal('0.8')).funded, true);
+  assert.equal(planQuote({min: 0.6171, max: 100}, {amountFrom: 0.647955, amountTo: 1.4}, decimal('0.8')).amount, decimal('0.647955'));
+  assert.equal(planQuote({min: '0.59524', max: 100}, null, 0n).amount, decimal('0.625002'));
+  assert.equal(planQuote({min: '0.00000001', max: 100}, null, 0n).amount, decimal('0.00000002'));
+  assert.throws(() => planQuote({min: 0, max: 100}, null, 0n), /limits/);
   assert.throws(() => planQuote({min: 1, max: 100}, null, decimal('2')), /budget/);
-  assert.throws(() => planQuote({min: 0.6, max: 100}, {amountFrom: 0.7, amountTo: 0.2}, decimal('0.8')), /setup/);
-  assert.throws(() => planQuote({min: 0.6, max: 100}, {amountFrom: 0.8, amountTo: 1.4}, decimal('0.8')), /mismatch/);
+  assert.throws(() => planQuote({min: 0.66666666, max: 100}, {amountFrom: 0.7, amountTo: 0.2}, decimal('0.8')), /setup/);
+  assert.throws(() => planQuote({min: 0.66666666, max: 100}, {amountFrom: 0.8, amountTo: 1.4}, decimal('0.8')), /mismatch/);
 });
 test('swap output and deposit are validated before signing', () => {
   assert.equal(validateOrder(makeOrder(), decimal('0.7'), wallet.address).payoutAddress, FUND);
@@ -70,7 +73,7 @@ test('pool cashout is requested once, including after ambiguous timeout', async 
   const state = {}; let requests = 0;
   const engine = new Settlement({wallet, state, save: async () => {}, stop: async () => {}, algo: async () => ({funded: false}),
     rpc: async action => action === 'account_info' ? {balance: '0'} : {blocks: {}},
-    swap: async path => path.startsWith('/get-limits') ? {min: 0.6, max: 100} : {amountFrom: 0.7, amountTo: 1.4},
+    swap: async path => path.startsWith('/get-limits') ? {min: 0.66666666, max: 100} : {amountFrom: 0.7, amountTo: 1.4},
     poolStatus: async () => ({balance: '0.7'}), poolPayout: async () => {requests++; throw Error('timeout');}});
   await assert.rejects(engine.tick(), /timeout/);
   await engine.tick(); assert.equal(requests, 1); assert.equal(state.phase, 'waiting-for-nano');
@@ -80,7 +83,7 @@ test('an order with a substituted ALGO address is never funded', async () => {
   const state = {};
   const engine = new Settlement({wallet, state, save: async () => {}, stop: async () => {}, algo: async () => ({funded: false}),
     rpc: async action => {if (action === 'process') broadcasts++; return action === 'account_info' ? {balance: String(decimal('0.8')), frontier: 'A'.repeat(64)} : {blocks: {}};},
-    swap: async path => path === '/get-limits' ? {min: 0.6, max: 100} : path === '/create-order' ? {...makeOrder(), payoutAddress: 'SUBSTITUTED'} : {amountFrom: 0.7, amountTo: 1.4}});
+    swap: async path => path === '/get-limits' ? {min: 0.66666666, max: 100} : path === '/create-order' ? {...makeOrder(), payoutAddress: 'SUBSTITUTED'} : {amountFrom: 0.7, amountTo: 1.4}});
   await assert.rejects(engine.tick(), /destination/); assert.equal(broadcasts, 0);
   await assert.rejects(engine.tick(), /reconciliation/); assert.equal(broadcasts, 0);
 });
@@ -112,7 +115,7 @@ test('confirmed Nano receipt, one swap payment and actual ALGO arrival complete 
     balance=BigInt(data.block.balance);frontier=hash;ledger.set(hash,{confirmed:'true'});return {hash};
   };
   const engine=new Settlement({wallet,state,rpc,work:async()=> '0'.repeat(16),save:async()=>{},stop:async()=>{},algo:async()=>({funded}),swap:async path=>{
-    if(path==='/get-limits')return {min:0.6,max:100};
+    if(path==='/get-limits')return {min:0.66666666,max:100};
     if(path==='/create-order'){orders++;return makeOrder();}
     if(path.startsWith('/get-order'))return {...makeOrder(),status:'completed'};
     return {amountFrom:0.7,amountTo:1.4};
@@ -122,4 +125,16 @@ test('confirmed Nano receipt, one swap payment and actual ALGO arrival complete 
   await engine.tick();assert.equal(state.phase,'waiting-for-algo');
   funded=true;await engine.tick();assert.equal(state.phase,'complete');
   await engine.tick();assert.equal(sends,1);assert.equal(orders,1);
+});
+
+test('a received cashout resumes mining if the live swap minimum rises', async () => {
+  const state = {poolPayoutRequestedAt:'2026-11-17T00:00:00Z', payoutTargetNano:'0.6'};
+  let starts = 0, requests = 0;
+  const engine = new Settlement({wallet, state, save:async()=>{}, stop:async()=>{}, start:async()=>{starts++;}, algo:async()=>({funded:false}),
+    rpc:async action=>action==='account_info' ? {balance:String(decimal('0.6'))} : {blocks:{}},
+    swap:async path=>path==='/get-limits' ? {min:0.66666666,max:100} : {amountFrom:0.7,amountTo:1.4},
+    poolStatus:async()=>({balance:'0.01'}), poolPayout:async()=>{requests++;}});
+  await engine.tick();
+  assert.equal(state.phase,'mining-nano'); assert.equal(starts,1); assert.equal(requests,0);
+  assert.equal(state.poolPayoutRequestedAt,null);
 });

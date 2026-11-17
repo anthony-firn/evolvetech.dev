@@ -60,6 +60,13 @@ export class Settlement {
       return;
     }
 
+    // A higher minimum after a received cashout needs only the shortfall.
+    // An ambiguous or unreceived payout stays latched.
+    if (state.poolPayoutRequestedAt && state.payoutTargetNano &&
+        BigInt(account.balance) >= decimal(state.payoutTargetNano)) {
+      state.poolPayoutRequestedAt = null; state.payoutTargetNano = null;
+      await save(state);
+    }
     if (state.poolPayoutRequestedAt) {
       await this.stop(); state.phase = 'waiting-for-nano';
       state.message = 'Mining stopped; waiting for the previously requested Nano payout.';
@@ -71,6 +78,7 @@ export class Settlement {
     if (decimal(state.poolNano) + BigInt(account.balance) >= plan.amount) {
       await this.stop();
       if (!state.poolPayoutRequestedAt) {
+        state.payoutTargetNano = amount;
         state.poolPayoutRequestedAt = new Date().toISOString(); state.phase = 'pool-payout-requested';
         state.message = 'Requesting the mined Nano payout into the local transit wallet.'; await save(state);
         try {await this.poolPayout();}

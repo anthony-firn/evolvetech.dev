@@ -9,7 +9,6 @@ export {FUND};
 export const RAW = 10n ** 30n;
 export const MIN_ALGO_OUT = 300000n;
 export const MAX_NANO = RAW;
-export const DEFAULT_TARGET = 7n * RAW / 10n;
 export const RPC_URL = 'https://rpc.nano.to';
 export const SWAP_URL = 'https://api.nanswap.com/v1';
 export const POOL_URL = 'https://api.unmineable.dev/v1';
@@ -31,8 +30,8 @@ export function planQuote(limits, quote, available) {
   const min = decimal(limits.min), max = decimal(limits.max);
   // 5% above the live minimum, rounded upward to eight Nano decimals.
   const quantum = 10n ** 22n;
-  const padded = ((min * 105n / 100n + quantum - 1n) / quantum) * quantum;
-  const amount = padded > DEFAULT_TARGET ? padded : DEFAULT_TARGET;
+  if (min <= 0n || max < min) throw Error('Invalid swap limits');
+  const amount = ((min * 105n + 100n * quantum - 1n) / (100n * quantum)) * quantum;
   if (amount > MAX_NANO || amount > max) throw Error('Swap minimum exceeds the one-Nano bootstrap budget');
   if (quote) {
     if (quote.error || (quote.from && quote.from !== 'XNO') || (quote.to && quote.to !== 'ALGO')) throw Error('Unexpected swap quote');
@@ -79,7 +78,7 @@ export async function setupWallet(dir) {
   }
   const secret = nano.deriveSecretKey(wallet.seed, wallet.index);
   if (nano.deriveAddress(nano.derivePublicKey(secret), {useNanoPrefix: true}) !== wallet.address) throw Error('Wallet address failed its derivation check');
-  await writeJSON(join(dir, 'public.json'), {nanoAddress: wallet.address, algoAddress: FUND, maxNano: display(MAX_NANO), targetNano: display(DEFAULT_TARGET)});
+  await writeJSON(join(dir, 'public.json'), {nanoAddress: wallet.address, algoAddress: FUND, maxNano: display(MAX_NANO), targetNanoPolicy: 'Live swap minimum plus 5%'});
   return {address: wallet.address};
 }
 
