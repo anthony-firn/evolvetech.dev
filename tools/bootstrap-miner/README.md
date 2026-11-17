@@ -94,3 +94,12 @@ Sources checked November 16, 2026:
 - [Provider's legacy address/worker configuration](https://unmineable.com/support/article/how-to-setup-xmrig-for-cpu-mining)
 - [RandomX-bonanza engine](https://github.com/aa022/RandomX-bonanza/tree/25741e126a687e39d715f3b921192e6125f450f2)
 - [Algorand minimum balances and transaction fees](https://dev.algorand.co/concepts/protocol/protocol-parameters/)
+
+## Native mining and one-time Nano settlement
+
+The installed operator session can use native CPU/GPU miners and the optional
+[Nano-to-ALGO settlement utility](settlement/README.md). It keeps wallet secrets
+outside the repository, stops at the one-time funding goal, and requires the
+operator's own pool/swap API credentials before switching payout routes.
+See the [pool and open-source trading research](../../docs/donation-funding-research.md)
+for measured configurations, payout minimums and the paper-trading sandbox.

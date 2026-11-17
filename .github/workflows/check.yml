@@ -25,4 +25,6 @@ jobs:
       - run: node --test tools/test_wallet_setup.mjs
       - run: node --test tools/bootstrap-miner/test.mjs
       - run: node tools/bootstrap-miner/verify-engine.cjs
+      - run: npm ci --prefix tools/bootstrap-miner/settlement --ignore-scripts --no-audit
+      - run: npm test --prefix tools/bootstrap-miner/settlement
       - run: python3 tools/check_site.py
