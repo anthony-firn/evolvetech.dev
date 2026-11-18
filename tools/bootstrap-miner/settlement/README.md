@@ -1,6 +1,6 @@
-# One-time Nano → ALGO settlement
+# Nano → ALGO donation settlement
 
-This operator utility initializes the existing donation fund by converting a small mined Nano balance into native ALGO. Its destination is fixed to the fund address exported by `../protocol.mjs`. It does not accept an alternate ALGO recipient.
+This operator utility initializes the existing donation fund by converting a small mined Nano balance into native ALGO. Ongoing donation batches require the explicit opt-in described below. Its destination is fixed to the fund address exported by `../protocol.mjs`. It does not accept an alternate ALGO recipient.
 
 The donation account owner still signs the USDC opt-in through Fairground after ALGO arrives. No Algorand signing keys are requested by this utility.
 
@@ -46,3 +46,30 @@ The native server was tested at both mainnet receive and send thresholds. It is 
 The executable reads no exchange keys and contains no real order or withdrawal calls. `evolve-paper-trading.service` runs it separately from donation settlement. Stop it with `systemctl --user stop evolve-paper-trading.service`.
 
 See [the research comparison](../../../docs/donation-funding-research.md) for Freqtrade, Hummingbot, CCXT, and Algorand swap options. The automation source is open; hosted mining pools and swap providers are external services. The current optimized GPU miner is a binary-distributed third-party miner, so the entire mining/service stack is not described as fully open source.
+
+## Ongoing donations
+
+After the original fund is initialized and opted into native USDC, an explicit
+`node cli.mjs donations` command enables ongoing mining to the same fixed fund.
+It preserves the completed bootstrap record and installs the host start/stop and
+thermal watcher helpers. This command must not reset an unfinished swap or
+signed payment. Repeating it resumes the current ongoing state.
+
+Each batch follows the live Nano-to-ALGO minimum plus 5%, capped at one NANO per
+swap. Mining pauses for payout and conversion. The next batch begins only after
+the completed swap's payout transaction is confirmed on Algorand mainnet with
+the exact recipient and actual amount. Its receipt is archived before clearing
+the prior payment journal; reused payout transactions and uncertain orders stop
+progress for reconciliation. The donation wallet must remain USDC-ready.
+
+`completedBatches`, `totalDonatedMicroAlgo`, and `lastDonation` appear in CLI
+status. These counters cover new ongoing batches; the original bootstrap is
+stored separately. Proceeds arrive as native ALGO in the existing project fund.
+The fund can also receive USDC donations through Fairground's existing flow.
+
+Use `~/.local/share/evolve-bootstrap/stop.sh` to pause all mining, or `start.sh`
+to resume. The original bootstrap behavior remains the default without a
+private `settlement/mode.json` explicitly enabling donations. Services are not
+enabled at boot. Wallets, receipts, API keys and signed journals stay outside Git.
+
+Host guard checks: `python3 -m unittest discover -s ../host -p 'test_*.py'`.

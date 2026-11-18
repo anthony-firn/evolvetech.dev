@@ -1,1 +1,1 @@
-{"name":"evolve-donation-settlement","version":"1.0.0","private":true,"type":"module","license":"GPL-3.0-or-later","scripts":{"test":"node --test test.mjs"},"dependencies":{"nanocurrency":"2.5.0"}}
+{"name":"evolve-donation-settlement","version":"1.0.0","private":true,"type":"module","license":"GPL-3.0-or-later","scripts":{"test":"node --test test.mjs donations.test.mjs"},"dependencies":{"nanocurrency":"2.5.0"}}

@@ -24,7 +24,8 @@ export class Settlement {
   async tick() {
     const {state, save, rpc, swap, wallet} = this;
     const chain = await this.algo();
-    if (chain.funded || chain.ready) {
+    if (this.donationMode && !chain.ready) {await this.stop(); throw Error('Ongoing donation recipient is not USDC-ready');}
+    if (!this.donationMode && (chain.funded || chain.ready)) {
       state.phase = 'complete'; state.message = 'ALGO received. Complete USDC opt-in in the existing owner wallet.';
       await save(state); await this.stop(); return;
     }
@@ -33,8 +34,25 @@ export class Settlement {
     if (state.sendHash) {
       const order = await swap('/get-order?id=' + encodeURIComponent(state.order.id));
       validateOrder(order, decimal(state.order.expectedAmountFrom), wallet.address);
+      if (order.id !== state.order.id || order.payinAddress !== state.order.payinAddress) throw Error('Paid swap order identity changed');
       state.swapStatus = order.status; state.phase = 'waiting-for-algo';
       state.message = 'Swap funded; checking the actual ALGO donation wallet.';
+      if (this.donationMode) {
+        await this.stop();
+        if (order.status === 'completed' && order.payinHash !== state.sendHash) throw Error('Completed swap does not match the saved Nano payment');
+        const receipt = await this.confirmPayout(order);
+        if (receipt) {
+          // Archive before clearing payment state. A crash retries this exact
+          // receipt; it cannot authorize a second send for the completed order.
+          await this.archive({order, sendHash: state.sendHash, receipt, completedAt: new Date().toISOString()});
+          const next = {mode: 'donations', phase: 'mining-nano', batchNumber: (state.batchNumber ?? 1) + 1,
+            completedBatches: (state.completedBatches ?? 0) + 1,
+            totalDonatedMicroAlgo: String(BigInt(state.totalDonatedMicroAlgo ?? '0') + BigInt(receipt.microAlgo)),
+            lastDonation: receipt, message: 'Donation confirmed on-chain; preparing the next mining batch.', error: null};
+          for (const key of Object.keys(state)) delete state[key];
+          Object.assign(state, next);
+        }
+      }
       await save(state); return;
     }
 
@@ -69,7 +87,7 @@ export class Settlement {
       await this.stop();
       if (!state.order) {
         // A timeout may have created an order. Do not silently repeat this POST.
-        state.phase = 'order-create-uncertain'; state.message = 'Creating the one-time Nano-to-ALGO order.'; await save(state);
+        state.phase = 'order-create-uncertain'; state.message = 'Creating the Nano-to-ALGO order for this batch.'; await save(state);
         let order;
         try {order = await swap('/create-order', {from: 'XNO', to: 'ALGO', amount: Number(amount), toAddress: FUND});}
         catch (error) {if (error.definitivelyRejected) {state.phase = 'order-rejected'; await save(state);} throw error;}
@@ -108,7 +126,7 @@ export class Settlement {
       }
       state.phase = 'waiting-for-nano'; state.message = 'Mining stopped; waiting for the requested Nano payout.';
     } else {
-      state.phase = 'mining-nano'; state.message = 'Accumulating the live swap minimum for wallet initialization.';
+      state.phase = 'mining-nano'; state.message = this.donationMode ? 'Mining the next donation batch for the existing project wallet.' : 'Accumulating the live swap minimum for wallet initialization.';
       if (this.start) await this.start();
     }
     await save(state);

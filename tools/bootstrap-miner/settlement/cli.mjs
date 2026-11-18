@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import {homedir} from 'node:os';
 import {join} from 'node:path';
-import {open, readFile} from 'node:fs/promises';
+import {open, readFile, copyFile, chmod} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {Worker} from 'node:worker_threads';
 import {setTimeout as delay} from 'node:timers/promises';
@@ -11,10 +11,12 @@ import {Settlement} from './engine.mjs';
 import {activateHost} from './activate-host.mjs';
 import nano from 'nanocurrency';
 import {gpuWork} from './gpu-work.mjs';
+import {donationMode, confirmDonation, archiveDonation} from './donations.mjs';
 
 const root = join(homedir(), '.local/share/evolve-bootstrap');
 const dir = join(root, 'settlement');
 const statePath = join(dir, 'state.json');
+const modePath = join(dir, 'mode.json');
 const command = process.argv[2] ?? 'status';
 if (command === 'run' && process.env.EVOLVE_SETTLEMENT_LOCKED !== '1') {
   await privateDirectory(dir);
@@ -63,17 +65,43 @@ if (command === 'setup') {
   await privateDirectory(dir);
   const pub = await readJSON(join(dir, 'public.json'), null);
   const state = await readJSON(statePath, {});
-  console.log(JSON.stringify({wallet: pub, phase: state.phase ?? 'not-activated', message: state.message, targetNano: state.targetNano, poolNano: state.poolNano, walletNano: state.walletNano, quotedAlgo: state.quotedAlgo, swapStatus: state.swapStatus, sendHash: state.sendHash, error: state.error}, null, 2));
-} else if (command === 'check' || command === 'activate' || command === 'run' || command === 'retry-order') {
+  console.log(JSON.stringify({wallet: pub, mode: state.mode ?? 'bootstrap', phase: state.phase ?? 'not-activated', message: state.message, targetNano: state.targetNano, poolNano: state.poolNano, walletNano: state.walletNano, quotedAlgo: state.quotedAlgo, swapStatus: state.swapStatus, sendHash: state.sendHash, batchNumber: state.batchNumber, completedBatches: state.completedBatches, totalDonatedMicroAlgo: state.totalDonatedMicroAlgo, lastDonation: state.lastDonation, error: state.error}, null, 2));
+} else if (['check', 'activate', 'run', 'retry-order', 'donations'].includes(command)) {
   await setupWallet(dir);
   const credentials = await readJSON(join(dir, 'credentials.json'), null);
   if (!credentials?.nanswapKey || !credentials?.unmineableKey || !credentials?.unmineableSecret) throw Error('Enter the Nanswap and unMineable API credentials in the local setup console');
   const wallet = await readJSON(join(dir, 'wallet.json'));
+  const ongoing = donationMode(await readJSON(modePath, null), wallet.address);
   const rpc = nanoClient(), swap = swapClient(credentials.nanswapKey), pool = poolClient(credentials);
   const version = await rpc('version');
   if (version.network !== 'live') throw Error('Nano RPC is not on the live network');
   await swap('/get-limits');
   let activation = await readJSON(join(dir, 'activation.json'), null);
+  if (command === 'donations') {
+    systemctl('start', 'evolve-bootstrap-server.service');
+    for (let attempt = 0; ; attempt++) {
+      try {await algo(); break;}
+      catch (error) {if (attempt >= 9) throw error; await delay(500);}
+    }
+    const chain = await algo();
+    if (!chain.ready) throw Error('Initialize the donation wallet and USDC holding before enabling ongoing donations');
+    const uuid = await getPoolIdentity(wallet, pool);
+    if (!activation || activation.address !== wallet.address || activation.uuid !== uuid) throw Error('Activate the existing transit wallet first');
+    systemctl('stop', 'evolve-bootstrap-watch.service', 'evolve-bootstrap-settlement.service');
+    const saved = await readJSON(statePath, {});
+    if (!ongoing) {
+      if (saved.pendingBlock || saved.orderResponse || (saved.phase !== 'complete' && (saved.order || saved.sendHash))) throw Error('Reconcile the previous batch before changing mining mode');
+      if (!await readJSON(join(dir, 'bootstrap-complete.json'), null)) await writeJSON(join(dir, 'bootstrap-complete.json'), saved);
+      await writeJSON(statePath, {mode: 'donations', phase: 'mining-nano', batchNumber: 1, completedBatches: 0, totalDonatedMicroAlgo: '0', message: 'Ongoing donations enabled for the existing project wallet.'});
+    }
+    for (const name of ['watch.py', 'start.sh', 'stop.sh']) {
+      await copyFile(new URL('../host/' + name, import.meta.url), join(root, name));
+      await chmod(join(root, name), 0o700);
+    }
+    await writeJSON(modePath, {mode: 'donations', recipient: FUND, nanoAddress: wallet.address, maxNano: '1'});
+    systemctl('start', 'evolve-bootstrap-watch.service', 'evolve-bootstrap-settlement.service');
+    console.log('Ongoing donation mining enabled; each batch retains the one-Nano cap and fixed recipient.'); process.exit(0);
+  }
   if (command === 'retry-order') {
     systemctl('stop', 'evolve-bootstrap-settlement.service');
     const saved = await readJSON(statePath, {});
@@ -84,7 +112,7 @@ if (command === 'setup') {
   }
   if (command !== 'run') {
     const chain = await algo();
-    if (chain.funded || chain.ready) throw Error('Donation wallet already funded; no more mining needed');
+    if (!ongoing && (chain.funded || chain.ready)) throw Error('Donation wallet already funded; use donations to explicitly enable ongoing mining');
     const uuid = await getPoolIdentity(wallet, pool);
     if (command === 'check') {console.log('Public quote, Nano mainnet and authenticated pool access checked.'); process.exit(0);}
     if (!activation) await activateHost(root, wallet, uuid);
@@ -113,7 +141,9 @@ if (command === 'setup') {
     } catch {}
     return localWork(hash, threshold);
   };
-  const engine = new Settlement({wallet, state, save, rpc, swap, algo, stop, start, work,
+  if (ongoing && state.mode !== 'donations') throw Error('Donation mode does not match the saved payment state');
+  const engine = new Settlement({wallet, state, save, rpc, swap, algo, stop, start, work, donationMode: ongoing,
+    confirmPayout: confirmDonation, archive: record => archiveDonation(join(dir, 'receipts'), record),
     poolStatus: () => publicPool(wallet.address),
     poolPayout: () => pool('POST', '/legacy-addresses/' + activation.uuid + '/payments', {platform: 'api'})});
   let quitting = false;
@@ -131,4 +161,4 @@ if (command === 'setup') {
       }
       for (let i = 0; i < 30 && !quitting; i++) await delay(1000);
   }
-} else throw Error('Use setup, status, check, activate, run or retry-order');
+} else throw Error('Use setup, status, check, activate, run, retry-order or donations');
