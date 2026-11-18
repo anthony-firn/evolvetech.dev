@@ -1,6 +1,6 @@
 {
-  "wasm_bytes": 2653181,
-  "wasm_sha256": "d55ad29e08c2f256afc474dd222a0e49fb87e5e96b110623f52aa8267a5bcd28",
+  "wasm_bytes": 2682069,
+  "wasm_sha256": "bb6434f6859c911c0e1ae4952e10b657034e16f409fb3df1827d448bf1266fd8",
   "wasm_bindgen": "0.2.130",
   "wasm_opt": true,
   "target_features": "+simd128,+bulk-memory,+nontrapping-fptoint,+sign-ext,+mutable-globals"
