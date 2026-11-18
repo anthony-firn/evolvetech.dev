@@ -1,0 +1,14 @@
+[Unit]
+Description=Read-only Algorand arbitrage scanner (public quotes only, no keys or orders)
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -I %h/.local/share/evolve-bootstrap/arb-scan/scan.py
+Nice=15
+CPUQuota=10%
+Restart=on-failure
+RestartSec=120
+
+[Install]
+WantedBy=default.target
