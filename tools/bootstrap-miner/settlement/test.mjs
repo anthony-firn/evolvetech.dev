@@ -28,6 +28,9 @@ test('exact Nano amounts and live minimum/fee checks', () => {
 });
 test('swap output and deposit are validated before signing', () => {
   assert.equal(validateOrder(makeOrder(), decimal('0.7'), wallet.address).payoutAddress, FUND);
+  assert.equal(validateOrder({...makeOrder(),to:'algo',toNetwork:'algo'}, decimal('0.7'), wallet.address).payoutAddress, FUND);
+  assert.throws(() => validateOrder({...makeOrder(),toNetwork:'ETH'},decimal('0.7'),wallet.address),/destination/);
+  assert.throws(() => validateOrder({...makeOrder(),fromNetwork:'BSC'},decimal('0.7'),wallet.address),/destination/);
   assert.throws(() => validateOrder({...makeOrder(), payoutAddress: 'OTHER'}, decimal('0.7'), wallet.address), /destination/);
   assert.throws(() => validateOrder({...makeOrder(), payinAddress: wallet.address}, decimal('0.7'), wallet.address), /deposit/);
   assert.throws(() => validateOrder({...makeOrder(), payinAddress: wallet.address.replace('nano_','xrb_')}, decimal('0.7'), wallet.address), /deposit/);
@@ -85,6 +88,7 @@ test('an order with a substituted ALGO address is never funded', async () => {
     rpc: async action => {if (action === 'process') broadcasts++; return action === 'account_info' ? {balance: String(decimal('0.8')), frontier: 'A'.repeat(64)} : {blocks: {}};},
     swap: async path => path === '/get-limits' ? {min: 0.66666666, max: 100} : path === '/create-order' ? {...makeOrder(), payoutAddress: 'SUBSTITUTED'} : {amountFrom: 0.7, amountTo: 1.4}});
   await assert.rejects(engine.tick(), /destination/); assert.equal(broadcasts, 0);
+  assert.equal(state.orderResponse.payoutAddress,'SUBSTITUTED'); assert.equal(state.order,undefined);
   await assert.rejects(engine.tick(), /reconciliation/); assert.equal(broadcasts, 0);
 });
 test('a completed swap is not counted as wallet funding until ALGO arrives', async () => {
@@ -117,7 +121,7 @@ test('confirmed Nano receipt, one swap payment and actual ALGO arrival complete 
   const engine=new Settlement({wallet,state,rpc,work:async()=> '0'.repeat(16),save:async()=>{},stop:async()=>{},algo:async()=>({funded}),swap:async path=>{
     if(path==='/get-limits')return {min:0.66666666,max:100};
     if(path==='/create-order'){orders++;return makeOrder();}
-    if(path.startsWith('/get-order'))return {...makeOrder(),status:'completed'};
+    if(path.startsWith('/get-order'))return {...makeOrder(),to:'algo',toNetwork:'algo',status:sends?'completed':'waiting',amountFrom:0};
     return {amountFrom:0.7,amountTo:1.4};
   }});
   await engine.tick();assert.equal(received,true);assert.equal(balance,decimal('0.7'));
@@ -137,4 +141,31 @@ test('a received cashout resumes mining if the live swap minimum rises', async (
   await engine.tick();
   assert.equal(state.phase,'mining-nano'); assert.equal(starts,1); assert.equal(requests,0);
   assert.equal(state.poolPayoutRequestedAt,null);
+});
+
+test('a recovered waiting order keeps its original amount without requoting', async () => {
+  const state={phase:'order-created',order:makeOrder()};let sends=0,accepted=false;
+  const rpc=async action=>{
+    if(action==='account_info')return {balance:String(decimal('0.8')),frontier:'A'.repeat(64),representative:wallet.address};
+    if(action==='receivable')return {blocks:{}};
+    if(action==='active_difficulty')return {network_minimum:'0000000000000000'};
+    if(action==='block_info')return accepted?{confirmed:'true'}:{error:'Block not found'};
+    if(action==='process'){sends++;accepted=true;return {};}
+    throw Error('Unexpected RPC');
+  };
+  const engine=new Settlement({state,wallet,rpc,save:async()=>{},stop:async()=>{},algo:async()=>({funded:false}),work:async()=> '0'.repeat(16),swap:async path=>{
+    assert.match(path,/^\/get-order\?id=/);
+    return {...makeOrder(),to:'algo',toNetwork:'algo',status:'waiting',amountFrom:0,validUntil:new Date(Date.now()+60000).toISOString()};
+  }});
+  await engine.tick();assert.equal(sends,1);assert.equal(state.targetNano,'0.7');assert.ok(state.sendHash);
+});
+test('expired, already funded and substituted deposit orders cannot be paid',async()=>{
+  const other=nano.deriveAddress(nano.derivePublicKey(nano.deriveSecretKey('2'.repeat(64),0)),{useNanoPrefix:true});
+  for(const change of [{validUntil:'2020-01-01'},{validUntil:'invalid'},{amountFrom:0.7},{status:'completed'},{payinHash:'B'.repeat(64)},{payinAddress:other}]){
+    let work=0;
+    const engine=new Settlement({state:{order:makeOrder()},wallet,save:async()=>{},stop:async()=>{},algo:async()=>({funded:false}),
+      rpc:async a=>a==='account_info'?{balance:String(decimal('0.8')),frontier:'A'.repeat(64)}:{blocks:{}},
+      swap:async()=>({...makeOrder(),status:'waiting',amountFrom:0,...change}),work:async()=>{work++;}});
+    await assert.rejects(engine.tick(),/expired|awaiting payment|deposit changed/);assert.equal(work,0);
+  }
 });

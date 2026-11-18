@@ -1,8 +1,26 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import {decimal, display, planQuote, validateOrder, prepareBlock, broadcastPending, FUND} from './core.mjs';
+import {decimal, display, planQuote, validateOrder, prepareBlock, broadcastPending, FUND, MAX_NANO} from './core.mjs';
 
 export class Settlement {
   constructor(dependencies) {Object.assign(this, dependencies);}
+  async fundOrder(account) {
+    const {state, wallet, swap, save} = this;
+    await this.stop();
+    const amount = decimal(state.order.expectedAmountFrom);
+    validateOrder(state.order, amount, wallet.address);
+    if (amount <= 0n || amount > MAX_NANO) throw Error('Saved order exceeds bootstrap budget');
+    const current = await swap('/get-order?id=' + encodeURIComponent(state.order.id));
+    validateOrder(current, amount, wallet.address);
+    if (current.id !== state.order.id || current.payinAddress !== state.order.payinAddress) throw Error('Saved order deposit changed');
+    if (current.status !== 'waiting' || current.payinHash ||
+        (current.amountFrom != null && decimal(current.amountFrom) !== 0n)) throw Error('Saved order is no longer awaiting payment');
+    if (current.validUntil != null && (!Number.isFinite(Date.parse(current.validUntil)) || Date.parse(current.validUntil) <= Date.now())) throw Error('Saved order has expired');
+    if (!account.frontier || BigInt(account.balance) < amount) throw Error('Saved order lacks confirmed Nano funds');
+    state.order = current; state.targetNano = display(amount);
+    state.walletNano = display(account.balance); state.quotedAlgo = String(current.expectedAmountTo);
+    state.phase = 'order-created'; await save(state);
+    await prepareBlock({wallet, account, balance: BigInt(account.balance) - amount, link: current.payinAddress, subtype: 'send', state, save, rpc: this.rpc, work: this.work});
+  }
   async tick() {
     const {state, save, rpc, swap, wallet} = this;
     const chain = await this.algo();
@@ -38,6 +56,9 @@ export class Settlement {
       return;
     }
 
+    // An existing order fixes the payment amount. Requoting a moving minimum
+    // must not alter it or create another order after a recoverable work failure.
+    if (state.order) {await this.fundOrder(account); return;}
     const limits = await swap('/get-limits');
     const plan = planQuote(limits, null, account.balance);
     const amount = display(plan.amount);
@@ -52,11 +73,12 @@ export class Settlement {
         let order;
         try {order = await swap('/create-order', {from: 'XNO', to: 'ALGO', amount: Number(amount), toAddress: FUND});}
         catch (error) {if (error.definitivelyRejected) {state.phase = 'order-rejected'; await save(state);} throw error;}
+        // Preserve the provider's order ID even when its response fails checks.
+        state.orderResponse = order; await save(state);
         validateOrder(order, plan.amount, wallet.address);
-        state.order = order; state.phase = 'order-created'; await save(state);
+        state.order = order; delete state.orderResponse; state.phase = 'order-created'; await save(state);
       } else validateOrder(state.order, plan.amount, wallet.address);
-      if (!account.frontier) throw Error('Funded Nano account has no frontier');
-      await prepareBlock({wallet, account, balance: BigInt(account.balance) - plan.amount, link: state.order.payinAddress, subtype: 'send', state, save, rpc, work: this.work});
+      await this.fundOrder(account);
       return;
     }
 

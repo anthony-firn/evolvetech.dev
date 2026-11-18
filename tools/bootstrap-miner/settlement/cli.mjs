@@ -77,7 +77,7 @@ if (command === 'setup') {
   if (command === 'retry-order') {
     systemctl('stop', 'evolve-bootstrap-settlement.service');
     const saved = await readJSON(statePath, {});
-    if (saved.phase !== 'order-create-uncertain' || saved.order || saved.pendingBlock || saved.sendHash) throw Error('Only an unfunded, uncertain order request may be retried');
+    if (saved.phase !== 'order-create-uncertain' || saved.order || saved.orderResponse || saved.pendingBlock || saved.sendHash) throw Error('Only an uncertain request without a saved provider response or payment may be retried');
     saved.phase = 'quote-ready'; saved.error = null; await writeJSON(statePath, saved);
     systemctl('start', 'evolve-bootstrap-settlement.service');
     console.log('Unfunded order retry enabled; saved signed payments were not changed.'); process.exit(0);

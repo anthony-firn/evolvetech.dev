@@ -41,7 +41,12 @@ export function planQuote(limits, quote, available) {
   return {amount, funded: BigInt(available) >= amount};
 }
 export function validateOrder(order, amount, walletAddress) {
-  if (!order || !/^[A-Za-z0-9_-]{4,100}$/.test(order.id ?? '') || order.from !== 'XNO' || order.to !== 'ALGO' || order.payoutAddress !== FUND) throw Error('Swap order destination mismatch');
+  if (!order || !/^[A-Za-z0-9_-]{4,100}$/.test(order.id ?? '') ||
+      typeof order.from !== 'string' || order.from.toUpperCase() !== 'XNO' ||
+      typeof order.to !== 'string' || order.to.toUpperCase() !== 'ALGO' ||
+      (order.toNetwork != null && String(order.toNetwork).toUpperCase() !== 'ALGO') ||
+      (order.fromNetwork != null && !['XNO', 'NANO'].includes(String(order.fromNetwork).toUpperCase())) ||
+      order.payoutAddress !== FUND) throw Error('Swap order destination mismatch');
   if (!nano.checkAddress(order.payinAddress) || nano.derivePublicKey(order.payinAddress) === nano.derivePublicKey(walletAddress) || nano.derivePublicKey(order.payinAddress) === '0'.repeat(64)) throw Error('Invalid swap deposit address');
   if (decimal(order.expectedAmountFrom) !== amount || decimal(order.expectedAmountTo, 6) < MIN_ALGO_OUT) throw Error('Swap order amount mismatch');
   return order;
