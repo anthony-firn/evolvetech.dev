@@ -134,7 +134,9 @@ larger than the device (Kimi K3.1 Pro, about 593 GB) are read from Hugging Face'
 capped cache in browser storage. Pi, the in-page coding agent, calls tools in each model family's own syntax.
 With sharing on (off by default), visitors pass model pieces to each other over WebRTC, found through public
 Nostr relays and checked against chunk hashes from github.com/anthony-firn/evolve-llm-manifests, which the
-CSP's raw.githubusercontent.com and wss: sources already allow.
+CSP's raw.githubusercontent.com and wss: sources already allow. A visitor can also pair their own devices
+(Settings, then a #pair= link): the chat device keeps the first layers and the output, and the others run
+the rest, passing the model's state over WebRTC.
 
 Rebuild with `python3 tools/build_demos.py evolve-llm --local-source ~/Dev/evolve-llm`. This needs Rust
 with `wasm32-unknown-unknown`, `wasm-bindgen-cli` matching the project's `Cargo.lock`, Node.js and Python 3;
