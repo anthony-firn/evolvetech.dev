@@ -129,7 +129,9 @@ Evolve LLM runs GGUF language models on the visitor's GPU at `/play/evolve-llm/`
 [public repository](https://github.com/anthony-firn/evolve-llm) and `/projects/evolve-llm/` case study.
 A Rust engine compiled to WebAssembly drives WebGPU from a module worker. Models download directly from
 Hugging Face into the browser's origin-private file system; no model files are hosted here. Models larger
-than the visitor's GPU memory read the rest of their weights from that storage while they run.
+than the visitor's GPU memory read the rest of their weights from that storage while they run, and models
+larger than the device (Kimi K3.1 Pro, about 593 GB) are read from Hugging Face's CDN as they run, with a
+capped cache in browser storage. Pi, the in-page coding agent, calls tools in each model family's own syntax.
 
 Rebuild with `python3 tools/build_demos.py evolve-llm --local-source ~/Dev/evolve-llm`. This needs Rust
 with `wasm32-unknown-unknown`, `wasm-bindgen-cli` matching the project's `Cargo.lock`, Node.js and Python 3;

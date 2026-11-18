@@ -1,6 +1,6 @@
 {
-  "wasm_bytes": 20909541,
-  "wasm_sha256": "19b437e3df3f36978efd0fe6e5a4f04ba30d6048653912b06784491c09eb7ba2",
+  "wasm_bytes": 20909533,
+  "wasm_sha256": "8acd126394ac9e81ab5323e21fb86e93579cc33ce0ba9560e96e49c8cc986e3d",
   "wasm_opt": true,
   "rustflags": "-C target-feature=+simd128,+bulk-memory,+nontrapping-fptoint,+sign-ext,+mutable-globals",
   "fonts": {
