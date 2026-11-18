@@ -1,4 +1,8 @@
 {
   "source": "https://github.com/anthony-firn/retirement-research.git",
-  "commit": "aa7ca19989139b30e80bb9c391cf1d74525a24ec"
+  "commit": "aa7ca19989139b30e80bb9c391cf1d74525a24ec",
+  "site_overlay": {
+    "tool": "tools/build_legal.py",
+    "purpose": "Privacy, use, reporting and security navigation"
+  }
 }

@@ -1,4 +1,8 @@
 {
   "source": "https://github.com/anthony-firn/de221.git",
-  "commit": "ce2a183ea07b4e89b209ba071fd2d364d83ed1cc"
+  "commit": "ce2a183ea07b4e89b209ba071fd2d364d83ed1cc",
+  "site_overlay": {
+    "tool": "tools/build_legal.py",
+    "purpose": "Privacy, use, reporting and security navigation"
+  }
 }

@@ -1,14 +1,14 @@
 {
   "source": "https://github.com/anthony-firn/fairground.git",
-  "commit": "85dc49ad0a9f8894214cb6c4b52dad88bd1f24ca",
+  "commit": "f01bd9ca41adc8d86132ec653d31070660cf8ba7",
   "build": "npm run app:build",
   "files_sha256": {
     "assets/embed.worker-cRyWOaGo.js": "75debce3ca8af24a639ee764ebac5446b02cb6eb5bf4dfd6ebf804fcaa33f616",
     "assets/hls-CydbS6hn.js": "a7b578046641a122957317c7bac6c3a18de24630c2bbc21cce3773e2b96297c9",
-    "assets/index-CZoaNniK.js": "34630ffea46c25b466f4cd5b9a318177411387971c02962d4b7b7e2e5359e22a",
+    "assets/index-BtL4zHtk.js": "185391641e08ed9345fa10b315e87259a6972ac17ae15efa1dc11fb0ca7f4ea4",
     "assets/index-Cdk_YR23.css": "92873b5c99bef0aeb6a70b4933518c9189d13c5be7f508d5850e9685bf4e3cea",
     "assets/lamejs-D2d3HPyl.js": "5b8f2a1a532a92330d9a12e1bce88a60a84c7b8ae6685a321c17f2261b057b29",
-    "assets/walletActions-B2Pddayl.js": "9ef4bb941af7b9ac5ed5044b470ad854cbab6f7c1205441320f0a196938cfeca",
+    "assets/walletActions-CO66JRa6.js": "4a1c2db280133c77a70f03d60405eb35bebe22f637ae4fbd433736ad5b50fda2",
     "icon.svg": "1f30631bf6f05fbe77bfa47c842acdd98727c9559f0ea96a714bf2283d563b8d",
     "icons/icon-128.webp": "20e497b93aaadc975312c117f5bc9126c843c47a2bdfcf2bca6d92962aea0182",
     "icons/icon-192.webp": "ed3fc74dd4c011858909013aca491617241afd5db111e1525a2c0d4ae3bb17f8",
@@ -17,9 +17,13 @@
     "icons/icon-512.webp": "3d614761c48d4d74200e4eea2b718c597c20f2bd67303ca75cf7aca230949190",
     "icons/icon-72.webp": "fd285bbe002386eb239527d361347fc1697e163822f424038f3528ff25e88fe6",
     "icons/icon-96.webp": "285c1fd1d1d35998fe0d3be531998759885d22a999ba82ce5be814ebbd58f1ef",
-    "index.html": "045dfdc2341d770352d0e89f6c42352517a147a3f6626c6f949d33fc2d222f94",
+    "index.html": "9682c84abec7fd9c41a4e1887c9018489d4e62c1c7e25d8b06877a0b97026252",
     "manifest.webmanifest": "93e38b104f01ea84344e38041f4533a17f11f342a481cbe01436424f3e99eba3",
     "ort/ort-wasm-simd-threaded.mjs": "c57ca56328877353a575e51bbca6f18450027d6c9bf2307a2cb2c41363b4de9f",
     "ort/ort-wasm-simd-threaded.wasm": "06ba057753da3847e4c24f02d91ab133455b0817c69a44993a9a53a2146df9e3"
+  },
+  "site_overlay": {
+    "tool": "tools/build_legal.py",
+    "purpose": "Privacy, use, reporting and security navigation"
   }
 }

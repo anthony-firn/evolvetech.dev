@@ -4,5 +4,9 @@
   "corpus_included": false,
   "private_research_included": false,
   "source_files": 27,
-  "browser_data_storage": "browser IndexedDB; user-initiated backups; search queries sent to CourtListener via EvolveTech"
+  "browser_data_storage": "browser IndexedDB; user-initiated backups; search queries sent to CourtListener via EvolveTech",
+  "site_overlay": {
+    "tool": "tools/build_legal.py",
+    "purpose": "Privacy, use, reporting and security navigation"
+  }
 }

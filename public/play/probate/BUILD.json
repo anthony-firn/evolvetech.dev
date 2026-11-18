@@ -18,5 +18,9 @@
     "vendor/pdf-lib.min.js": "0f9a5cad07941f0826586c94e089d89b918c46e5c17cf2d5a3c6f666e3bc694f",
     "vendor/pdf-lib-LICENSE.md": "f2c9fc00fdb66eb99ac156ba52d734af66d8d309f65753ae809ad34ee2883bcb",
     "../layout.py": "ae949dcb2e1830eabdd41a3aa5a3e390592460b00dfb5647167ba4c3aa8b5a0d"
+  },
+  "site_overlay": {
+    "tool": "tools/build_legal.py",
+    "purpose": "Privacy, use, reporting and security navigation"
   }
 }

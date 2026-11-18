@@ -2,5 +2,9 @@
   "source": "https://github.com/anthony-firn/evolve-llm",
   "commit": "25c5477d39d2bb5785a8dbe4bd19c2faaa60ea3b",
   "engine_commit": "25c5477d39d2bb5785a8dbe4bd19c2faaa60ea3b",
-  "wasm_sha256": "cf3a2dbcf2d7d2e901b32f4d03041d347abff48de026c4165c3b458e634ed3b1"
+  "wasm_sha256": "cf3a2dbcf2d7d2e901b32f4d03041d347abff48de026c4165c3b458e634ed3b1",
+  "site_overlay": {
+    "tool": "tools/build_legal.py",
+    "purpose": "Privacy, use, reporting and security navigation"
+  }
 }

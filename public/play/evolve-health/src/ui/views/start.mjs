@@ -42,7 +42,7 @@ function welcome(accounts) {
       feature('people', 'Caregivers and family', 'Give a parent’s caregiver, your children or a partner their own access: view only, add notes, or help manage. Remove it at any time.'),
       feature('paw', 'Pets too', 'Vaccines, preventatives, weights and vet visits for every pet, with proof of vaccines ready for boarding and groomers.'),
       feature('mic', 'Record the appointment', 'With everyone’s permission, record a visit, mark key moments and keep the transcript, so you don’t have to remember everything that was said.'),
-      feature('shield', 'Nothing for insurers to buy', 'No ads, analytics or data sales, and no account tied to your name. There is no copy of your records anyone could sell, share or hand over.')),
+      feature('shield', 'No ads or analytics', 'No ads, analytics or data sales, and no account tied to your name. Records are encrypted locally. Optional nodes hold encrypted copies; device, key or recipient compromise can still expose information.')),
     h('section.open-source', h('p', 'Evolve Health is free and open source (Apache 2.0). Use it here, or run your own copy and your own sync node with one command. ',
       h('a', { href: 'https://github.com/anthony-firn/evolve-health', rel: 'noopener' }, 'Source code and self-hosting guide'), '.')));
 }

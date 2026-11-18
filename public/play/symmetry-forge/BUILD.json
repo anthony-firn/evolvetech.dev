@@ -1,4 +1,8 @@
 {
   "source": "https://github.com/anthony-firn/symmetry-forge.git",
-  "commit": "3b1b00450129c74c54e621f3b947a5b35258e572"
+  "commit": "3b1b00450129c74c54e621f3b947a5b35258e572",
+  "site_overlay": {
+    "tool": "tools/build_legal.py",
+    "purpose": "Privacy, use, reporting and security navigation"
+  }
 }

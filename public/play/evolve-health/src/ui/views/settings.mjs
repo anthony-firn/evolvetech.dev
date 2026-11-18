@@ -139,8 +139,9 @@ function aboutSection() {
         h('li', h('a', { href: 'https://www.evolvetech.dev/projects/evolve-health/', rel: 'noopener' }, 'Project page')))),
     h('section.panel', h('h2', 'What this is not'),
       h('ul',
-        h('li', 'Not a medical device and not medical advice. Highlights in transcripts come from simple word matching.'),
+        h('li', 'For organizing records, not diagnosing or treating. Transcript highlights come from simple word matching and do not replace a clinician.'),
         h('li', 'Not connected to your doctor’s systems. Records come from what you enter or import.'),
-        h('li', 'Not a HIPAA-covered service. No company holds your records, so there is no one to breach, subpoena or sell them; that also means no one can recover them for you.'))));
+        h('li', h('a', { href: 'https://www.evolvetech.dev/privacy/', rel: 'noopener' }, 'Privacy'), ' · ', h('a', { href: 'https://www.evolvetech.dev/report/', rel: 'noopener' }, 'Report a problem')),
+        h('li', 'Health privacy obligations depend on how the service is used. Encryption does not guarantee protection from breaches or legal demands. Optional nodes hold encrypted copies and connection metadata. Lost keys or passphrases may make recovery impossible.'))));
 }
 

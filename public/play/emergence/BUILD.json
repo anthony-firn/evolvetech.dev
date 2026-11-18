@@ -3,5 +3,9 @@
   "commit": "70fcb754892f417ce54f4ffcf3c85f7f077cecd5",
   "modified": false,
   "wasm_sha256": "0fdcbcb42668618218a0a91f1183664ecaa233845d8889e82c9a7cf5bf7bb57c",
-  "wasm_commit": "4a0adbea1a3b2e73398de54a566b6047c96a5ebc"
+  "wasm_commit": "4a0adbea1a3b2e73398de54a566b6047c96a5ebc",
+  "site_overlay": {
+    "tool": "tools/build_legal.py",
+    "purpose": "Privacy, use, reporting and security navigation"
+  }
 }

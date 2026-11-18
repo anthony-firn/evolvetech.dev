@@ -2,5 +2,9 @@
   "source": "https://github.com/anthony-firn/emberwake.git",
   "commit": "7e083b69b58579bf41baa3ab8a79d469c2013ad0",
   "modified": true,
-  "working_tree_sha256": "b8e98fd06b5ed58b27e828512ba7b21676b0c2e57dd3094c83d2cf6f528bd423"
+  "working_tree_sha256": "b8e98fd06b5ed58b27e828512ba7b21676b0c2e57dd3094c83d2cf6f528bd423",
+  "site_overlay": {
+    "tool": "tools/build_legal.py",
+    "purpose": "Privacy, use, reporting and security navigation"
+  }
 }

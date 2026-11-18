@@ -226,6 +226,7 @@ function login(problem) {
   document.body.classList.remove('reading');
   const input = el('input', { type: 'password', placeholder: 'Password', ariaLabel: 'Inbox password', autocomplete: 'current-password', required: true });
   const form = el('form', { className: 'login' }, el('h1', { textContent: mailboxLabel + ' inbox' }), input, el('button', { className: 'primary', type: 'submit', textContent: 'Open inbox' }), el('p', { id: 'mail-notice', className: 'muted notice', role: 'status', ariaLive: 'polite' }));
+  form.append(el('a', { href: '/privacy/', textContent: 'Privacy and contact information' }));
   if (problem) form.append(el('p', { className: 'muted', textContent: problem }));
   form.onsubmit = (e) => { e.preventDefault(); password = input.value; sessionStorage.setItem('mail-password', password); load(); };
   app.replaceChildren(form);

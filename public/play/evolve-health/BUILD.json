@@ -1,5 +1,9 @@
 {
   "source": "https://github.com/anthony-firn/evolve-health.git",
-  "commit": "20d6bae61300f0db876a794e4656a73d688bcaf9",
-  "wasm_sha256": "317fd3c36a234741b3707f7a9b76aca6816b0e79dd3546a4b553717f2bfa0491"
+  "commit": "877e985fe950e6350a6bdf55f209ba6f939b7b68",
+  "wasm_sha256": "317fd3c36a234741b3707f7a9b76aca6816b0e79dd3546a4b553717f2bfa0491",
+  "site_overlay": {
+    "tool": "tools/build_legal.py",
+    "purpose": "Privacy, use, reporting and security navigation"
+  }
 }

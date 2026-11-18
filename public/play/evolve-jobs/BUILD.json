@@ -1,4 +1,8 @@
 {
   "source": "https://github.com/anthony-firn/evolve-jobs.git",
-  "commit": "2794782c5487571a11260c78126e66a30e16f1d0"
+  "commit": "2794782c5487571a11260c78126e66a30e16f1d0",
+  "site_overlay": {
+    "tool": "tools/build_legal.py",
+    "purpose": "Privacy, use, reporting and security navigation"
+  }
 }

@@ -47,6 +47,7 @@ jobs:
       - run: python3 tools/test_health_csp.py
       - run: node --test netlify/lib/open-case-law/search.test.mjs tools/test_case_law_engine.mjs
       - run: node --test tools/test_wallet_setup.mjs
+      - run: python3 tools/test_legal.py
       - run: python3 tools/deploy.py
         env:
           BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}

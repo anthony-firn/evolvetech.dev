@@ -1,4 +1,8 @@
 {
   "source": "https://github.com/anthony-firn/evolve-inbox.git",
-  "commit": "196ca1885ae8f288f0befcaeb7a1ec770d011ad3"
+  "commit": "196ca1885ae8f288f0befcaeb7a1ec770d011ad3",
+  "site_overlay": {
+    "tool": "tools/build_legal.py",
+    "purpose": "Privacy, use, reporting and security navigation"
+  }
 }

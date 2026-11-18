@@ -1,4 +1,8 @@
 {
   "source": "https://github.com/anthony-firn/evolve-hosting.git",
-  "commit": "801b4cf327f853cf719037af1417a381a6448abf"
+  "commit": "801b4cf327f853cf719037af1417a381a6448abf",
+  "site_overlay": {
+    "tool": "tools/build_legal.py",
+    "purpose": "Privacy, use, reporting and security navigation"
+  }
 }
