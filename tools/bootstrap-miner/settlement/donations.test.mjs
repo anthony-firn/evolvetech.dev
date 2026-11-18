@@ -22,14 +22,14 @@ test('ongoing mode requires the fixed recipient, transit wallet and one-Nano cap
 });
 
 test('receipts require the actual mainnet payment, recipient and exact amount', async () => {
-  const id='D'.repeat(52), order={status:'completed',payoutHash:id,amountTo:1.4};
-  const tx={id,'tx-type':'pay','genesis-hash':'wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8=','confirmed-round':42,'payment-transaction':{receiver:FUND,amount:1400000}};
+  const id='D'.repeat(52), order={status:'completed',payoutHash:id,amountTo:1.4,createdAt:'2026-11-18T05:00:00Z'};
+  const tx={id,'tx-type':'pay','genesis-hash':'wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8=','confirmed-round':42,'round-time':Math.floor(Date.parse(order.createdAt)/1000)+60,'payment-transaction':{receiver:FUND,amount:1400000}};
   const request=async()=>({transaction:structuredClone(tx)});
   assert.deepEqual(await confirmDonation(order,request),{txid:id,microAlgo:'1400000',round:42});
   assert.equal(await confirmDonation({...order,status:'exchanging'},request),null);
   assert.equal(await confirmDonation(order,async()=>{throw Object.assign(Error('not indexed'),{status:404});}),null);
   assert.equal(await confirmDonation(order,async()=>({transaction:{...tx,'confirmed-round':0}})),null);
-  for(const change of [{'genesis-hash':'testnet'},{id:'E'.repeat(52)},{'tx-type':'axfer'},
+  for(const change of [{'genesis-hash':'testnet'},{id:'E'.repeat(52)},{'tx-type':'axfer'},{'round-time':1},
       {'payment-transaction':{receiver:deposit,amount:1400000}}, {'payment-transaction':{receiver:FUND,amount:1400001}}])
     await assert.rejects(confirmDonation(order,async()=>({transaction:{...tx,...change}})),/payout/);
 });

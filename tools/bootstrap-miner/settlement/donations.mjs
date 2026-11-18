@@ -16,6 +16,8 @@ export async function confirmDonation(order, request = requestJSON) {
   catch (error) {if (error.status === 404) return null; throw error;}
   const tx = value.transaction;
   if (!tx || !Number.isSafeInteger(tx['confirmed-round']) || tx['confirmed-round'] <= 0) return null;
+  const created = Date.parse(order.createdAt);
+  if (!Number.isFinite(created) || !Number.isSafeInteger(tx['round-time']) || tx['round-time'] < Math.floor(created / 1000) - 5) throw Error('Donation payout predates the current swap order');
   const pay = tx['payment-transaction'];
   if (tx.id !== order.payoutHash || tx['tx-type'] !== 'pay' || tx['genesis-hash'] !== 'wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8=' || pay?.receiver !== FUND || !Number.isSafeInteger(pay.amount) || pay.amount < 0) throw Error('Donation payout transaction does not match the fixed mainnet recipient');
   if (BigInt(pay.amount) < MIN_ALGO_OUT || BigInt(pay.amount) !== decimal(order.amountTo, 6)) throw Error('Donation payout amount differs from the completed swap');
