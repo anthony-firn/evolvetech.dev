@@ -9,6 +9,11 @@ export {FUND};
 export const RAW = 10n ** 30n;
 export const MIN_ALGO_OUT = 300000n;
 export const MAX_NANO = RAW;
+// Ongoing donations convert in larger batches: the swap's fixed cost is about 0.28 NANO, so a
+// minimum-size (~0.6 NANO) batch delivers about half its market value and a 5 NANO batch over 90%.
+export const DONATION_BATCH_NANO = 5n * RAW;
+export const DONATION_MAX_NANO = 6n * RAW;
+export const DONATION_MAX_TEXT = '6';
 export const RPC_URL = 'https://rpc.nano.to';
 export const SWAP_URL = 'https://api.nanswap.com/v1';
 export const POOL_URL = 'https://api.unmineable.dev/v1';
@@ -26,13 +31,14 @@ export function display(value, places = 30) {
   const tail = String(n % scale).padStart(places, '0').replace(/0+$/, '');
   return String(n / scale) + (tail ? '.' + tail : '');
 }
-export function planQuote(limits, quote, available) {
+export function planQuote(limits, quote, available, {floor = 0n, cap = MAX_NANO} = {}) {
   const min = decimal(limits.min), max = decimal(limits.max);
   // 5% above the live minimum, rounded upward to eight Nano decimals.
   const quantum = 10n ** 22n;
   if (min <= 0n || max < min) throw Error('Invalid swap limits');
-  const amount = ((min * 105n + 100n * quantum - 1n) / (100n * quantum)) * quantum;
-  if (amount > MAX_NANO || amount > max) throw Error('Swap minimum exceeds the one-Nano bootstrap budget');
+  const live = ((min * 105n + 100n * quantum - 1n) / (100n * quantum)) * quantum;
+  const amount = live > floor ? live : floor;
+  if (amount > cap || amount > max) throw Error('Swap amount exceeds the batch budget');
   if (quote) {
     if (quote.error || (quote.from && quote.from !== 'XNO') || (quote.to && quote.to !== 'ALGO')) throw Error('Unexpected swap quote');
     if (decimal(quote.amountFrom) !== amount) throw Error('Quote amount mismatch');
@@ -144,7 +150,7 @@ export async function broadcastPending(state, save, rpc) {
   state.pendingBlock = null; await save(state);
   return true;
 }
-export async function prepareBlock({wallet, account, balance, link, subtype, state, save, rpc, work}) {
+export async function prepareBlock({wallet, account, balance, link, subtype, state, save, rpc, work, cap = MAX_NANO}) {
   if (state.pendingBlock) throw Error('A previous block still needs confirmation');
   if (!['send', 'receive', 'open'].includes(subtype)) throw Error('Unsupported bootstrap block type');
   if (subtype === 'send' && state.sendHash) throw Error('This bootstrap swap has already been paid');
@@ -152,7 +158,7 @@ export async function prepareBlock({wallet, account, balance, link, subtype, sta
   if (subtype === 'send') {
     const amount = decimal(state.order.expectedAmountFrom);
     validateOrder(state.order, amount, wallet.address);
-    if (amount > MAX_NANO || amount <= 0n || BigInt(balance) !== BigInt(account.balance) - amount) throw Error('Send amount exceeds the saved bootstrap order');
+    if (amount > cap || amount <= 0n || BigInt(balance) !== BigInt(account.balance) - amount) throw Error('Send amount exceeds the saved bootstrap order');
   }
   const secret = nano.deriveSecretKey(wallet.seed, wallet.index);
   const publicKey = nano.derivePublicKey(secret);

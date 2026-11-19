@@ -14,7 +14,7 @@ def ongoing():
     if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o077:
         raise ValueError('Mining mode must be a private file owned by this user')
     value = json.loads(path.read_text())
-    if value.get('mode') != 'donations' or value.get('recipient') != FUND or value.get('maxNano') != '1':
+    if value.get('mode') != 'donations' or value.get('recipient') != FUND or value.get('maxNano') != '6':
         raise ValueError('Invalid ongoing donation mode')
     return True
 

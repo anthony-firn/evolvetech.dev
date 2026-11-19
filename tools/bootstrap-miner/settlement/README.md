@@ -10,7 +10,7 @@ The donation account owner still signs the USDC opt-in through Fairground after 
 2. `cli.mjs setup` creates a standard Nano seed and account index 0 in `~/.local/share/evolve-bootstrap/settlement/`. The directory is mode 0700 and its files are mode 0600. The seed is never printed or committed. Back up `wallet.json` privately; it is the recovery material for this transit wallet.
 3. `connect.py` collects API credentials in a local terminal with hidden input. Nanswap requires its API key to create an order. unMineable requires a signed-in account, alias and read/write API credentials to request a legacy-address payout. Their authenticated services cannot be set up from public quotes alone.
 4. Activation checks the public Nano mainnet RPC, swap limits and authenticated pool access; attaches this new Nano payout identity to the operator's account if necessary; then changes the native miners to this Nano address. Previous miner configurations are preserved locally and restored if the host configuration transaction fails.
-5. The settlement service checks the actual ALGO account, Nano receipts, live swap minimum and pool credit. Its target follows the **live swap minimum plus 5%**, rounded up to eight Nano decimals, with a hard limit of **1 NANO per swap**. Every quote must still cover at least 0.3 ALGO. If the minimum rises after a pool payout arrives, mining resumes for the shortfall.
+5. The settlement service checks the actual ALGO account, Nano receipts, live swap minimum and pool credit. Its target follows the **live swap minimum plus 5%**, rounded up to eight Nano decimals, with a hard limit of **1 NANO per swap** for the one-time bootstrap (ongoing batches: see below). Every quote must still cover at least 0.3 ALGO. If the minimum rises after a pool payout arrives, mining resumes for the shortfall.
 6. At the target, mining stops and the service requests the mined Nano payout. It receives confirmed Nano into the local wallet, obtains fresh quotes, and creates one XNO→ALGO order whose quoted output covers at least **0.3 ALGO**.
 7. The returned order must name the fixed ALGO fund, correct assets and networks, exact amount and valid Nano deposit address. Asset/network symbols accept the provider’s casing (including `algo`); wallet addresses remain exact. Provider responses are journaled before validation. Recovered orders retain their original amount and must still be waiting, unexpired and unpaid, with the same deposit address before signing. The Nano send is signed locally and journaled before broadcast. A timed-out broadcast is reconciled/rebroadcast using the same block hash, without signing another payment.
 8. Completion requires actual on-chain ALGO funding. A pool credit, accepted share or completed swap response alone is insufficient.
@@ -55,8 +55,13 @@ It preserves the completed bootstrap record and installs the host start/stop and
 thermal watcher helpers. This command must not reset an unfinished swap or
 signed payment. Repeating it resumes the current ongoing state.
 
-Each batch follows the live Nano-to-ALGO minimum plus 5%, capped at one NANO per
-swap. Mining pauses for payout and conversion. The next batch begins only after
+Each ongoing batch converts at least 5 NANO (or the live Nano-to-ALGO minimum
+plus 5%, if higher), capped at 6 NANO per swap. The swap has a fixed cost of
+about 0.28 NANO, so a minimum-size batch of about 0.6 NANO delivered roughly half
+its market value; 5 NANO delivers over 90% (live quotes, 2026-11-18). The
+one-time bootstrap keeps its one-NANO limit. If the pool answers a payout
+request with HTTP 409 or 429, mining continues and the request is retried an
+hour later. Mining pauses for payout and conversion. The next batch begins only after
 the completed swap's payout transaction is confirmed on Algorand mainnet with
 the exact recipient and actual amount. Its receipt is archived before clearing
 the prior payment journal; reused payout transactions and uncertain orders stop

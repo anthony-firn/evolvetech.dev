@@ -13,11 +13,11 @@ const address = seed => nano.deriveAddress(nano.derivePublicKey(nano.deriveSecre
 const wallet = {address: address('0')}, deposit = address('1');
 const makeOrder = () => ({id:'fixture-order',from:'XNO',to:'ALGO',payinAddress:deposit,payoutAddress:FUND,expectedAmountFrom:0.7,expectedAmountTo:1.4});
 
-test('ongoing mode requires the fixed recipient, transit wallet and one-Nano cap', () => {
-  const config={mode:'donations',recipient:FUND,nanoAddress:wallet.address,maxNano:'1'};
+test('ongoing mode requires the fixed recipient, transit wallet and six-Nano batch cap', () => {
+  const config={mode:'donations',recipient:FUND,nanoAddress:wallet.address,maxNano:'6'};
   assert.equal(donationMode(null,wallet.address),false);
   assert.equal(donationMode(config,wallet.address),true);
-  for(const change of [{recipient:deposit},{nanoAddress:deposit},{maxNano:'2'},{mode:'bootstrap'}])
+  for(const change of [{recipient:deposit},{nanoAddress:deposit},{maxNano:'1'},{mode:'bootstrap'}])
     assert.throws(()=>donationMode({...config,...change},wallet.address),/configuration/);
 });
 
@@ -38,7 +38,7 @@ test('ongoing mining proceeds for a ready wallet but stops if USDC readiness is 
   const state={mode:'donations'};let ready=true,starts=0,stops=0;
   const engine=new Settlement({state,wallet,donationMode:true,save:async()=>{},algo:async()=>({ready,funded:true}),start:async()=>{starts++;},stop:async()=>{stops++;},
     rpc:async action=>action==='account_info'?{balance:'0'}:{blocks:{}},
-    swap:async path=>path==='/get-limits'?{min:0.66666666,max:100}:{amountFrom:0.7,amountTo:1.4},poolStatus:async()=>({balance:'0.1'})});
+    swap:async path=>path==='/get-limits'?{min:0.66666666,max:100}:{amountFrom:5,amountTo:18.5},poolStatus:async()=>({balance:'0.1'})});
   await engine.tick();assert.equal(state.phase,'mining-nano');assert.equal(starts,1);assert.equal(stops,0);
   ready=false;await assert.rejects(engine.tick(),/USDC-ready/);assert.equal(stops,1);
 });
@@ -48,7 +48,7 @@ test('a batch clears payment state only after confirmed payout and durable recei
   let indexed=false,failArchive=true,archived=0,starts=0;
   const engine=new Settlement({state,wallet,donationMode:true,save:async()=>{},algo:async()=>({ready:true,funded:true}),stop:async()=>{},start:async()=>{starts++;},
     rpc:async action=>action==='account_info'?{balance:'0'}:{blocks:{}},poolStatus:async()=>({balance:'0'}),
-    swap:async path=>path.startsWith('/get-order')?{...makeOrder(),status:'completed',payinHash:hash,payoutHash:id}:path==='/get-limits'?{min:0.66666666,max:100}:{amountFrom:0.7,amountTo:1.4},
+    swap:async path=>path.startsWith('/get-order')?{...makeOrder(),status:'completed',payinHash:hash,payoutHash:id}:path==='/get-limits'?{min:0.66666666,max:100}:{amountFrom:5,amountTo:18.5},
     confirmPayout:async()=>indexed?{txid:id,microAlgo:'1400000',round:42}:null,
     archive:async()=>{if(failArchive)throw Error('disk full');archived++;}});
   await engine.tick();assert.equal(state.sendHash,hash);assert.equal(state.phase,'waiting-for-algo');assert.equal(archived,0);

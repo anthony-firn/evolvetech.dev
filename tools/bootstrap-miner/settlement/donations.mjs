@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import {FUND, MIN_ALGO_OUT, decimal, requestJSON, readJSON, writeJSON, privateDirectory} from './core.mjs';
+import {FUND, MIN_ALGO_OUT, DONATION_MAX_TEXT, decimal, requestJSON, readJSON, writeJSON, privateDirectory} from './core.mjs';
 import {join} from 'node:path';
 
 export function donationMode(config, address) {
   if (config == null) return false;
-  if (config.mode !== 'donations' || config.recipient !== FUND || config.nanoAddress !== address || config.maxNano !== '1') throw Error('Invalid ongoing donation configuration');
+  if (config.mode !== 'donations' || config.recipient !== FUND || config.nanoAddress !== address || config.maxNano !== DONATION_MAX_TEXT) throw Error('Invalid ongoing donation configuration');
   return true;
 }
 
