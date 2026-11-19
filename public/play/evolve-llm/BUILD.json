@@ -6,5 +6,7 @@
   "site_overlay": {
     "tool": "tools/build_legal.py",
     "purpose": "Privacy, use, reporting and security navigation"
-  }
+  },
+  "browser_commit": "52f25dfbf3899aff7b146e9ccf9f0fc27f8baafb",
+  "browser_wasm_sha256": "0f2805d0ee9e55b6a6500bbce4d3c96e0a6d07507ee1d71b595758c662a88dc2"
 }

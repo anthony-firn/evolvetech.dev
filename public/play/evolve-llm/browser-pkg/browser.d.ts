@@ -106,11 +106,11 @@ export interface InitOutput {
     readonly Servo_NumericType_MatchesPercentage: (a: number) => number;
     readonly wasm_bindgen__convert__closures_____invoke__h0b954ebff9e69eda: (a: number, b: number, c: any, d: any) => void;
     readonly wasm_bindgen__convert__closures_____invoke__he3e3914ed696371b: (a: number, b: number, c: any) => [number, number];
+    readonly wasm_bindgen__convert__closures_____invoke__h02fbaeaf32f22b48: (a: number, b: number, c: any) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e: (a: number, b: number, c: any) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_38: (a: number, b: number, c: any) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_39: (a: number, b: number, c: any) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_40: (a: number, b: number, c: any) => void;
-    readonly wasm_bindgen__convert__closures_____invoke__h7db403c2cfc8de8c: (a: number, b: number, c: any) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h27c5e105281d6b36: (a: number, b: number) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
