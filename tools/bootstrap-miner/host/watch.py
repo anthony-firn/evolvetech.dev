@@ -25,6 +25,9 @@ def reached(value):
     wallet = value.get('wallet') or {}
     pool = value.get('pool') or {}
     if ongoing():
+        # A failed or partial lookup (node timeout, server restart) is not evidence the wallet changed.
+        if value.get('walletError') or not wallet or 'ready' not in wallet:
+            return None
         return None if wallet.get('ready') else 'Donation recipient is no longer USDC-ready; mining stopped.'
     if wallet.get('ready'):
         return 'Donation wallet is initialized and ready for USDC.'
