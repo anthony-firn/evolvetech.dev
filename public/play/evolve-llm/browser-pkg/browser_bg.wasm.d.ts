@@ -26,7 +26,9 @@ export const browser_pointer: (a: number, b: number, c: number, d: number, e: nu
 export const browser_prepareNetwork: (a: number) => void;
 export const browser_reload: (a: number) => void;
 export const browser_resize: (a: number, b: number, c: number, d: number) => void;
+export const browser_setIdentity: (a: number, b: number, c: number) => [number, number];
 export const browser_setRelay: (a: number, b: number, c: number) => void;
+export const browser_setTlsProfile: (a: number, b: number, c: number) => [number, number];
 export const browser_setTorConsensus: (a: number, b: number, c: number) => void;
 export const browser_snapshot: (a: number, b: number) => [number, number];
 export const browser_stop: (a: number) => void;
@@ -46,9 +48,9 @@ export const wasm_bindgen__convert__closures_____invoke__h0b954ebff9e69eda: (a: 
 export const wasm_bindgen__convert__closures_____invoke__he3e3914ed696371b: (a: number, b: number, c: any) => [number, number];
 export const wasm_bindgen__convert__closures_____invoke__h02fbaeaf32f22b48: (a: number, b: number, c: any) => void;
 export const wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e: (a: number, b: number, c: any) => void;
-export const wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_38: (a: number, b: number, c: any) => void;
-export const wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_39: (a: number, b: number, c: any) => void;
 export const wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_40: (a: number, b: number, c: any) => void;
+export const wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_41: (a: number, b: number, c: any) => void;
+export const wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_42: (a: number, b: number, c: any) => void;
 export const wasm_bindgen__convert__closures_____invoke__h27c5e105281d6b36: (a: number, b: number) => void;
 export const __wbindgen_malloc: (a: number, b: number) => number;
 export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

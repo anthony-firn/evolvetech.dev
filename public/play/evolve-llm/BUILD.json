@@ -7,7 +7,7 @@
     "tool": "tools/build_legal.py",
     "purpose": "Privacy, use, reporting and security navigation"
   },
-  "browser_commit": "52f25dfbf3899aff7b146e9ccf9f0fc27f8baafb",
-  "browser_wasm_sha256": "0f2805d0ee9e55b6a6500bbce4d3c96e0a6d07507ee1d71b595758c662a88dc2",
-  "browser_ui_commit": "3d223867aad2af168ddeebda1dad029ffbaf908e"
+  "browser_commit": "c28b664c575432d9495b554937b790fc72f7c247",
+  "browser_wasm_sha256": "cc342f0e4a2e823fe98163a81c042d8bd8c1088ac4c9a4ff4b711976f3f9bd2f",
+  "browser_ui_commit": "c28b664c575432d9495b554937b790fc72f7c247"
 }

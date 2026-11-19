@@ -38,9 +38,14 @@ export class Browser {
     reload(): void;
     resize(css_width: number, css_height: number, dpr: number): void;
     /**
+     * Diagnostic content-negotiation profile; must be selected before the first navigation.
+     */
+    setIdentity(profile: string): void;
+    /**
      * The route to websites: `"tor:"` for the Tor network, or a Wisp relay's ws(s):// URL.
      */
     setRelay(url: string): void;
+    setTlsProfile(profile: string): void;
     /**
      * Base URLs serving Tor's cached consensus (`consensus.txt.br`, `microdescriptors.txt.br`),
      * tried in order when the Tor route starts.
@@ -88,7 +93,9 @@ export interface InitOutput {
     readonly browser_prepareNetwork: (a: number) => void;
     readonly browser_reload: (a: number) => void;
     readonly browser_resize: (a: number, b: number, c: number, d: number) => void;
+    readonly browser_setIdentity: (a: number, b: number, c: number) => [number, number];
     readonly browser_setRelay: (a: number, b: number, c: number) => void;
+    readonly browser_setTlsProfile: (a: number, b: number, c: number) => [number, number];
     readonly browser_setTorConsensus: (a: number, b: number, c: number) => void;
     readonly browser_snapshot: (a: number, b: number) => [number, number];
     readonly browser_stop: (a: number) => void;
@@ -108,9 +115,9 @@ export interface InitOutput {
     readonly wasm_bindgen__convert__closures_____invoke__he3e3914ed696371b: (a: number, b: number, c: any) => [number, number];
     readonly wasm_bindgen__convert__closures_____invoke__h02fbaeaf32f22b48: (a: number, b: number, c: any) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e: (a: number, b: number, c: any) => void;
-    readonly wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_38: (a: number, b: number, c: any) => void;
-    readonly wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_39: (a: number, b: number, c: any) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_40: (a: number, b: number, c: any) => void;
+    readonly wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_41: (a: number, b: number, c: any) => void;
+    readonly wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_42: (a: number, b: number, c: any) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h27c5e105281d6b36: (a: number, b: number) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
