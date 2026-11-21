@@ -4,7 +4,7 @@ from llm_csp import llm_rule, preview_rules
 
 
 class LlmPolicy(unittest.TestCase):
-    def test_policy_is_scoped_and_only_reaches_hugging_face(self):
+    def test_policy_is_scoped_to_models_browser_and_local_connector(self):
         zone = {'EdgeRules': [{'Guid': 'original', 'ActionType': 5,
                  'ActionParameter1': 'Content-Security-Policy', 'ActionParameter2': 'old',
                  'OrderIndex': 2, 'TriggerMatchingType': 0,
@@ -26,7 +26,9 @@ class LlmPolicy(unittest.TestCase):
         # community relays (hosts unknown in advance), and a relay on the visitor's own computer.
         for source in ('https://raw.githubusercontent.com', 'wss:', 'ws://127.0.0.1:*', 'ws://localhost:*'):
             self.assertIn(source, connect)
-        self.assertEqual(len(connect), 12, connect)
+        self.assertIn('http://127.0.0.1:8791', connect)
+        self.assertNotIn('http:', connect)
+        self.assertEqual(len(connect), 13, connect)
         self.assertNotIn('https:', connect)
         self.assertNotIn('ws:', connect)
         self.assertNotIn("'unsafe-eval'", policy.replace("'wasm-unsafe-eval'", ''))

@@ -1,0 +1,10 @@
+{
+  "source_base": "c28b664c575432d9495b554937b790fc72f7c247",
+  "files": {
+    "app.js": "2ce0e34d90dbf9fe738d11f1c3cecb9b12012d798a0b4f5ccf8e409b523bc5dd",
+    "local-computer.mjs": "eb733546dfcf87062650fedf3c7175e2dff6e23c5fd7aac9b3b7dcc49c98bbde",
+    "pi-agent.bundle.mjs": "07f431a6f44532ce98f9561af8a7b0728a8265828df564513ef28fac59ae77ed",
+    "pi-agent.mjs": "2356545dcfaee2e90415ae4fc677fd921073d4e921d0be6839802925a36f2b27"
+  },
+  "source_commit": "86674da2f36b9892ef2caddf870e78b322902772"
+}

@@ -285,3 +285,13 @@ and use unMineable's ALGO payout route for the configured receiving fund. Run
 `node tools/bootstrap-miner/server.mjs`, open `http://127.0.0.1:8773`, and explicitly start mining.
 It is not included in the public website and never starts on a site visit. Pool credits must reach
 the provider's payout threshold before ALGO can arrive; the fund owner still signs its USDC opt-in.
+
+## Pop!_OS local coding connector
+
+The Evolve LLM **Local computer** panel pairs with the optional Python connector
+in the source repository's `companion/` directory. Its README covers installation,
+local approvals, Polkit root execution, stopping/revoking access, and the longer-term
+cross-platform plan. The live page permits only its fixed loopback HTTP endpoint
+at `127.0.0.1:8791`; no SSH server or public tunnel is deployed.
+`public/play/evolve-llm/LOCAL_BUILD.json` records this overlay separately from the
+unchanged model engine and browser builds. Never commit pairing links or local files.
