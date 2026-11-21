@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import {decimal, display, planQuote, validateOrder, prepareBlock, broadcastPending, FUND, MAX_NANO} from './core.mjs';
+import {decimal, display, planQuote, validateOrder, prepareBlock, broadcastPending, FUND, MAX_NANO, DONATION_BATCH_NANO, DONATION_MAX_NANO} from './core.mjs';
+// unMineable answers 409 while it won't take another manual payout yet; asking every 30 s kept the miners stopped.
+const PAYOUT_RETRY_MS = 3600_000;
 
 export class Settlement {
   constructor(dependencies) {Object.assign(this, dependencies);}
+  get batch() {return this.donationMode ? {floor: DONATION_BATCH_NANO, cap: DONATION_MAX_NANO} : {cap: MAX_NANO};}
   async fundOrder(account) {
     const {state, wallet, swap, save} = this;
     await this.stop();
     const amount = decimal(state.order.expectedAmountFrom);
     validateOrder(state.order, amount, wallet.address);
-    if (amount <= 0n || amount > MAX_NANO) throw Error('Saved order exceeds bootstrap budget');
+    if (amount <= 0n || amount > this.batch.cap) throw Error('Saved order exceeds the batch budget');
     const current = await swap('/get-order?id=' + encodeURIComponent(state.order.id));
     validateOrder(current, amount, wallet.address);
     if (current.id !== state.order.id || current.payinAddress !== state.order.payinAddress) throw Error('Saved order deposit changed');
@@ -19,7 +22,7 @@ export class Settlement {
     state.order = current; state.targetNano = display(amount);
     state.walletNano = display(account.balance); state.quotedAlgo = String(current.expectedAmountTo);
     state.phase = 'order-created'; await save(state);
-    await prepareBlock({wallet, account, balance: BigInt(account.balance) - amount, link: current.payinAddress, subtype: 'send', state, save, rpc: this.rpc, work: this.work});
+    await prepareBlock({wallet, account, balance: BigInt(account.balance) - amount, link: current.payinAddress, subtype: 'send', state, save, rpc: this.rpc, work: this.work, cap: this.batch.cap});
   }
   async tick() {
     const {state, save, rpc, swap, wallet} = this;
@@ -78,10 +81,10 @@ export class Settlement {
     // must not alter it or create another order after a recoverable work failure.
     if (state.order) {await this.fundOrder(account); return;}
     const limits = await swap('/get-limits');
-    const plan = planQuote(limits, null, account.balance);
+    const plan = planQuote(limits, null, account.balance, this.batch);
     const amount = display(plan.amount);
     const quote = await swap('/get-estimate?amount=' + encodeURIComponent(amount));
-    planQuote(limits, quote, account.balance);
+    planQuote(limits, quote, account.balance, this.batch);
     state.targetNano = amount; state.quotedAlgo = String(quote.amountTo); state.walletNano = display(account.balance);
     if (plan.funded) {
       await this.stop();
@@ -115,14 +118,22 @@ export class Settlement {
 
     const pool = await this.poolStatus();
     state.poolNano = String(pool.balance_payable ?? pool.balance ?? '0');
-    if (decimal(state.poolNano) + BigInt(account.balance) >= plan.amount) {
+    const retryLater = state.poolPayoutRetryAt && Date.parse(state.poolPayoutRetryAt) > Date.now();
+    if (!retryLater && decimal(state.poolNano) + BigInt(account.balance) >= plan.amount) {
       await this.stop();
       if (!state.poolPayoutRequestedAt) {
         state.payoutTargetNano = amount;
         state.poolPayoutRequestedAt = new Date().toISOString(); state.phase = 'pool-payout-requested';
         state.message = 'Requesting the mined Nano payout into the local transit wallet.'; await save(state);
-        try {await this.poolPayout();}
-        catch (error) {if (error.definitivelyRejected) {state.poolPayoutRequestedAt = null; await save(state);} throw error;}
+        try {await this.poolPayout(); state.poolPayoutRetryAt = null;}
+        catch (error) {
+          if (!error.definitivelyRejected) throw error;
+          state.poolPayoutRequestedAt = null;
+          if (error.status !== 409 && error.status !== 429) {await save(state); throw error;}
+          state.poolPayoutRetryAt = new Date(Date.now() + PAYOUT_RETRY_MS).toISOString();
+          state.phase = 'mining-nano'; state.message = 'The pool declined a payout for now; mining continues and the payout is retried in an hour.';
+          await save(state); if (this.start) await this.start(); return;
+        }
       }
       state.phase = 'waiting-for-nano'; state.message = 'Mining stopped; waiting for the requested Nano payout.';
     } else {

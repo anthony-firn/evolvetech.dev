@@ -5,7 +5,7 @@ import {mkdtemp, chmod, stat, rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import nano from 'nanocurrency';
-import {decimal, display, planQuote, validateOrder, setupWallet, FUND, poolSignature, prepareBlock, broadcastPending, nanoClient} from './core.mjs';
+import {decimal, display, planQuote, validateOrder, setupWallet, FUND, poolSignature, prepareBlock, broadcastPending, nanoClient, DONATION_BATCH_NANO, DONATION_MAX_NANO} from './core.mjs';
 import {Settlement} from './engine.mjs';
 
 const wallet = {seed: '0'.repeat(64), index: 0};
@@ -168,4 +168,44 @@ test('expired, already funded and substituted deposit orders cannot be paid',asy
       swap:async()=>({...makeOrder(),status:'waiting',amountFrom:0,...change}),work:async()=>{work++;}});
     await assert.rejects(engine.tick(),/expired|awaiting payment|deposit changed/);assert.equal(work,0);
   }
+});
+
+test('ongoing donations convert at least the batch floor, within the donation cap', () => {
+  const batch = {floor: DONATION_BATCH_NANO, cap: DONATION_MAX_NANO};
+  assert.equal(planQuote({min: '0.59582', max: 9600}, null, 0n, batch).amount, decimal('5'));
+  assert.equal(planQuote({min: '5.5', max: 9600}, null, 0n, batch).amount, decimal('5.775'));
+  assert.equal(planQuote({min: '0.59582', max: 9600}, {amountFrom: 5, amountTo: 18.5}, decimal('5'), batch).funded, true);
+  assert.throws(() => planQuote({min: '6', max: 9600}, null, 0n, batch), /budget/);
+  assert.throws(() => planQuote({min: '0.59582', max: 4}, null, 0n, batch), /budget/);
+});
+test('a donation batch waits for the 5 NANO floor instead of the live minimum', async () => {
+  const state = {}; let requests = 0, starts = 0;
+  const engine = new Settlement({wallet, state, save: async () => {}, stop: async () => {}, start: async () => {starts++;}, donationMode: true,
+    algo: async () => ({ready: true}), rpc: async action => action === 'account_info' ? {balance: '0'} : {blocks: {}},
+    swap: async path => path.startsWith('/get-limits') ? {min: 0.59582, max: 9600} : {amountFrom: 5, amountTo: 18.5},
+    poolStatus: async () => ({balance: '0.7'}), poolPayout: async () => {requests++;}});
+  await engine.tick();
+  assert.equal(requests, 0); assert.equal(starts, 1); assert.equal(state.targetNano, '5'); assert.equal(state.phase, 'mining-nano');
+});
+test('a 409 payout refusal keeps mining and retries an hour later', async () => {
+  const state = {}; let requests = 0, starts = 0, stops = 0;
+  const refuse = () => {const e = Error('api.unmineable.dev returned HTTP 409'); e.status = 409; e.definitivelyRejected = true; throw e;};
+  const engine = new Settlement({wallet, state, save: async () => {}, stop: async () => {stops++;}, start: async () => {starts++;}, donationMode: true,
+    algo: async () => ({ready: true}), rpc: async action => action === 'account_info' ? {balance: '0'} : {blocks: {}},
+    swap: async path => path.startsWith('/get-limits') ? {min: 0.59582, max: 9600} : {amountFrom: 5, amountTo: 18.5},
+    poolStatus: async () => ({balance: '5.2'}), poolPayout: async () => {requests++; refuse();}});
+  await engine.tick();
+  assert.equal(requests, 1); assert.equal(state.phase, 'mining-nano'); assert.equal(state.poolPayoutRequestedAt, null); assert.equal(starts, 1);
+  await engine.tick(); await engine.tick();
+  assert.equal(requests, 1, 'no new request inside the retry hour'); assert.equal(starts, 3);
+  state.poolPayoutRetryAt = new Date(Date.now() - 1000).toISOString();
+  await engine.tick(); assert.equal(requests, 2);
+});
+test('other payout rejections still surface as errors', async () => {
+  const state = {};
+  const engine = new Settlement({wallet, state, save: async () => {}, stop: async () => {}, start: async () => {}, donationMode: true,
+    algo: async () => ({ready: true}), rpc: async action => action === 'account_info' ? {balance: '0'} : {blocks: {}},
+    swap: async path => path.startsWith('/get-limits') ? {min: 0.59582, max: 9600} : {amountFrom: 5, amountTo: 18.5},
+    poolStatus: async () => ({balance: '5.2'}), poolPayout: async () => {const e = Error('HTTP 403'); e.status = 403; e.definitivelyRejected = true; throw e;}});
+  await assert.rejects(engine.tick(), /403/); assert.equal(state.poolPayoutRequestedAt, null); assert.equal(state.poolPayoutRetryAt, undefined);
 });

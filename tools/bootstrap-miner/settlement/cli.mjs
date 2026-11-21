@@ -6,7 +6,7 @@ import {execFileSync} from 'node:child_process';
 import {Worker} from 'node:worker_threads';
 import {setTimeout as delay} from 'node:timers/promises';
 import {fileURLToPath} from 'node:url';
-import {setupWallet, readJSON, writeJSON, privateDirectory, requestJSON, nanoClient, swapClient, poolClient, FUND} from './core.mjs';
+import {setupWallet, readJSON, writeJSON, privateDirectory, requestJSON, nanoClient, swapClient, poolClient, FUND, DONATION_MAX_TEXT} from './core.mjs';
 import {Settlement} from './engine.mjs';
 import {activateHost} from './activate-host.mjs';
 import nano from 'nanocurrency';
@@ -98,7 +98,7 @@ if (command === 'setup') {
       await copyFile(new URL('../host/' + name, import.meta.url), join(root, name));
       await chmod(join(root, name), 0o700);
     }
-    await writeJSON(modePath, {mode: 'donations', recipient: FUND, nanoAddress: wallet.address, maxNano: '1'});
+    await writeJSON(modePath, {mode: 'donations', recipient: FUND, nanoAddress: wallet.address, maxNano: DONATION_MAX_TEXT});
     systemctl('start', 'evolve-bootstrap-watch.service', 'evolve-bootstrap-settlement.service');
     console.log('Ongoing donation mining enabled; each batch retains the one-Nano cap and fixed recipient.'); process.exit(0);
   }
