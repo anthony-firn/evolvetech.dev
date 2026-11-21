@@ -26,5 +26,23 @@ class EarningsTests(unittest.TestCase):
         s = self.series(1.0, 2.0) + [{'t': 3 * 3600, 'pool': None}]
         self.assertAlmostEqual(miner_report.earned(s, -1), 1.0)
 
+class SimulatorTests(unittest.TestCase):
+    def opener(self, payload):
+        import io, json
+        class R(io.BytesIO):
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+        return lambda req, timeout: R(json.dumps(payload).encode())
+    def test_reads_the_spot_daily_estimate(self):
+        payload = {'success': True, 'data': {'algorithms': [{'windows': {'1d': {'scenarios': {'spot_now': {'auto_convert': {'payout_coin': '5.625660'}}}}}}]}}
+        self.assertAlmostEqual(miner_report.simulated('pearlpow', 25.7e12, self.opener(payload)), 5.62566)
+    def test_unavailable_or_idle(self):
+        self.assertIsNone(miner_report.simulated('pearlpow', 1e12, self.opener({'success': False, 'msg': 'Invalid algorithm.'})))
+        self.assertEqual(miner_report.simulated('randomx', None), 0.0)
+    def test_expected_averages_the_window(self):
+        s = [{'t': 0, 'expectedAlgoPerDay': 6.0}, {'t': 3600, 'expectedAlgoPerDay': 7.0}, {'t': 7200}]
+        self.assertAlmostEqual(miner_report.expected(s, 6, 7200), 6.5)
+        self.assertIsNone(miner_report.expected([], 6, 0))
+
 if __name__ == '__main__':
     unittest.main()

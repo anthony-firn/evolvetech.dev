@@ -59,6 +59,26 @@ def pool():
     except Exception:
         return None
 
+SIMULATOR = 'https://api.unmineable.dev/v1/simulator'
+
+def simulated(algorithm, hps, opener=urllib.request.urlopen):
+    """The pool's public simulator: ALGO a day for `hps` on `algorithm` at today's yields and prices (spot, auto-convert).
+    It leaves out the miners' developer fees (XMRig 1%, BzMiner 2%). None if unavailable."""
+    if not hps: return 0.0
+    body = json.dumps({'mode': 'advanced', 'coin': 'ALGO', 'algorithm': algorithm, 'hashrate_hs': str(int(hps)),
+                       'scenario_set': 'default', 'referral_discount': False}).encode()
+    req = urllib.request.Request(SIMULATOR, data=body, headers={'Content-Type': 'application/json', 'User-Agent': 'evolve-miner-report/1'})
+    try:
+        with opener(req, timeout=20) as r: d = json.load(r)
+        return float(d['data']['algorithms'][0]['windows']['1d']['scenarios']['spot_now']['auto_convert']['payout_coin'])
+    except Exception:
+        return None
+
+def expected(samples, hours, now):
+    """Mean simulator estimate (ALGO a day) over the trailing window."""
+    xs = [x['expectedAlgoPerDay'] for x in samples if x['t'] >= now - hours * 3600 and x.get('expectedAlgoPerDay')]
+    return sum(xs) / len(xs) if xs else None
+
 def earned(samples, since):
     """ALGO credited by the pool between `since` (epoch seconds) and the last sample."""
     pts = [(x['t'], x['pool']['algo']) for x in samples if x.get('pool')]
@@ -83,12 +103,17 @@ def main():
               'running': {k: active(u) for k, u in UNITS.items()}, 'pool': pool()}
     if sample['running']['cpu']: sample['cpu'] = cpu_miner()
     if sample['running']['gpu']: sample['gpu'] = gpu_miner(); sample['gpuSensors'] = gpu_sensors()
+    parts = [simulated('randomx', (sample.get('cpu') or {}).get('hps60s')), simulated('pearlpow', (sample.get('gpu') or {}).get('avgHps'))]
+    sample['expectedAlgoPerDay'] = round(sum(parts), 4) if None not in parts else None
     history = out / 'history.jsonl'
     with open(history, 'a') as f: f.write(json.dumps(sample) + '\n')
     os.chmod(history, 0o600)
     samples = [json.loads(l) for l in history.read_text().splitlines()[-2000:] if l.strip()]
-    status = {**sample, 'algoPerDay6h': rate(samples, 6, now), 'algoPerDay24h': rate(samples, 24, now),
-              'earned24h': round(earned(samples, now - 86400), 6)}
+    paid6, exp6 = rate(samples, 6, now), expected(samples, 6, now)
+    status = {**sample, 'algoPerDay6h': paid6, 'algoPerDay24h': rate(samples, 24, now),
+              'earned24h': round(earned(samples, now - 86400), 6), 'expectedAlgoPerDay6h': exp6,
+              # Paid ÷ the pool's own estimate at our hashrates: ~0.97 is normal (developer fees); much lower means trouble.
+              'paidVsExpected6h': round(paid6 / exp6, 3) if paid6 and exp6 else None}
     tmp = out / 'status.json.tmp'; tmp.write_text(json.dumps(status, indent=1)); os.chmod(tmp, 0o600); tmp.replace(out / 'status.json')
 
 if __name__ == '__main__':
