@@ -288,7 +288,10 @@ the provider's payout threshold before ALGO can arrive; the fund owner still sig
 
 ## Pop!_OS local coding connector
 
-The Evolve LLM **Local computer** panel pairs with the optional Python connector
+Once paired, Evolve LLM main-chat **Auto** and **Build** messages use the local
+computer with desktop approvals and in-chat tool activity; **Chat** has no computer
+tools. Stop cancels local work, and Disconnect returns to the browser workspace.
+The **Local computer** panel pairs with the optional Python connector
 in the source repository's `companion/` directory. Its README covers installation,
 local approvals, Polkit root execution, stopping/revoking access, and the longer-term
 cross-platform plan. The live page permits only its fixed loopback HTTP endpoint
