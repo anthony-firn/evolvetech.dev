@@ -7,13 +7,28 @@ const MIT = { license: 'MIT', licenseUrl: 'https://opensource.org/license/mit' }
 const KIMI = { license: 'Modified MIT', licenseUrl: 'https://huggingface.co/moonshotai/Kimi-K2-Instruct-0905/blob/main/LICENSE' };
 const KIMI_K31 = { license: 'Kimi K3.1 Pro License', licenseUrl: 'https://huggingface.co/moonshotai/Kimi-K3.1-Pro/blob/main/LICENSE' };
 
+/** For each kind of request (web/chat-development.mjs kindOf), the catalog models that did that
+ *  work best in tests/agent_bench.py, best first. With "Switch models by kind of request" on, the
+ *  chat loads the first one saved on this device before answering. Measured on a laptop with an
+ *  RTX 3050 and an Intel GPU (2026-11-22); update from new benchmark runs. */
+// From the agent benchmark (tests/agent_bench.py), rounds 7 to 10: Qwen3.5 4B 10/10 in 333 s
+// (round 9) and 10/10 reworded in 391 s (round 10); Qwen3 4B Instruct 2507 10/10 three times (417 s in
+// round 9); Nanbeige4.1 3B 6-7/10; Qwen3 4B 7/10 in round 9 (scored with link addresses).
+export const BEST_FOR = {
+  coding: ['qwen3.5-4b', 'qwen3-4b-2507', 'nanbeige4.1-3b', 'qwen3-4b'],
+  research: ['qwen3.5-4b', 'qwen3-4b-2507', 'nanbeige4.1-3b', 'qwen3-4b'],
+  law: ['qwen3.5-4b', 'qwen3-4b-2507', 'nanbeige4.1-3b', 'qwen3-4b'],
+  browser: ['qwen3.5-4b', 'qwen3-4b-2507', 'nanbeige4.1-3b', 'qwen3-4b'],
+  chat: ['qwen3.5-4b', 'qwen3-4b-2507', 'qwen3-4b', 'nanbeige4.1-3b'],
+};
+
 export const MODELS = [
   { id: 'smollm2-135m', name: 'SmolLM2 135M', maker: 'Hugging Face', repo: 'bartowski/SmolLM2-135M-Instruct-GGUF',
     file: 'SmolLM2-135M-Instruct-Q8_0.gguf', bytes: 144811360, quant: 'Q8_0', note: 'Tiny. A quick first test.', ...APACHE },
   { id: 'smollm2-360m', name: 'SmolLM2 360M', maker: 'Hugging Face', repo: 'HuggingFaceTB/SmolLM2-360M-Instruct-GGUF',
     file: 'smollm2-360m-instruct-q8_0.gguf', bytes: 386404992, quant: 'Q8_0', note: 'Small English assistant.', ...APACHE },
   { id: 'qwen2.5-0.5b', name: 'Qwen2.5 0.5B', maker: 'Qwen', repo: 'Qwen/Qwen2.5-0.5B-Instruct-GGUF',
-    file: 'qwen2.5-0.5b-instruct-q4_k_m.gguf', bytes: 491400032, quant: 'Q4_K_M', note: 'Fast and multilingual. Recommended.', recommended: true, ...APACHE },
+    file: 'qwen2.5-0.5b-instruct-q4_k_m.gguf', bytes: 491400032, quant: 'Q4_K_M', note: 'Fast and multilingual: the smallest download, for slow connections and phones.', ...APACHE },
   { id: 'qwen3-0.6b', name: 'Qwen3 0.6B', maker: 'Qwen', repo: 'Qwen/Qwen3-0.6B-GGUF',
     file: 'Qwen3-0.6B-Q8_0.gguf', bytes: 639446688, quant: 'Q8_0', note: 'Can think step by step before answering.', thinking: true, ...APACHE },
   { id: 'llama3.2-1b', name: 'Llama 3.2 1B', maker: 'Meta', repo: 'bartowski/Llama-3.2-1B-Instruct-GGUF',
@@ -30,6 +45,24 @@ export const MODELS = [
     file: 'Llama-3.2-3B-Instruct-Q4_K_M.gguf', bytes: 2019377696, quant: 'Q4_K_M', note: 'Needs about 3 GB of GPU memory.', ...LLAMA },
   { id: 'qwen3-4b', name: 'Qwen3 4B', maker: 'Qwen', repo: 'Qwen/Qwen3-4B-GGUF',
     file: 'Qwen3-4B-Q4_K_M.gguf', bytes: 2497280256, quant: 'Q4_K_M', note: 'Largest here. Needs about 3.5 GB of GPU memory.', thinking: true, ...APACHE },
+  { id: 'qwen3-4b-2507', name: 'Qwen3 4B Instruct 2507', maker: 'Qwen', repo: 'unsloth/Qwen3-4B-Instruct-2507-GGUF',
+    file: 'Qwen3-4B-Instruct-2507-Q4_K_M.gguf', bytes: 2497281120, quant: 'Q4_K_M', note: 'The July 2025 update of Qwen3 4B: better at using tools. A good coding assistant for most computers.', ...APACHE },
+  { id: 'qwen3-4b-thinking-2507', name: 'Qwen3 4B Thinking 2507', maker: 'Qwen', repo: 'unsloth/Qwen3-4B-Thinking-2507-GGUF',
+    file: 'Qwen3-4B-Thinking-2507-Q4_K_M.gguf', bytes: 2497281152, quant: 'Q4_K_M', note: 'Thinks before it answers: stronger with tools, slower to reply.', thinking: true, ...APACHE },
+  { id: 'qwen3-vl-2b', name: 'Qwen3-VL 2B', maker: 'Qwen', repo: 'Qwen/Qwen3-VL-2B-Instruct-GGUF',
+    file: 'Qwen3VL-2B-Instruct-Q4_K_M.gguf', bytes: 1107409952, quant: 'Q4_K_M', note: 'Sees images: reads screenshots and pictures you give it. Downloads its image encoder too.',
+    vision: { file: 'mmproj-Qwen3VL-2B-Instruct-F16.gguf', bytes: 819394848 }, ...APACHE },
+  { id: 'gui-owl-1.5-4b', name: 'GUI-Owl 1.5 4B', maker: 'mPLUG (Alibaba)', repo: 'mradermacher/GUI-Owl-1.5-4B-Instruct-GGUF',
+    file: 'GUI-Owl-1.5-4B-Instruct.Q4_K_M.gguf', bytes: 2497282208, quant: 'Q4_K_M', note: 'Trained to use computers: reads screenshots and points at what to click. Downloads its image encoder too.',
+    vision: { file: 'GUI-Owl-1.5-4B-Instruct.mmproj-f16.gguf', bytes: 836180288 }, ...MIT },
+  { id: 'qwen3.5-4b', name: 'Qwen3.5 4B', maker: 'Qwen', repo: 'unsloth/Qwen3.5-4B-GGUF',
+    file: 'Qwen3.5-4B-Q4_K_M.gguf', bytes: 2740937888, quant: 'Q4_K_M', note: 'The February 2026 generation: a linear-attention hybrid with a far smaller cache for long chats. The best and fastest agent in our tests. Recommended.', thinking: true, recommended: true, ...APACHE },
+  { id: 'qwen3.5-2b', name: 'Qwen3.5 2B', maker: 'Qwen', repo: 'unsloth/Qwen3.5-2B-GGUF',
+    file: 'Qwen3.5-2B-Q4_K_M.gguf', bytes: 1280835840, quant: 'Q4_K_M', note: 'Qwen3.5 for smaller GPUs and phones: the same linear-attention design in half the size.', thinking: true, ...APACHE },
+  { id: 'qwen3.5-0.8b', name: 'Qwen3.5 0.8B', maker: 'Qwen', repo: 'unsloth/Qwen3.5-0.8B-GGUF',
+    file: 'Qwen3.5-0.8B-Q4_K_M.gguf', bytes: 532517120, quant: 'Q4_K_M', note: 'The smallest Qwen3.5: for phones and older computers.', thinking: true, ...APACHE },
+  { id: 'nanbeige4.1-3b', name: 'Nanbeige4.1 3B', maker: 'Nanbeige', repo: 'mradermacher/Nanbeige4.1-3B-GGUF',
+    file: 'Nanbeige4.1-3B.Q4_K_M.gguf', bytes: 2443113024, quant: 'Q4_K_M', note: 'A 3B model that leads small models at calling tools. Thinks before it answers.', thinking: true, ...APACHE },
 ];
 
 // Mixture-of-experts models. The ones larger than GPU memory keep their attention weights on the
@@ -41,6 +74,9 @@ export const LARGE = [
   { id: 'olmoe-1b-7b', name: 'OLMoE 1B-7B', maker: 'Ai2', repo: 'allenai/OLMoE-1B-7B-0125-Instruct-GGUF',
     file: 'OLMoE-1B-7B-0125-Instruct-Q4_K_M.gguf', bytes: 4210000000, quant: 'Q4_K_M', params: '7B, 1.3B active',
     note: '64 experts, 8 per token. Fits on GPUs with about 5 GB.', ...APACHE },
+  { id: 'qwen3-coder-30b-a3b', name: 'Qwen3 Coder 30B-A3B', maker: 'Qwen', repo: 'unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF',
+    file: 'Qwen3-Coder-30B-A3B-Instruct-UD-IQ3_XXS.gguf', bytes: 12848766112, quant: 'UD-IQ3_XXS', params: '30B, 3.3B active',
+    note: 'Trained for coding agents. Runs on the GPU with 14 GB free; streams experts from storage with less.', ...APACHE },
   { id: 'qwen3-30b-a3b', name: 'Qwen3 30B-A3B', maker: 'Qwen', repo: 'unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF',
     file: 'Qwen3-30B-A3B-Instruct-2507-UD-Q2_K_XL.gguf', bytes: 11790000000, quant: 'UD-Q2_K_XL', params: '30B, 3.3B active',
     note: 'Strong general model. Streams experts from storage when GPU memory is short.', ...APACHE },

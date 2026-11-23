@@ -4,6 +4,7 @@ export const memory: WebAssembly.Memory;
 export const __wbg_browser_free: (a: number, b: number) => void;
 export const browser_agentClick: (a: number, b: number) => [number, number];
 export const browser_agentKey: (a: number, b: number, c: number) => [number, number];
+export const browser_agentRefAt: (a: number, b: number, c: number) => [number, number];
 export const browser_agentScroll: (a: number, b: number) => [number, number];
 export const browser_agentSelect: (a: number, b: number, c: number, d: number) => [number, number];
 export const browser_agentType: (a: number, b: number, c: number, d: number, e: number) => [number, number];
@@ -48,9 +49,9 @@ export const wasm_bindgen__convert__closures_____invoke__h0b954ebff9e69eda: (a: 
 export const wasm_bindgen__convert__closures_____invoke__he3e3914ed696371b: (a: number, b: number, c: any) => [number, number];
 export const wasm_bindgen__convert__closures_____invoke__h02fbaeaf32f22b48: (a: number, b: number, c: any) => void;
 export const wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e: (a: number, b: number, c: any) => void;
-export const wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_40: (a: number, b: number, c: any) => void;
 export const wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_41: (a: number, b: number, c: any) => void;
 export const wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_42: (a: number, b: number, c: any) => void;
+export const wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_43: (a: number, b: number, c: any) => void;
 export const wasm_bindgen__convert__closures_____invoke__h27c5e105281d6b36: (a: number, b: number) => void;
 export const __wbindgen_malloc: (a: number, b: number) => number;
 export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
