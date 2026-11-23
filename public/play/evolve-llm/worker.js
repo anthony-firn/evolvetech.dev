@@ -5,7 +5,7 @@ import { assistantWithCalls, nativeToolFormat, toolResult, toolTransport } from 
 import { openModelReaders, storageError } from './model-readers.mjs';
 import { RangeCache, RemoteModel } from './remote-reader.mjs';
 import { CHUNK as SWARM_CHUNK } from './swarm-protocol.mjs';
-import { capacityOf, planSplit } from './split.mjs';
+import { capacityOf, planFill, planSplit } from './split.mjs';
 import { TOOL_SCHEMAS, displayText, parseToolCalls, rawPiece, runTool, schemaTypes, webSearch } from './tools.js';
 
 const CHUNK = 16 << 20; // bytes read from the file per upload call
@@ -106,6 +106,7 @@ async function listCached() {
   if (!navigator.storage?.getDirectory) return { models: [], supported: false };
   const dir = await modelsDir();
   const models = [];
+  const visions = new Map();
   for await (const [name, handle] of dir.entries()) {
     if (handle.kind !== 'file' || !name.endsWith('.json')) continue;
     const key = name.slice(0, -5);
@@ -114,8 +115,11 @@ async function listCached() {
     const count = meta.parts?.length || 1;
     let size = 0;
     for (let i = 0; i < count; i++) size += await storedSize(dir, partName(key, i, count));
-    models.push({ ...meta, key, stored: size });
+    // A model's image encoder counts as part of the model.
+    if (key.endsWith('.vision')) visions.set(key.slice(0, -7), size);
+    else models.push({ ...meta, key, stored: size });
   }
+  for (const m of models) if (visions.has(m.key)) { m.stored += visions.get(m.key); m.vision = true; }
   let estimate = null;
   try { estimate = await navigator.storage.estimate(); } catch { /* not available */ }
   let persisted = false;
@@ -132,6 +136,7 @@ async function removeCached(key) {
   for (const name of names) {
     try { await dir.removeEntry(name); } catch { /* already gone */ }
   }
+  if (!key.endsWith('.vision')) await removeCached(`${key}.vision`);
 }
 
 function httpError(status) {
@@ -144,7 +149,13 @@ function httpError(status) {
 // Download every part of a model into storage, resuming partial parts. Returns the part names.
 const FULL = 'This browser ran out of storage for the model. Remove a downloaded model in the list, or allow this site more storage, then choose the model again.';
 
-async function download(entry) {
+// A model downloading in the background (the device's pick), while the app is idle.
+let fetching = null;
+// A measurement of free GPU memory in progress.
+let probingNow = null;
+
+// `quiet`: progress goes to 'fetch-progress', not the loading screen; `controller` stops it.
+async function download(entry, { quiet = false, controller = null } = {}) {
   if (!navigator.storage?.getDirectory) throw new Error('This browser cannot store downloaded models. Open a GGUF file from your device instead.');
   const dir = await modelsDir();
   const { key } = entry;
@@ -178,10 +189,10 @@ async function download(entry) {
     let pos = same ? (await handle.getFile()).size : 0;
     if (part.bytes && pos === part.bytes) continue;
     if (part.bytes && pos > part.bytes) pos = 0;
-    downloadAbort = new AbortController();
+    const abort = controller || (downloadAbort = new AbortController());
     let res;
     try {
-      res = await fetch(part.url, { headers: pos > 0 ? { Range: `bytes=${pos}-` } : {}, signal: downloadAbort.signal });
+      res = await fetch(part.url, { headers: pos > 0 ? { Range: `bytes=${pos}-` } : {}, signal: abort.signal });
     } catch (e) {
       if (e?.name === 'AbortError') throw new Error('Download paused. Choose the model again to resume.');
       throw new Error('Could not reach Hugging Face. Check your connection and try again.');
@@ -215,7 +226,7 @@ async function download(entry) {
         const now = performance.now();
         if (now - last > 150) {
           last = now;
-          post('progress', { phase: 'download', loaded: done, total, part: i + 1, parts: count,
+          post(quiet ? 'fetch-progress' : 'progress', { phase: 'download', key, loaded: done, total, part: i + 1, parts: count,
             rate: (done - have) / Math.max(0.001, (now - t0) / 1000) });
         }
       }
@@ -223,7 +234,7 @@ async function download(entry) {
       if (access.getSize() !== pos) throw new Error(FULL);
     } finally {
       access.close();
-      downloadAbort = null;
+      if (!controller) downloadAbort = null;
     }
     if (part.bytes && pos !== part.bytes) throw new Error('The download ended early. Choose the model again to resume it.');
   }
@@ -342,7 +353,35 @@ function readHeader(reader) {
   }
 }
 
-async function loadModel(source, wantCtx, lowPower, budgetPref, { stage = null, split = null } = {}) {
+/**
+ * Free memory on this worker's GPU, measured: 256 MB buffers are allocated (and touched) until
+ * the GPU refuses or `need` bytes are found, then freed. Browsers do not say how much memory a
+ * GPU has free, and another program may be holding most of it.
+ */
+async function freeGpuBytes(lowPower, need) {
+  const adapter = await navigator.gpu?.requestAdapter({ powerPreference: lowPower ? 'low-power' : 'high-performance' });
+  if (!adapter) return 0;
+  const device = await adapter.requestDevice({ requiredLimits: { maxBufferSize: adapter.limits.maxBufferSize } });
+  const step = 256 * 2 ** 20;
+  const buffers = [];
+  try {
+    while (buffers.length * step < need) {
+      device.pushErrorScope('out-of-memory');
+      const b = device.createBuffer({ size: step, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+      device.queue.writeBuffer(b, step - 4, new Uint32Array([1]));
+      if (await device.popErrorScope()) { b.destroy(); break; }
+      buffers.push(b);
+    }
+    await device.queue.onSubmittedWorkDone();
+  } finally {
+    buffers.forEach((b) => b.destroy());
+    device.destroy();
+  }
+  return buffers.length * step;
+}
+
+// `reserve`: GPU bytes to leave free on this device for an image encoder loaded after the model.
+async function loadModel(source, wantCtx, lowPower, budgetPref, { stage = null, split = null, pool = false, reserve = 0 } = {}) {
   readers = source.remote ? source.remote.readers() : await openModelReaders(source, modelsDir);
   remote = source.remote || null;
   // Headers come over the network together; later reads of a longer header fall back to
@@ -373,9 +412,25 @@ async function loadModel(source, wantCtx, lowPower, budgetPref, { stage = null, 
   const budget = budgetPref === 'all' ? null
     : budgetPref && budgetPref !== 'auto' ? Number(budgetPref) * 2 ** 30
     : (model.fast_bytes > AUTO ? AUTO : null);
+  // Pooled with this machine's other GPU (`pool`, one local helper): this, the faster GPU, keeps
+  // the embedding, the head and as many layers as its free memory holds, and the other GPU the
+  // rest, all on the GPU (nothing streamed). A model that fits here is not split.
+  let pooled = false;
+  if (pool && split?.length === 1) {
+    const lb = JSON.parse(layer_bytes(headers));
+    const fileBytes = lb.layers.reduce((a, b) => a + b, 0) + lb.embed + (lb.tied ? 0 : lb.head);
+    const scale = Math.max(1, (model.fast_bytes || fileBytes) / fileBytes);
+    const need = (model.fast_bytes || fileBytes) + (lb.kv_per_token || 0) * ctx * lb.n_layer;
+    const free = Math.max(0, (await freeGpuBytes(lowPower, need * 1.15 + reserve)) - reserve);
+    const [, rest] = planFill(lb, free, ctx, scale);
+    const helpers = rest.end > rest.first ? [{ helper: 0, stage: { first: rest.first, end: rest.end, embed: false, head: false } }] : [];
+    if (helpers.length) stage = { first: 0, end: rest.first, embed: true, head: true };
+    pooled = helpers.length > 0;
+    post('split-plan', { helpers, ctx, n_layer: lb.n_layer, mine: stage, pooled, free });
+  }
   // Shared with the person's other devices (`split`: what each can hold): this one keeps the
   // embedding, the head and the first layers, and the page has the others load the rest.
-  if (split?.length) {
+  else if (split?.length) {
     const lb = JSON.parse(layer_bytes(headers));
     const stages = planSplit(lb, [capacityOf(budgetPref, MOBILE), ...split]);
     const helpers = stages.slice(1).map((s, helper) => ({ helper, stage: { first: s.first, end: s.end, embed: false, head: false } })).filter((h) => h.stage.end > h.stage.first);
@@ -384,7 +439,7 @@ async function loadModel(source, wantCtx, lowPower, budgetPref, { stage = null, 
   }
   let loader;
   try {
-    loader = await create_loader(headers, JSON.stringify({ low_power: lowPower, budget, stage }));
+    loader = await create_loader(headers, JSON.stringify({ low_power: lowPower, budget: pooled ? null : budget, stage }));
   } catch (e) {
     throw new Error(`Could not start the model on the GPU: ${e?.message || e}`);
   }
@@ -447,7 +502,8 @@ async function loadModel(source, wantCtx, lowPower, budgetPref, { stage = null, 
   } finally {
     loader.free();
   }
-  return { model, chat: JSON.parse(chat.info()) };
+  // Whether the chat template takes tools: the main chat's assistant needs it.
+  return { model, chat: JSON.parse(chat.info()), tools: Boolean(toolTemplate) };
 }
 
 function unload() {
@@ -466,13 +522,27 @@ function unload() {
 
 // ---- Generation ----
 
+// Images ride on messages as `images: [{rgb: Uint8Array, width, height}]`; the prompt gets one
+// placeholder per image at the start of its message (Qwen-VL's chat templates put them there).
+const IMAGE_SLOT = '<|vision_start|><|image_pad|><|vision_end|>';
+function withImages(msgs) {
+  return msgs.map(({ images, ...m }) => (images?.length ? { ...m, content: IMAGE_SLOT.repeat(images.length) + (m.content || '') } : m));
+}
+
+function prefillImages(tokens, images) {
+  const rgb = new Uint8Array(images.reduce((n, i) => n + i.rgb.length, 0));
+  let at = 0;
+  for (const i of images) { rgb.set(i.rgb, at); at += i.rgb.length; }
+  return chat.prefill_images(tokens, rgb, new Uint32Array(images.flatMap((i) => [i.width, i.height])));
+}
+
 // One model turn: fit the conversation in the context, read it, and generate until the end.
 async function turn(messages, opts, maxTokens, ctx, emit = post, preserveTask = false) {
   let msgs = messages;
   let tokens;
   let dropped = 0;
   for (;;) {
-    tokens = chat.prompt(JSON.stringify(msgs), JSON.stringify(opts));
+    tokens = chat.prompt(JSON.stringify(withImages(msgs)), JSON.stringify(opts));
     if (tokens.length + Math.min(maxTokens, 256) < ctx) break;
     let first = msgs.findIndex((m) => m.role !== 'system');
     if (preserveTask) {
@@ -488,15 +558,22 @@ async function turn(messages, opts, maxTokens, ctx, emit = post, preserveTask = 
     dropped += 2;
   }
   const t0 = performance.now();
-  const pre = JSON.parse(await chat.prefill(tokens));
+  const images = msgs.flatMap((m) => m.images || []);
+  const pre = JSON.parse(images.length ? await prefillImages(tokens, images) : await chat.prefill(tokens));
   emit('prefill', { ...pre, ms: performance.now() - t0, dropped, promptTokens: tokens.length });
   const t1 = performance.now();
-  const limit = Math.min(maxTokens, ctx - tokens.length - 1);
+  let limit = Math.min(maxTokens, ctx - tokens.length - 1);
   let n = 0;
   let reason = 'length';
+  const ids = [];
+  // Whether the prompt itself opens the reply's thinking (Qwen3 Thinking 2507, Nanbeige 4.1).
+  let opensThinking = false;
+  try { opensThinking = /<think>\s*$/.test(chat.render(JSON.stringify(withImages(msgs)), JSON.stringify(opts))); } catch { /* no template */ }
   // The raw reply keeps the control tokens that carry markup (Kimi K3 channels, DeepSeek and
   // Kimi tool calls), so calls can be read from it; the person sees `displayText` of it.
-  let raw = '';
+  // When the prompt opened the thinking, the reply starts inside it: give it its opening tag, so
+  // it shows as thinking (not as the answer) and is read as such everywhere.
+  let raw = opensThinking ? '<think>\n' : '';
   let shown = '';
   const show = () => {
     const d = displayText(raw);
@@ -507,20 +584,42 @@ async function turn(messages, opts, maxTokens, ctx, emit = post, preserveTask = 
   };
   // A model that streams its weights may read several tokens per pass (a draft from earlier
   // text, verified at once).
-  outer: while (n < limit) {
-    if (stopRequested) { reason = 'stopped'; break; }
-    for (const id of await chat.next_many()) {
-      n++;
-      if (chat.is_end(id)) { reason = 'end'; break outer; }
-      const piece = rawPiece(chat.control_text(id), chat.piece(id));
-      if (piece) raw += piece;
-      if (n >= limit) break;
+  const run = async () => {
+    reason = 'length';
+    outer: while (n < limit) {
+      if (stopRequested) { reason = 'stopped'; break; }
+      // All of a pass's tokens are in the cache, even past the limit: the thinking budget's
+      // continuation must extend exactly what the cache holds.
+      const batch = await chat.next_many();
+      ids.push(...batch);
+      for (const id of batch) {
+        n++;
+        if (chat.is_end(id)) { reason = 'end'; break outer; }
+        const piece = rawPiece(chat.control_text(id), chat.piece(id));
+        if (piece) raw += piece;
+        if (n >= limit) break;
+      }
+      show();
     }
+    raw += chat.flush();
     show();
+  };
+  await run();
+  // A thinking budget (as llama.cpp's reasoning budget): a reply that used all of it thinking
+  // gets its thinking closed for it and room to act, instead of being cut off with nothing done.
+  const open = raw.includes('<think>') ? !raw.includes('</think>') : opensThinking && !raw.includes('</think>');
+  if (reason === 'length' && open && !/<tool_call>|<function=/.test(raw)) {
+    const close = Array.from(chat.tokenize('\n</think>\n\n'));
+    const room = ctx - tokens.length - ids.length - close.length - 1;
+    if (room > 64) {
+      await chat.prefill(Uint32Array.from([...tokens, ...ids, ...close]));
+      raw += '\n</think>\n\n';
+      emit('budget', { thought: n });
+      limit = n + Math.min(1024, room);
+      await run();
+    }
   }
-  raw += chat.flush();
-  show();
-  return { text: raw, display: displayText(raw), n, reason, ms: performance.now() - t1, promptTokens: tokens.length };
+  return { text: raw, display: displayText(raw), n, reason, ms: performance.now() - t1, promptTokens: tokens.length, computed: pre.computed, prefillMs: t1 - t0 };
 }
 
 const MAX_TOOL_ROUNDS = 3;
@@ -600,8 +699,41 @@ const handlers = {
   async adapter({ gpu }) {
     post('adapter', { adapter: await describeAdapter(gpu) });
   },
-  async load({ source, ctx, gpu, gpuMemory, cacheGb, share, stage, split }) {
+  // GPU memory free for a model, up to `need` bytes (allocated and released at once).
+  async probe({ gpu, need }) {
+    probingNow = freeGpuBytes(gpu === 'low-power', Number(need) || 8 * 2 ** 30).catch(() => 0);
+    const bytes = await probingNow;
+    probingNow = null;
+    post('probed', { gpu, bytes });
+  },
+  // Download a model (and its image encoder) without loading it; a load stops it.
+  async fetch({ source }) {
+    if (fetching) return;
+    const controller = new AbortController();
+    fetching = { key: source.key, controller, done: null };
+    fetching.done = (async () => {
+      const listed = async () => post('cache', await listCached().catch(() => ({ models: [], supported: false })));
+      try {
+        await download(source, { quiet: true, controller });
+        if (source.vision) await download({ ...source.vision, parts: null }, { quiet: true, controller });
+        fetching = null;
+        // The page sees the model saved before it hears the download is done.
+        await listed();
+        post('fetched', { key: source.key });
+      } catch (e) {
+        fetching = null;
+        await listed();
+        post('fetch-error', { key: source.key, message: controller.signal.aborted ? 'stopped' : storageError(e) });
+      }
+    })();
+    await fetching.done;
+  },
+  async load({ source, ctx, gpu, gpuMemory, cacheGb, share, stage, split, pool }) {
     cancelLoad = false;
+    // A background download gives way (what it saved is kept, and resumes from there), and a
+    // measurement of free GPU memory finishes first (it holds GPU memory while it runs).
+    if (fetching) { const f = fetching; f.controller.abort(); await f.done; }
+    if (probingNow) await probingNow;
     swarmOn = Boolean(share);
     unload();
     await ensureWasm();
@@ -614,10 +746,23 @@ const handlers = {
       files = { names: await download(source) };
       post('cache', await listCached().catch(() => ({ models: [], supported: false })));
     }
-    const result = await loadModel(files, ctx, gpu === 'low-power', gpuMemory, { stage, split });
+    // An image encoder takes its file's size on the GPU, and some room for its work.
+    const visionBytes = source.kind === 'file' ? source.visionFile?.size : source.vision?.bytes;
+    const reserve = visionBytes ? visionBytes + 256 * 2 ** 20 : 0;
+    const result = await loadModel(files, ctx, gpu === 'low-power', gpuMemory, { stage, split, pool, reserve });
     if (result.stageLoaded) {
       post('stage-loaded', { stage: result.stage, placement: result.placement });
       return;
+    }
+    // A vision model's image encoder: downloaded beside it, read whole, and put on its GPU.
+    let visionFile = source.kind === 'file' ? source.visionFile : null;
+    if (source.vision && !source.stream && source.kind !== 'file') {
+      const [part] = await download({ ...source.vision, parts: null });
+      visionFile = await (await (await modelsDir()).getFileHandle(part)).getFile();
+    }
+    if (visionFile) {
+      post('progress', { phase: 'vision', loaded: 0, total: visionFile.size });
+      result.vision = { unit: chat.attach_vision(new Uint8Array(await visionFile.arrayBuffer())) };
     }
     const name = source.kind === 'file' ? (source.files || [source.file])[0].name : null;
     post('loaded', { ...result, source: source.kind === 'file' ? { kind: 'file', name } : { kind: 'hf', key: source.key, id: source.id } });
@@ -665,7 +810,8 @@ const handlers = {
     const schemas = msg.tools || [];
     remote?.resume();
     const { messages, options } = toolTransport(msg.messages, schemas, toolTemplate, { argsAsString });
-    const result = await turn(messages, options, msg.maxTokens || 512, chat.context_length(), (type,data) => post('agent_event',{requestId:msg.requestId,event:{type,...data}}), true);
+    // The page's template options (enable_thinking) for this turn.
+    const result = await turn(messages, { ...options, ...(msg.options || {}) }, msg.maxTokens || 512, chat.context_length(), (type,data) => post('agent_event',{requestId:msg.requestId,event:{type,...data}}), true);
     post('agent_done',{requestId:msg.requestId,...result});
   },
   stop() {

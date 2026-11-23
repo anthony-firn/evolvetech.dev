@@ -1,7 +1,10 @@
-import { LARGE, MODELS, cacheKey, formatBytes, hfUrl, listRepo, parseHfReference, resolveParts, splitParts } from './models.js';
+import { BEST_FOR, LARGE, MODELS, cacheKey, formatBytes, hfUrl, listRepo, parseHfReference, resolveParts, splitParts } from './models.js';
+import { GPU_OVERHEAD, LADDER, isMetered, pickModel, shouldFetch, toRemove } from './model-manager.mjs';
 import { renderMarkdown, splitThinking } from './markdown.js';
 import { stripToolCalls } from './tools.js';
-import { wantsDevelopment, wantsSnakeStarter, wantsBrowser, developmentSummary, createDevelopmentView } from './chat-development.mjs';
+import { wantsSnakeStarter, wantsBrowser, createWorkView, kindOf } from './chat-development.mjs';
+import { trace } from './trace.mjs';
+import { newChatId, saveChat, getChat, listChats, deleteChat } from './chats.mjs';
 
 const $ = (id) => document.getElementById(id);
 const app = $('app');
@@ -17,7 +20,7 @@ let worker = newWorker();
 if (REMOTE_CODE) app.dataset.remote = '';
 const IS_MOBILE = navigator.userAgentData?.mobile ?? /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
 
-const DEFAULTS = { system: '', temperature: 0.7, top_p: 0.95, top_k: 40, min_p: 0.05, repeat_penalty: 1.1, maxTokens: 1024, ctx: 4096, thinking: true, gpu: 'high-performance', gpuMemory: 'auto', cacheGb: 10, share: false, shareUpload: 2, internet: false, jinaKey: '' };
+const DEFAULTS = { system: '', temperature: 0.7, top_p: 0.95, top_k: 40, min_p: 0.05, repeat_penalty: 1.1, maxTokens: 1024, ctx: 4096, thinking: true, gpu: 'high-performance', gpuMemory: 'auto', cacheGb: 10, share: false, shareUpload: 2, internet: false, jinaKey: '', githubToken: '', autonomy: 1, poolGpus: true };
 const SUGGESTIONS = [
   'Make me a Snake game I can play.',
   'Write a haiku about running AI on my own laptop.',
@@ -32,10 +35,16 @@ const state = {
   loading: null, // { label, id, key }
   loaded: null, // { id, key, label, info, chat }
   messages: [], // { role, content, stats?, error? }
-  developmentActive: false,
+  chatId: newChatId(), // where this conversation is saved (web/chats.mjs)
   live: null, // the assistant message being written
   settings: loadSettings(),
 };
+
+// The Linux terminal's VM takes the GitHub token and autonomy from Settings (when it starts,
+// and on every change); the VM is created only when the terminal opens.
+function configureVm() {
+  import('./vm/client.mjs').then(({ provideConfig }) => provideConfig(() => ({ github: { token: state.settings.githubToken || '', autonomy: Number(state.settings.autonomy ?? 1) } }))).catch(() => {});
+}
 
 function loadSettings() {
   try {
@@ -73,17 +82,17 @@ function el(tag, attrs = {}, ...children) {
 function setPhase(phase) {
   state.phase = phase;
   app.dataset.phase = phase;
+  if (phase === 'ready' || phase === 'idle') scheduleUpkeep();
   // A phone using its computer keeps its screen on while the computer works for it: a locked
   // phone drops the connection.
   if (REMOTE_CODE) keepAwake(['loading', 'generating', 'agent', 'preparing'].includes(phase));
   const ready = phase === 'ready';
   const agentBusy = phase === 'agent' || phase === 'preparing';
-  const generating = phase === 'generating' || (agentBusy && Boolean(state.live?.development));
-  $('chat-mode').disabled = agentBusy || phase === 'generating';
+  const generating = phase === 'generating' || (agentBusy && Boolean(state.live?.assistant));
   $('file-input').disabled = agentBusy;
   $('hf-input').disabled = agentBusy;
   $('prompt').disabled = !(ready || phase === 'generating');
-  $('prompt').placeholder = state.loaded ? 'Ask a question or build…' : 'Choose a model to start';
+  $('prompt').placeholder = state.loaded ? 'Ask anything, or describe what to build…' : 'Choose a model to start';
   $('send').disabled = !ready;
   $('send').hidden = generating;
   $('stop').hidden = !generating;
@@ -150,7 +159,9 @@ function catalogEntry(m) {
   // Models marked `stream` are read from Hugging Face as they run instead of downloaded.
   const stream = Boolean(m.stream) && !cachedEntry(key)?.complete;
   // Streamed models always list their parts: each part's SHA-256 names its swarm.
-  return { kind: 'hf', id: m.id, key, repo: m.repo, file: m.file, revision: 'main', url: hfUrl(m.repo, m.file), bytes: m.bytes, name: m.name, resolve: split || stream, stream };
+  // A vision model's image encoder is stored beside it, under the model's key.
+  const vision = m.vision ? { key: `${key}.vision`, file: m.vision.file, url: hfUrl(m.vision.repo || m.repo, m.vision.file), bytes: m.vision.bytes } : null;
+  return { kind: 'hf', id: m.id, key, repo: m.repo, file: m.file, revision: 'main', url: hfUrl(m.repo, m.file), bytes: m.bytes, name: m.name, resolve: split || stream, stream, vision };
 }
 
 const ALL = [...MODELS, ...LARGE];
@@ -175,7 +186,7 @@ function renderModels() {
     ];
     const button = el('button', {
       class: 'model', type: 'button', disabled: busy || running, 'aria-current': running ? 'true' : null,
-      onclick: () => startLoad(catalogEntry(m)),
+      onclick: () => { pin(key); startLoad(catalogEntry(m)); },
     },
     el('span', { class: 'row' }, el('span', { class: 'name', text: m.name }), el('span', { class: 'size', text: formatBytes(m.bytes) })),
     el('span', { class: 'note', text: m.note }),
@@ -199,7 +210,7 @@ function renderModels() {
     const running = state.loaded?.key === c.key;
     const entry = { kind: 'hf', id: c.key, key: c.key, repo: c.repo, file: c.file, revision: c.revision || 'main', url: c.url, bytes: c.bytes, name: c.file, parts: c.parts?.length > 1 ? c.parts.map((p) => ({ ...p, url: hfUrl(c.repo, p.file, c.revision || 'main') })) : null };
     items.push(el('li', {},
-      el('button', { class: 'model', type: 'button', disabled: busy || running, 'aria-current': running ? 'true' : null, onclick: () => startLoad(entry) },
+      el('button', { class: 'model', type: 'button', disabled: busy || running, 'aria-current': running ? 'true' : null, onclick: () => { pin(c.key); startLoad(entry); } },
         el('span', { class: 'row' }, el('span', { class: 'name', text: c.file.split('/').pop().replace(/(-\d{5}-of-\d{5})?\.gguf$/i, '') }), el('span', { class: 'size', text: formatBytes(c.bytes) })),
         el('span', { class: 'note', text: c.repo }),
         el('span', { class: 'meta' }, running ? el('span', { class: 'tag run', text: 'Running' }) : el('span', { class: 'tag ok', text: c.complete ? 'Saved' : 'Partial' }))),
@@ -224,19 +235,138 @@ function renderStorage() {
   box.hidden = false;
   const meter = el('div', { class: 'meter' }, el('span'));
   meter.firstChild.style.setProperty('width', `${Math.min(100, (usage / quota) * 100).toFixed(1)}%`);
+  const f = state.fetching;
   box.replaceChildren(
     el('div', { text: `Saved models: ${formatBytes(stored)}` }),
     meter,
     el('div', { text: `${formatBytes(quota - usage)} of browser storage free` }),
+    f ? el('div', { text: `Getting ${f.name} for this device in the background: ${f.total ? Math.floor((f.loaded / f.total) * 100) : 0}%` }) : null,
   );
+}
+
+// ---- Models that manage themselves (model-manager.mjs) ----
+// The app picks the best model for this device, loads it on later visits, downloads a better
+// one in the background when idle, and removes models nobody uses. A model the person chose
+// themselves is kept and not replaced. "Manage models for me" in Settings turns it off.
+
+const managed = () => state.settings.manageModels !== false && !REMOTE_CODE;
+function readJson(key, fallback) { try { return JSON.parse(recall(key)) ?? fallback; } catch { return fallback; } }
+function markUsed(key) { const used = readJson('evolve-llm-used', {}); used[key] = Date.now(); remember('evolve-llm-used', JSON.stringify(used)); }
+function pin(key) { remember('evolve-llm-pinned', JSON.stringify([...new Set([...readJson('evolve-llm-pinned', []), key])])); }
+const pinned = () => new Set(readJson('evolve-llm-pinned', []));
+const keyOf = (m) => cacheKey(m.repo, m.file);
+const savedIds = () => new Set(MODELS.filter((m) => cachedEntry(keyOf(m))?.complete).map((m) => m.id));
+// Whether the person chose the running model themselves (a file, a pasted link, the model list).
+const chosen = () => Boolean(state.loaded && (state.loaded.kind === 'file' || pinned().has(state.loaded.key)));
+
+// GPU memory free for a model, measured once per GPU (and both GPUs when they are pooled).
+let gpuBytes = null;
+async function probeGpu(adapter) {
+  if (!adapter?.ok || !managed() || state.loaded) return;
+  const id = `evolve-llm-gpu-${describeGpu(adapter)}`;
+  const known = readJson(id, null);
+  if (known && Date.now() - known.at < 30 * 864e5) { gpuBytes = known.bytes; updatePick(); return; }
+  const need = Math.max(...LADDER.map((i) => MODELS.find((m) => m.id === i)?.bytes || 0)) * GPU_OVERHEAD;
+  // Set before waiting, so loading a saved model waits for the measurement (both use the GPU).
+  probing = { id, need, gpus: [], bytes: 0 };
+  probing.gpus = (await poolingGpus()) ? ['high-performance', 'low-power'] : [state.settings.gpu];
+  worker.postMessage({ type: 'probe', gpu: probing.gpus[0], need });
+}
+let probing = null;
+function onProbed(msg) {
+  if (!probing) return;
+  probing.bytes += msg.bytes;
+  probing.gpus.shift();
+  if (probing.gpus.length) { worker.postMessage({ type: 'probe', gpu: probing.gpus[0], need: probing.need }); return; }
+  gpuBytes = probing.bytes;
+  remember(probing.id, JSON.stringify({ bytes: gpuBytes, at: Date.now() }));
+  probing = null;
+  onCache();
+}
+
+function updatePick() {
+  const { usage, quota } = state.cache;
+  state.pick = pickModel(MODELS, { gpuBytes: gpuBytes ?? undefined, storageFree: quota ? quota - usage : undefined, mobile: IS_MOBILE, saved: savedIds() });
+  const start = $('start-recommended');
+  const m = startingModel();
+  if (m) start.textContent = `Start with ${m.name} (${formatBytes(m.bytes)})`;
+}
+
+/** The model "Start" loads: a model the person chose that is saved, else the device's pick. */
+function startingModel() {
+  const last = ALL.find((m) => m.id === recall('evolve-llm-last'));
+  if (!managed()) return last || MODELS.find((m) => m.recommended);
+  const lastSaved = last && cachedEntry(keyOf(last))?.complete;
+  if (lastSaved && pinned().has(keyOf(last))) return last;
+  if (state.pick && cachedEntry(keyOf(state.pick))?.complete) return state.pick;
+  if (lastSaved) return last;
+  // Something saved starts now (the pick downloads in the background): the best saved one.
+  const anySaved = [...LADDER.map((id) => MODELS.find((m) => m.id === id)), ...MODELS].find((m) => m && cachedEntry(keyOf(m))?.complete);
+  return anySaved || state.pick || MODELS.find((m) => m.recommended);
+}
+
+/** The device's pick, once saved, when the running model was not the person's own choice. */
+function pickToSwitchTo() {
+  const p = state.pick;
+  if (!managed() || !p || chosen() || !state.loaded || state.loaded.id === p.id) return null;
+  return cachedEntry(keyOf(p))?.complete ? p : null;
+}
+
+// A downloaded pick takes over at once when no conversation is under way, else at the next one.
+function onFetched() {
+  const name = state.pick?.name || 'The model';
+  if (state.phase === 'ready' && !state.messages.length) {
+    const better = pickToSwitchTo();
+    if (better) { state.afterLoad = { note: `Switched to ${better.name}, the best model for this device.` }; startLoad(catalogEntry(better), { keepChat: true }); return; }
+  }
+  $('status-line').textContent = `${name} is saved on this device. It takes over at your next new conversation.`;
+}
+
+// On a later visit, the saved model loads by itself.
+let autoStarted = false;
+function onCache() {
+  updatePick();
+  if (probing || autoStarted || !managed() || !state.adapter?.ok || state.loaded || state.phase !== 'idle') return;
+  const m = startingModel();
+  if (!m || !cachedEntry(keyOf(m))?.complete) return;
+  autoStarted = true;
+  startLoad(catalogEntry(m));
+}
+
+// After half a minute idle: remove what is not used, and fetch the device's pick.
+let upkeepTimer = 0;
+function scheduleUpkeep() {
+  clearTimeout(upkeepTimer);
+  if (managed()) upkeepTimer = setTimeout(upkeep, 30000);
+}
+function upkeep() {
+  if (!managed() || !state.cache.supported || !['ready', 'idle'].includes(state.phase)) return;
+  const used = readJson('evolve-llm-used', {});
+  // Models saved before this existed count as used today.
+  for (const c of state.cache.models) used[c.key] ??= Date.now();
+  remember('evolve-llm-used', JSON.stringify(used));
+  const p = state.pick;
+  const pickKey = p ? keyOf(p) : null;
+  const fetchNow = !state.fetching && !chosen() && shouldFetch({ pick: p, saved: savedIds(), running: state.loaded?.id, metered: isMetered(navigator.connection), idle: true });
+  const keep = new Set([state.loaded?.key, pickKey, ...pinned()].filter(Boolean));
+  const { usage = 0, quota = 0 } = state.cache;
+  const need = fetchNow ? p.bytes - (cachedEntry(pickKey)?.stored || 0) + (p.vision?.bytes || 0) : 0;
+  const gone = toRemove(state.cache.models, { need, free: quota ? quota - usage : Infinity, keep, lastUsed: used });
+  for (const m of gone) worker.postMessage({ type: 'removeCache', key: m.key });
+  if (gone.length) $('status-line').textContent = `Removed ${gone.map((m) => m.name || m.file).join(', ')}, which ${gone.length > 1 ? 'were' : 'was'} not being used, to keep storage free.`;
+  if (fetchNow) {
+    state.fetching = { key: pickKey, name: p.name, loaded: cachedEntry(pickKey)?.stored || 0, total: p.bytes };
+    worker.postMessage({ type: 'fetch', source: catalogEntry(p) });
+    renderStorage();
+  }
 }
 
 // ---- Loading ----
 
 let loadStarted = 0;
 
-async function startLoad(source) {
-  if (['agent','preparing'].includes(state.phase)) { $('status-line').textContent = 'Stop the Pi task before loading another model.'; return; }
+async function startLoad(source, { keepChat = false } = {}) {
+  if (['agent','preparing'].includes(state.phase)) { $('status-line').textContent = 'Stop the current reply before loading another model.'; return; }
   if (!state.adapter?.ok) return;
   closeDrawer();
   if (state.phase === 'generating') return;
@@ -246,8 +376,11 @@ async function startLoad(source) {
   const label = known ? known.name : source.kind === 'file' ? first.replace(/(-\d{5}-of-\d{5})?\.gguf$/i, '') : source.name;
   state.loading = { label, key: known ? cacheKey(known.repo, known.file) : source.key, id: known ? known.id : source.id, kind: source.kind, stream: Boolean(source.stream) };
   state.loaded = null;
-  for(const m of state.messages)m.developmentView?.dispose();
-  state.messages = [];state.developmentActive=false;
+  // Switching models for a kind of request keeps the conversation; choosing one starts afresh.
+  if (!keepChat) {
+    for(const m of state.messages)m.workView?.dispose();
+    state.messages = [];state.chatId=newChatId();assistant?.reset();
+  }
   renderMessages();
   $('loading-title').textContent = label;
   for (const li of $('loading-steps').children) li.dataset.state = '';
@@ -258,9 +391,9 @@ async function startLoad(source) {
   $('loading-step').textContent = saved ? 'Saved on this device' : source.kind === 'file' ? 'From this device' : source.stream ? 'Connecting to Hugging Face' : 'Downloading';
   loadStarted = performance.now();
   setPhase('loading');
-  if (source.kind === 'hf') remember('evolve-llm-last', source.id);
+  if (source.kind === 'hf') { remember('evolve-llm-last', source.id); markUsed(source.key); }
   // With paired devices, each reads only its share of a model from Hugging Face.
-  state.helpers?.unloadAll();
+  state.helpers?.unloadAll();localGpuPromise?.then((l)=>l.hub.unloadAll(),()=>{});
   const helpers = source.kind === 'hf' ? state.helpers?.ready() ?? [] : [];
   if (helpers.length && !source.stream) source = { ...source, stream: true, resolve: true, parts: null };
   if (source.kind === 'hf' && (source.resolve || !source.bytes) && !source.parts) {
@@ -276,8 +409,41 @@ async function startLoad(source) {
   stopSharing();
   const share = Boolean(!REMOTE_CODE && source.stream && state.settings.share && source.parts?.length);
   if (share) await startSharing(source);
-  state.split = helpers.length ? { source, helpers, pending: null, plan: null } : null;
-  worker.postMessage({ type: 'load', source, ctx: Number(state.settings.ctx), gpu: state.settings.gpu, gpuMemory: state.settings.gpuMemory, cacheGb: Number(state.settings.cacheGb), share, split: helpers.length ? helpers.map((h) => h.capacity) : null });
+  // This machine's two GPUs: with the faster chosen, a model that does not fit in its free memory
+  // has its later layers on the other GPU (a second worker in this page), all on GPUs.
+  const localGpuHelper = !helpers.length && await poolingGpus() ? await localGpu() : null;
+  const pool = localGpuHelper ? [localGpuHelper.helper()] : [];
+  const hub = localGpuHelper ? localGpuHelper.hub : state.helpers;
+  state.split = helpers.length || pool.length ? { source, helpers: helpers.length ? helpers : pool, hub, pending: null, plan: null, local: Boolean(localGpuHelper) } : null;
+  worker.postMessage({ type: 'load', source, ctx: Number(state.settings.ctx), gpu: state.settings.gpu, gpuMemory: state.settings.gpuMemory, cacheGb: Number(state.settings.cacheGb), share, split: helpers.length ? helpers.map((h) => h.capacity) : pool.length ? [16 * 2 ** 30] : null, pool: Boolean(localGpuHelper) });
+}
+
+/** Whether to pool this machine's GPUs: chosen in Settings, the faster GPU selected, and two
+ *  different GPUs present (not on a phone using a computer). */
+let gpuPair = null;
+async function poolingGpus() {
+  if (REMOTE_CODE || state.settings.poolGpus === false || state.settings.gpu !== 'high-performance' || !navigator.gpu) return false;
+  gpuPair ??= Promise.all(['low-power', 'high-performance'].map((p) => navigator.gpu.requestAdapter({ powerPreference: p }).catch(() => null)))
+    .then(([a, b]) => Boolean(a && b && (a.info?.vendor !== b.info?.vendor || a.info?.architecture !== b.info?.architecture)));
+  return gpuPair;
+}
+
+/** The other GPU as a helper in this page: its own worker, reached through an in-page link. */
+let localGpuPromise = null;
+function localGpu() {
+  localGpuPromise ??= (async () => {
+    const { Helpers, Helping, localLinkPair } = await import('./devices.mjs');
+    const hub = new Helpers({ onChange: () => { if (state.phase === 'loading') renderDevices(); } });
+    const [main, side] = localLinkPair();
+    const w = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+    w.postMessage({ type: 'hello', gpu: 'low-power' });
+    new Helping({ link: side, worker: w, local: true, about: { name: 'the integrated GPU', capacity: 16 * 2 ** 30, gpu: 'integrated' },
+      settings: () => ({ gpu: 'low-power', gpuMemory: 'all', cacheGb: state.settings.cacheGb }) });
+    hub.add(main, 'local-gpu');
+    await new Promise((resolve) => { const ready = () => (hub.list[0]?.state === 'ready' ? resolve() : setTimeout(ready, 20)); ready(); });
+    return { hub, worker: w, helper: () => hub.list[0] };
+  })().catch((e) => { localGpuPromise = null; throw e; });
+  return localGpuPromise;
 }
 
 // ---- Your other devices: pairing, and running part of a model on them ----
@@ -340,22 +506,23 @@ function renderDevices() {
   }
 }
 
-function onSplitPlan({ helpers: plan, ctx, mine }) {
+function onSplitPlan({ helpers: plan, ctx, mine, pooled, free, n_layer }) {
   const sp = state.split;
   if (!sp) return;
+  trace({ type: 'split', model: state.loading?.label, n_layer, here: mine ? `${mine.first}-${mine.end}` : 'all', others: plan.map((p) => `${p.stage.first}-${p.stage.end}`).join(', '), pooled: Boolean(pooled), freeGB: free ? +(free / 2 ** 30).toFixed(2) : undefined });
   sp.plan = { mine, helpers: plan.map(({ helper, stage }) => ({ h: sp.helpers[helper], stage })) };
-  sp.pending = Promise.all(sp.plan.helpers.map(({ h, stage }) => state.helpers.load(h, sp.source, stage, ctx)));
+  sp.pending = Promise.all(sp.plan.helpers.map(({ h, stage }) => sp.hub.load(h, sp.source, stage, ctx)));
   // A device that cannot load its layers ends the load now rather than after this one's.
   sp.pending.catch((e) => {
     if (state.split !== sp || state.phase !== 'loading') return;
     worker.postMessage({ type: 'cancel' });
-    state.helpers.unloadAll();
+    sp.hub.unloadAll();
     onError({ during: 'load', message: e.message });
   });
 }
 
 function onRemoteForward({ id, hidden, n, pos0 }) {
-  state.helpers.forward(hidden, n, pos0).then(
+  (state.split?.hub || state.helpers).forward(hidden, n, pos0).then(
     (out) => worker.postMessage({ type: 'remote-result', id, hidden: out }, [out]),
     (e) => worker.postMessage({ type: 'remote-result', id, error: e.message || String(e) }),
   );
@@ -639,13 +806,13 @@ function onLoaded(msg) {
   const { model, chat, source } = msg;
   state.lastLoaded = msg;
   const label = state.loading?.label || chat.name;
-  state.loaded = { ...source, key: state.loading?.key ?? source.key, label, info: model, chat, stream: Boolean(state.loading?.stream) };
+  state.loaded = { ...source, key: state.loading?.key ?? source.key, label, info: model, chat, tools: Boolean(msg.tools), stream: Boolean(state.loading?.stream), vision: msg.vision || null };
   state.loading = null;
   $('loading-bar').classList.remove('indeterminate');
   const secs = (performance.now() - loadStarted) / 1000;
   const cfg = model.config;
   const types = Object.keys(model.weight_types).join(', ');
-  $('ready-title').textContent = state.split?.plan?.helpers.length ? `${label} is running on your devices` : `${label} is running on your GPU`;
+  $('ready-title').textContent = state.split?.plan?.helpers.length ? (state.split.local ? `${label} is running on both GPUs` : `${label} is running on your devices`) : `${label} is running on your GPU`;
   const active = model.active_parameters < model.parameters * 0.9 ? `, ${formatParams(model.active_parameters)} active per token` : '';
   const pl = chat.placement || {};
   const where = pl.streaming
@@ -656,6 +823,10 @@ function onLoaded(msg) {
   $('status-line').textContent = 'Replies are generated on this device. Responses can be wrong; check anything important.';
   setPhase('ready');
   $('prompt').focus();
+  // A switch for a kind of request: answer the request that asked for it.
+  const after = state.afterLoad;
+  state.afterLoad = null;
+  if (after) { $('status-line').textContent = after.note; after.run?.(); }
 }
 
 function formatParams(n) {
@@ -706,7 +877,6 @@ function stepNode(step) {
 }
 
 function fillAssistant(bubble, m) {
-  if(m.development){const answer=el('div',{class:'answer'});answer.append(renderMarkdown(document,m.content,copyText));bubble.replaceChildren(answer);return;}
   const parts = splitThinking(stripToolCalls(m.content));
   const nodes = [];
   if (m.steps?.length) nodes.push(el('ul', { class: 'web-steps', 'aria-label': 'Web activity' }, ...m.steps.map(stepNode)));
@@ -743,7 +913,7 @@ function messageNode(m, i) {
   fillAssistant(bubble,m);
   const li=m.element ||= el('li',{class:'msg assistant','data-index':i},el('span',{class:'who',text:state.loaded?.label||'Model'}),bubble);
   li.querySelector(':scope > .msg-foot')?.remove();li.querySelector(':scope > .trimmed')?.remove();
-  if(m.developmentView&&m.developmentView.root.parentElement!==li)li.append(m.developmentView.root);
+  if(m.workView&&m.workView.root.parentElement!==li)li.append(m.workView.root);
   if (m !== state.live) {
     const last = i === state.messages.length - 1;
     li.append(el('div', { class: 'msg-foot' },
@@ -790,72 +960,170 @@ function send(text) {
   text = text.trim();
   if (!text || state.phase !== 'ready') return;
   state.messages.push({ role: 'user', content: text });
+  const better = betterModelFor(text);
+  if (better) {
+    trace({ type: 'switch', chat: state.chatId, kind: better.kind, from: state.loaded.label, to: better.name });
+    state.afterLoad = { run: runResponse, note: `Switched to ${better.name}, which does ${better.kind} best on this device.` };
+    startLoad(better.entry, { keepChat: true });
+    return;
+  }
   runResponse();
+}
+
+/** The saved model that does this kind of request best (BEST_FOR in models.js), when it is not the
+ *  one loaded and switching is on. Only models already saved on this device: no downloads. */
+function betterModelFor(question) {
+  if (state.settings.autoSwitch === false || !state.loaded?.tools || localComputer.connected) return null;
+  const kind = kindOf(question);
+  for (const id of BEST_FOR[kind] || []) {
+    const m = ALL.find((x) => x.id === id);
+    if (!m) continue;
+    const key = cacheKey(m.repo, m.file);
+    if (state.loaded.key === key) return null;
+    if (cachedEntry(key)?.complete) return { kind, name: m.name, entry: catalogEntry(m) };
+  }
+  return null;
 }
 
 function regenerate() {
   if (state.phase !== 'ready') return;
-  while (state.messages.length && state.messages[state.messages.length - 1].role !== 'user') state.messages.pop().developmentView?.dispose();
+  while (state.messages.length && state.messages[state.messages.length - 1].role !== 'user') state.messages.pop().workView?.dispose();
   if (state.messages.length) runResponse();
 }
 
+// One chat: a model whose template takes tools answers through the assistant (files, git, the
+// web, app previews), deciding itself whether a message needs them; other models chat plainly.
 function runResponse(){
   const question=state.messages.at(-1)?.content||'';
-  if(localComputer.connected && $('chat-mode').value !== 'chat')runLocalResponse(question);
-  else if(wantsDevelopment(question,$('chat-mode').value,state.developmentActive))runDevelopment(question);
+  if(localComputer.connected&&state.loaded?.tools)runLocalResponse(question);
+  else if(state.loaded?.tools)runAssistant(question);
   else runGeneration();
 }
 
+// With a paired computer connected (web/local-computer.mjs), the same chat works on that computer.
 async function runLocalResponse(question) {
-  const context=state.messages.slice(0,-1).filter(m=>!m.error).slice(-6).map(m=>`${m.role}: ${m.content}`).join('\n').slice(-6000);
-  const m={role:'assistant',content:'Pi is working on this computer…',development:true,localComputer:true,started:performance.now()};
-  const activity=el('pre'),details=el('details',{},el('summary',{text:'Local computer activity'}),activity);
-  m.developmentView={root:details,dispose:()=>details.remove()};
+  const context=state.messages.slice(0,-1).filter(m=>!m.error).slice(-6).map(m=>`${m.role}: ${stripToolCalls(m.content)}`).join('\n').slice(-6000);
+  const m={role:'assistant',content:'',assistant:true,localComputer:true,started:performance.now()};
+  m.workView=createWorkView();
   state.live=m;state.messages.push(m);setPhase('preparing');renderMessages();
   $('scroll').scrollTop=$('scroll').scrollHeight;
+  const t0=performance.now();let calls=0,error=null;
+  trace({type:'run',chat:state.chatId,question,model:state.loaded?.label,computer:true});
   try {
     const result=await localComputer.runTask(question,{context,onEvent:e=>{
-      if(e.type==='tool')activity.textContent=(activity.textContent+'\n'+e.name+' '+JSON.stringify(e.args)).slice(-65536);
-      else if(e.type==='tool-result')activity.textContent=(activity.textContent+'\n'+JSON.stringify(e.result)).slice(-65536);
-      else if(e.type==='answer'){m.content=stripToolCalls(e.text||'').trim()||'Pi is working on this computer…';scheduleLiveRender();}
+      m.workView.event(e);
+      if(e.type==='tool')trace({type:'tool',chat:state.chatId,name:e.name,args:JSON.stringify(e.args)});
+      else if(e.type==='tool-result')trace({type:'result',chat:state.chatId,name:e.name,error:Boolean(e.isError),output:(e.result?.content||[]).map(c=>c.text||'').join('\n')});
+      else if(e.type==='answer'){const t=stripToolCalls(e.text||'').trim();if(t){m.content=t;scheduleLiveRender();}}
     }});
+    calls=result.calls;
     const last=result.messages.filter(m=>m.role==='assistant').at(-1);
-    m.content=stripToolCalls((last?.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n')).trim()||'Task ended. Review the local computer activity for results.';
-    m.stats=`Local computer · ${result.calls} tool calls · ${result.errors} tool errors`;
-  } catch(error) {m.content='The local computer task stopped: '+String(error.message||error);}
-  finally {state.live=null;setPhase(state.loaded?'ready':'idle');renderMessages();$('scroll').scrollTop=$('scroll').scrollHeight;$('status-line').textContent=localComputer.connected?'Computer connected · Auto and Build can use local tools; Chat has no computer tools.':'Local computer disconnected.';}
+    m.content=stripToolCalls((last?.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n')).trim()||m.content||'Done.';
+    m.stats=`On your computer${result.calls?` · ${result.calls} step${result.calls===1?'':'s'}`:''}`;
+  } catch(e) {error=String(e.message||e);m.content=(m.content?m.content+'\n\n':'')+(m.cancelRequested?'Stopped.':`I stopped before finishing: ${error}`);}
+  finally {
+    m.workView.finish();state.live=null;setPhase(state.loaded?'ready':'idle');renderMessages();$('scroll').scrollTop=$('scroll').scrollHeight;
+    $('status-line').textContent=localComputer.connected?'Computer connected · the chat works on this computer.':'Local computer disconnected.';
+    trace({type:'done',chat:state.chatId,ms:Math.round(performance.now()-t0),calls,error,stopped:Boolean(m.cancelRequested),answer:m.content});
+    saveCurrentChat();
+  }
 }
 
-async function runDevelopment(question){
-  const context=state.messages.slice(0,-1).filter(m=>!m.error).slice(-6).map(m=>`${m.role}: ${m.content}`).join('\n').slice(-6000);
-  const m={role:'assistant',content:'Preparing your workspace…',development:true,started:performance.now()};
-  m.developmentView=createDevelopmentView({openWorkspace:async()=>{try{await(await ensureWorkbench()).open();}catch(error){$('status-line').textContent=error.message;}}});
-  state.live=m;state.messages.push(m);state.developmentActive=true;setPhase('preparing');renderMessages();
-  $('scroll').scrollTop=$('scroll').scrollHeight;
-  try{
-    const session=await ensureWorkbench();
-    if(m.cancelRequested)throw new Error('Task cancelled.');
-    let starter;
-    if(wantsSnakeStarter(question)){
-      const response=await fetch(new URL('./examples/snake.html',import.meta.url));
-      if(!response.ok)throw new Error('The Snake starter could not be loaded.');
-      starter=await response.text();
-    }
-    if(m.cancelRequested)throw new Error('Task cancelled.');
-    m.content='Pi is working on your request…';scheduleLiveRender();
-    const browsing=wantsBrowser(question)||(state.lastTaskBrowsing&&!starter&&question.length<240&&!/\b(make|build|create|write|code|game|app)\b/i.test(question));state.lastTaskBrowsing=browsing;
-    const result=await session.runTask(question.replace(/^\s*pi\s+/i,''),{context,starter,partial:true,browser:browsing?()=>import('./browser-session.mjs').then(b=>b.ensureBrowser({show:true})):undefined,confirmBrowserAction:t=>Promise.resolve(confirm(t+'\n\nAllow Pi to do this?')),onEvent:e=>{m.developmentView.event(e);if(e.type==='starter'){m.content='Your Snake starter is ready below. Pi is applying your request…';scheduleLiveRender();}},preview:(...args)=>m.developmentView.preview(...args)});
-    m.content=developmentSummary(result,m.developmentView.check);
-    m.stats=`Pi · ${result.calls} tool call${result.calls===1?'':'s'} · ${result.changes} file${result.changes===1?'':'s'} changed · ${result.errors} tool errors`;
-    m.developmentView.finish(result);
-  }catch(error){m.content='The development task stopped: '+String(error.message||error);m.developmentView.finish({error:m.content,artifacts:[]});}
-  finally{state.live=null;setPhase(state.loaded?'ready':'idle');renderMessages();$('scroll').scrollTop=$('scroll').scrollHeight;$('status-line').textContent='Files stay in your browser. Ask for changes here, or open the workspace.';}
+let assistant=null;
+async function getAssistant(){
+  if(!assistant){
+    const {createAssistant}=await import('./assistant.mjs');
+    assistant||=createAssistant({
+      turn:async(messages,tools,opts)=>{
+        const t0=performance.now();
+        try{
+          const r=await agentTurn(messages,tools,{...opts,options:{enable_thinking:Boolean(state.settings.thinking)}});
+          trace({type:'turn',chat:state.chatId,ms:Math.round(performance.now()-t0),messages:messages.length,promptTokens:r.promptTokens,computed:r.computed,prefillMs:Math.round(r.prefillMs||0),decodeMs:Math.round(r.ms||0),tokens:r.n,reason:r.reason,text:r.text});
+          return r;
+        }catch(error){trace({type:'turn-error',chat:state.chatId,ms:Math.round(performance.now()-t0),error:String(error.message||error)});throw error;}
+      },
+      getNetwork:()=>({enabled:Boolean(state.settings.internet),jinaKey:state.settings.jinaKey||''}),
+      sandbox:async()=>(await ensureWorkbench()).sandbox(),
+      getVision:()=>state.loaded?.vision||null,
+    });
+  }
+  return assistant;
 }
+
+async function runAssistant(question){
+  // Earlier turns as plain text: their answers, without reasoning or tool markup.
+  const history=state.messages.slice(0,-1).filter(m=>!m.error&&(m.role==='user'||m.role==='assistant')).slice(-8)
+    .map(m=>({role:m.role,content:m.role==='assistant'?stripToolCalls(m.content).replace(/<think>[\s\S]*?<\/think>\s*/g,'').trim():m.content})).filter(m=>m.content);
+  const m={role:'assistant',content:'',assistant:true,started:performance.now()};
+  m.workView=createWorkView();
+  state.live=m;state.messages.push(m);setPhase('agent');renderMessages();
+  $('scroll').scrollTop=$('scroll').scrollHeight;
+  // A short follow-up to a website task ("I logged in") keeps the browser.
+  const browsing=wantsBrowser(question)||(state.lastTaskBrowsing&&question.length<240&&!/\b(make|build|create|write|code|game|app)\b/i.test(question));state.lastTaskBrowsing=browsing;
+  const s=state.settings,t0=performance.now();
+  trace({type:'run',chat:state.chatId,question,model:state.loaded?.label,ctx:Number(s.ctx),thinking:Boolean(s.thinking),web:Boolean(s.internet),autonomy:Number(s.autonomy??1),history:history.length,browser:Boolean(browsing)});
+  let calls=0,error=null;
+  try{
+    const a=await getAssistant();
+    if(m.cancelRequested)throw new Error('Stopped.');
+    const result=await a.run(question,{history,view:m.workView,modelName:state.loaded?.label||'Local model',maxTokens:Math.max(2048,Number(state.settings.maxTokens)||0),
+      starter:wantsSnakeStarter(question),
+      browser:browsing?()=>import('./browser-session.mjs').then(b=>b.ensureBrowser({show:true})):undefined,
+      confirmBrowserAction:t=>Promise.resolve(confirm(t+'\n\nAllow this?')),
+      onText:t=>{m.content=t;scheduleLiveRender();},
+      onEvent:e=>{
+        if(e.type==='tool')trace({type:'tool',chat:state.chatId,name:e.name,args:JSON.stringify(e.args)});
+        else if(e.type==='tool-result')trace({type:'result',chat:state.chatId,name:e.name,error:Boolean(e.isError),output:(e.result?.content||[]).map(c=>c.text||'').join('\n')});
+        else if(e.type==='retry')trace({type:'retry',chat:state.chatId,message:e.message,output:e.output});
+      }});
+    calls=result.calls;error=result.error;
+    // Never claim success the model did not state: the steps show what actually ran.
+    m.content=result.answer||m.content||(result.calls?'I stopped without saying what I did. The steps above show what actually ran.':'');
+    if(result.error)m.content=(m.content?m.content+'\n\n':'')+(m.cancelRequested?'Stopped.':`I stopped before finishing: ${result.error}`);
+    if(!m.content.trim())m.content='(no reply)';
+    m.stats=result.calls?`${result.calls} step${result.calls===1?'':'s'}`:'';
+  }catch(e){error=String(e.message||e);m.content=(m.content?m.content+'\n\n':'')+(m.cancelRequested?'Stopped.':`I stopped before finishing: ${error}`);}
+  finally{
+    m.workView.finish();state.live=null;setPhase(state.loaded?'ready':'idle');renderMessages();$('scroll').scrollTop=$('scroll').scrollHeight;
+    trace({type:'done',chat:state.chatId,ms:Math.round(performance.now()-t0),calls,error,stopped:Boolean(m.cancelRequested),answer:m.content});
+    saveCurrentChat();
+  }
+}
+
+// ---- Saved chats: every finished reply saves the conversation in this browser ----
+function saveCurrentChat(){
+  const messages=state.messages.filter(m=>m!==state.live&&(m.role==='user'||m.role==='assistant'));
+  if(!messages.length)return;
+  const title=(messages.find(m=>m.role==='user')?.content||'Chat').replace(/\s+/g,' ').slice(0,80);
+  saveChat({id:state.chatId,title,updated:Date.now(),model:state.loaded?.label||'',
+    messages:messages.map(m=>({role:m.role,content:m.content,...(m.error&&{error:true}),...(m.stats&&{stats:m.stats}),...(m.workView&&m.workView.record)}))}).catch(()=>{});
+}
+async function openChat(id){
+  if(!['ready','idle'].includes(state.phase))return;
+  const chat=await getChat(id);if(!chat)return;
+  for(const m of state.messages)m.workView?.dispose();
+  const openFile=async path=>(await getAssistant()).read(path);
+  state.messages=chat.messages.map(m=>({...m,steps:undefined,preview:undefined,...(m.role==='assistant'&&(m.steps?.length||m.preview)&&{workView:createWorkView({restore:{steps:m.steps,preview:m.preview},openFile})})}));
+  state.chatId=chat.id;assistant?.reset();
+  setPhase(state.phase);renderMessages();$('scroll').scrollTop=$('scroll').scrollHeight;
+}
+async function showChats(){
+  const list=$('chat-list');
+  const chats=await listChats().catch(()=>[]);
+  const when=t=>new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+  list.replaceChildren(...chats.map(c=>el('li',{class:c.id===state.chatId?'current':''},
+    el('button',{type:'button',class:'chat-open',onclick:()=>{$('chats').close();openChat(c.id);}},el('strong',{text:c.title}),el('small',{text:`${when(c.updated)}${c.model?' · '+c.model:''}`})),
+    el('button',{type:'button',class:'ghost chat-delete','aria-label':`Delete “${c.title}”`,text:'Delete',onclick:async()=>{await deleteChat(c.id).catch(()=>{});showChats();}}))));
+  $('chats-empty').hidden=chats.length>0;
+  if(!$('chats').open)$('chats').showModal();
+}
+$('open-chats').addEventListener('click',()=>{showChats();});
 
 function runGeneration() {
   const now = new Date();
   const s = state.settings;
   const history = conversation();
+  trace({ type: 'chat', chat: state.chatId, question: state.messages.at(-1)?.content || '', model: state.loaded?.label, ctx: Number(s.ctx) });
   state.live = { role: 'assistant', content: '', started: performance.now() };
   state.messages.push(state.live);
   setPhase('generating');
@@ -906,6 +1174,8 @@ function onDone(d) {
   m.stats = `${slow}${prompt}${why}${stream}${net}`;
   if (!m.content.trim()) m.content = d.reason === 'stopped' ? '' : '(no reply)';
   state.live = null;
+  trace({ type: 'reply', chat: state.chatId, tokens: d.tokens, ms: Math.round(d.ms), reason: d.reason, text: m.content });
+  saveCurrentChat();
   $('status-line').textContent = `Context: ${d.used.toLocaleString()} of ${d.context.toLocaleString()} tokens used`;
   setPhase('ready');
   renderMessages();
@@ -913,6 +1183,8 @@ function onDone(d) {
 
 function onError({ during, message }) {
   if (during === 'load') {
+    if (state.afterLoad) message = `Switching models for this request did not work: ${message}`;
+    state.afterLoad = null;
     state.loading = null;
     state.loaded = null;
     $('loading-bar').classList.remove('indeterminate');
@@ -946,13 +1218,17 @@ function onWorkerMessage(event) {
   if (msg.requestId) {
     if (!agentRequest || msg.requestId !== agentRequest.id) return;
     if (msg.type === 'agent_event' && msg.event.type === 'token') agentRequest.onToken?.(msg.event.text);
-    else if (msg.type === 'agent_done') finishAgent(agentRequest.aborted ? new Error('Pi model turn cancelled.') : null, msg);
+    else if (msg.type === 'agent_done') finishAgent(agentRequest.aborted ? new Error(agentRequest.timedOut ? `One model turn took more than ${agentRequest.timedOut} minutes, so it was stopped. A smaller model, a faster GPU or a shorter request helps.` : 'Stopped.') : null, msg);
     else if (msg.type === 'error') finishAgent(new Error(msg.message));
     return;
   }
   switch (msg.type) {
-    case 'adapter': showGpu(msg.adapter); break;
-    case 'cache': state.cache = msg; renderModels(); break;
+    case 'adapter': showGpu(msg.adapter); probeGpu(msg.adapter); break;
+    case 'cache': state.cache = msg; renderModels(); onCache(); break;
+    case 'probed': onProbed(msg); break;
+    case 'fetch-progress': if (state.fetching) { state.fetching.loaded = msg.loaded; state.fetching.total = msg.total; renderStorage(); } break;
+    case 'fetched': state.fetching = null; onFetched(); break;
+    case 'fetch-error': state.fetching = null; renderStorage(); if (msg.message !== 'stopped') $('status-line').textContent = `Could not download ${state.pick?.name || 'the model'} in the background: ${msg.message}`; break;
     case 'progress': onProgress(msg); break;
     case 'stream-progress': onStreamProgress(msg); break;
     case 'inspected': break;
@@ -965,7 +1241,7 @@ function onWorkerMessage(event) {
       break;
     case 'split-plan': onSplitPlan(msg); break;
     case 'remote-forward': onRemoteForward(msg); break;
-    case 'remote-control': state.helpers?.control(msg.op); break;
+    case 'remote-control': (state.split?.hub || state.helpers)?.control(msg.op); break;
     case 'prefill': onPrefill(msg); break;
     case 'token':
       if (state.live) {
@@ -1014,7 +1290,7 @@ $('composer').addEventListener('submit', (e) => {
   autosize();
   send(text);
 });
-function stopCurrent(){if(state.live?.development){state.live.cancelRequested=true;if(state.live.localComputer)localComputer.cancel();else workbench?.cancel();}else worker.postMessage({type:'stop'});}
+function stopCurrent(){if(state.live?.assistant){state.live.cancelRequested=true;if(state.live.localComputer)localComputer.cancel();else assistant?.cancel();}else worker.postMessage({type:'stop'});}
 $('stop').addEventListener('click',stopCurrent);
 $('web-toggle').addEventListener('click', () => {
   state.settings.internet = !state.settings.internet;
@@ -1031,17 +1307,20 @@ document.addEventListener('keydown', (e) => {
 $('cancel-load').addEventListener('click', () => worker.postMessage({ type: 'cancel' }));
 $('new-chat').addEventListener('click', () => {
   if (state.phase !== 'ready') return;
-  for(const m of state.messages)m.developmentView?.dispose();
-  state.messages = [];state.developmentActive=false;
-  worker.postMessage({ type: 'reset' });
+  for(const m of state.messages)m.workView?.dispose();
+  state.messages = [];state.chatId=newChatId();assistant?.reset();
+  // The engine keeps what it computed: a new conversation starts with the same system prompt and
+  // tools, which it then reuses (it compares tokens, so a different start is simply recomputed).
   renderMessages();
   setPhase('ready');
   $('status-line').textContent = 'Started a new conversation.';
   prompt.focus();
+  const better = pickToSwitchTo();
+  if (better) { state.afterLoad = { note: `Started a new conversation with ${better.name}, the best model for this device.` }; startLoad(catalogEntry(better)); }
 });
 $('start-recommended').addEventListener('click', () => {
-  const last = ALL.find((m) => m.id === recall('evolve-llm-last'));
-  startLoad(catalogEntry(last || MODELS.find((m) => m.recommended)));
+  const m = startingModel();
+  if (m) startLoad(catalogEntry(m));
 });
 const HF_HELP = $('hf-help').textContent;
 
@@ -1062,14 +1341,16 @@ $('hf-form').addEventListener('submit', async (e) => {
     help.classList.remove('error');
     help.textContent = HF_HELP;
     if (ref.file) {
-      startLoad(hfSource(ref, ref.file));
+      const source = hfSource(ref, ref.file);
+      pin(source.key);
+      startLoad(source);
       return;
     }
     help.textContent = `Looking up ${ref.repo}…`;
     const groups = await listRepo(ref.repo, ref.revision);
     if (!groups.length) throw new Error('That repository has no GGUF files.');
     help.textContent = `${groups.length} GGUF ${groups.length === 1 ? 'model' : 'models'} in ${ref.repo}. Choose one:`;
-    results.replaceChildren(...groups.map((g) => el('li', {}, el('button', { type: 'button', onclick: () => startLoad(hfSource(ref, g.file)) },
+    results.replaceChildren(...groups.map((g) => el('li', {}, el('button', { type: 'button', onclick: () => { const source = hfSource(ref, g.file); pin(source.key); startLoad(source); } },
       el('span', { class: 'name', text: g.file.split('/').pop().replace(/(-\d{5}-of-\d{5})?\.gguf$/i, '') }),
       el('span', { class: 'size', text: `${formatBytes(g.bytes)}${g.parts.length > 1 ? ` · ${g.parts.length} files` : ''}` })))));
     results.hidden = false;
@@ -1081,7 +1362,10 @@ $('hf-form').addEventListener('submit', async (e) => {
 $('file-input').addEventListener('change', (e) => {
   const files = [...(e.target.files || [])].sort((a, b) => a.name.localeCompare(b.name));
   e.target.value = '';
-  if (files.length) startLoad({ kind: 'file', files, key: null, id: null });
+  // An image encoder (llama.cpp names them mmproj) picked with the model goes beside it.
+  const vision = files.find((f) => /mmproj/i.test(f.name)) || null;
+  const model = files.filter((f) => f !== vision);
+  if (model.length) startLoad({ kind: 'file', files: model, key: null, id: null, visionFile: vision });
 });
 
 // Drawer on narrow screens.
@@ -1111,8 +1395,13 @@ function fillSettings() {
   form.elements.share.checked = Boolean(s.share);
   form.elements.shareUpload.value = String(s.shareUpload ?? 2);
   form.elements.thinking.checked = Boolean(s.thinking);
+  form.elements.poolGpus.checked = s.poolGpus !== false;
+  form.elements.autoSwitch.checked = s.autoSwitch !== false;
+  form.elements.manageModels.checked = s.manageModels !== false;
   form.elements.internet.checked = Boolean(s.internet);
   form.elements.jinaKey.value = s.jinaKey || '';
+  form.elements.githubToken.value = s.githubToken || '';
+  form.elements.autonomy.value = String(s.autonomy ?? 1);
 }
 form.addEventListener('input', (e) => {
   const t = e.target;
@@ -1131,9 +1420,10 @@ form.addEventListener('input', (e) => {
   }
   else state.settings[t.name] = t.value;
   saveSettings();
+  if (t.name === 'githubToken' || t.name === 'autonomy') configureVm();
 });
 form.addEventListener('change', (e) => {
-  if (['ctx', 'gpu', 'gpuMemory', 'cacheGb', 'share', 'shareUpload'].includes(e.target.name) && state.loaded) $('status-line').textContent = 'This setting applies the next time a model loads.';
+  if (['ctx', 'gpu', 'gpuMemory', 'poolGpus', 'cacheGb', 'share', 'shareUpload'].includes(e.target.name) && state.loaded) $('status-line').textContent = 'This setting applies the next time a model loads.';
 });
 $('open-settings').addEventListener('click', () => { fillSettings(); dialog.showModal(); });
 $('reset-settings').addEventListener('click', () => {
@@ -1151,7 +1441,7 @@ syncWebToggle();
 // ---- Terminal and Pi: a lease on the existing model, not a second GPU copy ----
 let workbench=null, workbenchPromise=null, agentRequest=null, agentSequence=0;
 worker.onmessage=onWorkerMessage;worker.onerror=onWorkerError;
-const terminalButton=el('button',{class:'ghost',type:'button',id:'open-terminal',text:'Terminal',title:'WASM terminal and Pi coding agent'});
+const terminalButton=el('button',{class:'ghost',type:'button',id:'open-terminal',text:'Terminal',title:'A Linux terminal on the same files the assistant works on'});
 $('open-settings').before(terminalButton);
 function finishAgent(error,value) {
   const request=agentRequest;if(!request)return;agentRequest=null;clearTimeout(request.timer);clearTimeout(request.cancelTimer);request.signal?.removeEventListener('abort',request.abort);
@@ -1159,7 +1449,7 @@ function finishAgent(error,value) {
 }
 function restartEngine(reason) {
   stopSharing();
-  state.helpers?.unloadAll();
+  state.helpers?.unloadAll();localGpuPromise?.then((l)=>l.hub.unloadAll(),()=>{});
   worker.terminate();finishAgent(new Error(reason));state.loaded=null;state.loading=null;
   worker=newWorker();worker.onmessage=onWorkerMessage;worker.onerror=onWorkerError;
   setPhase('starting');worker.postMessage({type:'hello',gpu:state.settings.gpu});$('status-line').textContent=reason+' Choose a saved model to reload it.';
@@ -1170,18 +1460,21 @@ function restartEngine(reason) {
 function piLimits() {
   if (state.loaded?.stream) return { turn: 0, task: 0, stop: 120000 };
   if (state.loaded?.chat?.placement?.streaming) return { turn: 1800000, task: 7200000, stop: 60000 };
-  return { turn: 120000, task: 180000, stop: 10000 };
+  // A 4B model on an integrated GPU reads a long prompt in minutes, and reading cannot be
+  // interrupted, so the limit only catches a turn that never ends.
+  return { turn: 1800000, task: 180000, stop: 10000 };
 }
-function agentTurn(messages,tools,{signal,onToken,maxTokens=2048}={}) {
+function agentTurn(messages,tools,{signal,onToken,maxTokens=2048,options}={}) {
   if(state.phase!=='agent'||agentRequest)return Promise.reject(new Error('The model is busy.'));
-  if(signal?.aborted)return Promise.reject(new Error('Pi model turn cancelled.'));
+  if(signal?.aborted)return Promise.reject(new Error('Stopped.'));
   return new Promise((resolve,reject)=>{
     const id=++agentSequence;
     const limits=piLimits();
-    const abort=()=>{if(agentRequest?.id!==id)return;agentRequest.aborted=true;worker.postMessage({type:'stop'});agentRequest.cancelTimer=setTimeout(()=>restartEngine('Pi cancellation released an unresponsive worker.'),limits.stop)};
-    agentRequest={id,resolve,reject,onToken,signal,abort,timer:limits.turn?setTimeout(()=>restartEngine(`Pi model turn exceeded its ${Math.round(limits.turn/60000)}-minute limit.`),limits.turn):null};
+    const abort=()=>{if(agentRequest?.id!==id)return;agentRequest.aborted=true;worker.postMessage({type:'stop'});agentRequest.cancelTimer=setTimeout(()=>restartEngine('Stopping took too long, so the model was unloaded.'),limits.stop)};
+    // A turn past its limit is stopped like Stop does; the model stays loaded unless stopping hangs.
+    agentRequest={id,resolve,reject,onToken,signal,abort,timer:limits.turn?setTimeout(()=>{if(agentRequest?.id===id){agentRequest.timedOut=Math.round(limits.turn/60000);abort();}},limits.turn):null};
     signal?.addEventListener('abort',abort,{once:true});
-    worker.postMessage({type:'agent_turn',requestId:id,messages,tools,maxTokens:Math.max(64,Math.min(4096,Number(maxTokens)||2048)),sampler:{temperature:0,top_p:.95,top_k:40,min_p:.05,repeat_penalty:1.1,repeat_last_n:64,seed:1}});
+    worker.postMessage({type:'agent_turn',requestId:id,messages,tools,options,maxTokens:Math.max(64,Math.min(4096,Number(maxTokens)||2048)),sampler:{temperature:0,top_p:.95,top_k:40,min_p:.05,repeat_penalty:1.1,repeat_last_n:64,seed:1}});
   });
 }
 function networkChanged() {
@@ -1190,7 +1483,7 @@ function networkChanged() {
 async function ensureWorkbench(){
   workbenchPromise ||= import('./workbench.mjs').then(({mountWorkbench})=>mountWorkbench({
     ready:()=>['ready','preparing'].includes(state.phase)&&Boolean(state.loaded),turn:agentTurn,modelName:()=>state.loaded?.label||'Local model',taskTimeLimit:()=>piLimits().task,
-    lease:()=>{if(!['ready','preparing'].includes(state.phase)||!state.loaded)throw new Error('The model is not ready.');setPhase('agent');let released=false;return()=>{if(!released){released=true;setPhase(state.loaded?(state.live?.development?'preparing':'ready'):'idle');}};},
+    lease:()=>{if(state.phase!=='ready'||!state.loaded)throw new Error('The model is busy or not loaded.');setPhase('agent');let released=false;return()=>{if(!released){released=true;setPhase(state.loaded?'ready':'idle');}};},
     getNetwork:()=>({enabled:Boolean(state.settings.internet),jinaKey:state.settings.jinaKey||''}),
     setNetwork:enabled=>{state.settings.internet=enabled;saveSettings();syncWebToggle();networkChanged();},
   })).catch(error=>{workbenchPromise=null;throw error;});
@@ -1202,7 +1495,7 @@ terminalButton.addEventListener('click',async()=>{
   finally{terminalButton.disabled=false;}
 });
 // ---- Browser: a web engine compiled to WebAssembly, shared by the person and Pi ----
-const browserButton=el('button',{class:'ghost',type:'button',id:'open-browser',text:'Browser',title:'Web browser engine in WebAssembly, shared with Pi'});
+const browserButton=el('button',{class:'ghost',type:'button',id:'open-browser',text:'Browser',title:'A web browser in this page, shared with the assistant'});
 $('open-settings').before(browserButton);
 browserButton.addEventListener('click',async()=>{
   browserButton.disabled=true;
@@ -1210,11 +1503,9 @@ browserButton.addEventListener('click',async()=>{
   catch(error){$('status-line').textContent=String(error.message||error);}
   finally{browserButton.disabled=false;}
 });
-$('chat-mode').value=recall('evolve-llm-chat-mode')||'auto';
-if(!$('chat-mode').value)$('chat-mode').value='auto';
-$('chat-mode').addEventListener('change',()=>remember('evolve-llm-chat-mode',$('chat-mode').value));
 
 worker.postMessage({ type: 'hello', gpu: state.settings.gpu });
+configureVm();
 {
   const code = new URLSearchParams(location.hash.slice(1)).get('pair');
   if (REMOTE_CODE) {
@@ -1240,7 +1531,7 @@ worker.postMessage({ type: 'hello', gpu: state.settings.gpu });
 import { mountLocalComputer } from './local-computer.mjs';
 const localComputer = mountLocalComputer({
   ready:()=>['ready','preparing'].includes(state.phase)&&Boolean(state.loaded), turn:agentTurn,
-  onConnectionChange:connected=>{$('status-line').textContent=connected?'Computer connected · main chat can use local tools in Auto and Build.':'Local computer disconnected.';},
+  onConnectionChange:(connected,building)=>{$('status-line').textContent=building?`Computer paired for building ${building}: cargo, npm and node run there.`:connected?'Computer connected · the chat works on this computer.':'Local computer disconnected.';},
   modelName:()=>state.loaded?.label||'Local model',
-  lease:()=>{if(!['ready','preparing'].includes(state.phase)||!state.loaded)throw new Error('The model is not ready.');setPhase('agent');let released=false;return()=>{if(!released){released=true;setPhase(state.loaded?(state.live?.development?'preparing':'ready'):'idle');}};}
+  lease:()=>{if(!['ready','preparing'].includes(state.phase)||!state.loaded)throw new Error('The model is not ready.');setPhase('agent');let released=false;return()=>{if(!released){released=true;setPhase(state.loaded?(state.live?.assistant?'preparing':'ready'):'idle');}};}
 });

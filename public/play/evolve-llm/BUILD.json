@@ -1,13 +1,13 @@
 {
   "source": "https://github.com/anthony-firn/evolve-llm",
-  "commit": "733c81746edb363924e09c7c5fbe7ffdf53e7197",
-  "engine_commit": "733c81746edb363924e09c7c5fbe7ffdf53e7197",
-  "wasm_sha256": "e7fd3b496af23eb825265956d2308645aff54188b883fe15b130f071524d9b10",
+  "commit": "bfde9a84082a44661ab4989bd370c20bfc660456",
+  "engine_commit": "bfde9a84082a44661ab4989bd370c20bfc660456",
+  "wasm_sha256": "0084cea266bd83ec0cac0fc1aca8a69e87456c5865267225f6af0e506f16c561",
   "site_overlay": {
     "tool": "tools/build_legal.py",
     "purpose": "Privacy, use, reporting and security navigation"
   },
-  "browser_commit": "c28b664c575432d9495b554937b790fc72f7c247",
-  "browser_wasm_sha256": "cc342f0e4a2e823fe98163a81c042d8bd8c1088ac4c9a4ff4b711976f3f9bd2f",
-  "browser_ui_commit": "c28b664c575432d9495b554937b790fc72f7c247"
+  "browser_commit": "bfde9a84082a44661ab4989bd370c20bfc660456",
+  "browser_wasm_sha256": "4f77cac9c9d4bc77848eaf2d4f4798392af0d86a28cbb84a77896a72bf57a76c",
+  "browser_ui_commit": "bfde9a84082a44661ab4989bd370c20bfc660456"
 }

@@ -1,6 +1,6 @@
 {
-  "wasm_bytes": 20952670,
-  "wasm_sha256": "cc342f0e4a2e823fe98163a81c042d8bd8c1088ac4c9a4ff4b711976f3f9bd2f",
+  "wasm_bytes": 20955216,
+  "wasm_sha256": "4f77cac9c9d4bc77848eaf2d4f4798392af0d86a28cbb84a77896a72bf57a76c",
   "wasm_opt": true,
   "rustflags": "-C target-feature=+simd128,+bulk-memory,+nontrapping-fptoint,+sign-ext,+mutable-globals",
   "fonts": {
@@ -16,7 +16,5 @@
     "LiberationSerif-BoldItalic.ttf": "379010e87421a883f7bbfa7936d23dfe0257a54ce850819b74556e9f2c615a8a",
     "LiberationSerif-Italic.ttf": "eaeaf7f2b12544ecde64290c1fa7ec403ff70fd58b313637b265400b20249242",
     "LiberationSerif-Regular.ttf": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65"
-  },
-  "source": "https://github.com/anthony-firn/evolve-llm",
-  "commit": "c28b664c575432d9495b554937b790fc72f7c247"
+  }
 }

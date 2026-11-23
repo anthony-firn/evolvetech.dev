@@ -6,6 +6,7 @@ export class Browser {
     [Symbol.dispose](): void;
     agentClick(r: number): string;
     agentKey(key: string): string;
+    agentRefAt(x: number, y: number): string;
     agentScroll(dy: number): string;
     agentSelect(r: number, value: string): string;
     agentType(r: number, text: string, submit: boolean): string;
@@ -71,6 +72,7 @@ export interface InitOutput {
     readonly __wbg_browser_free: (a: number, b: number) => void;
     readonly browser_agentClick: (a: number, b: number) => [number, number];
     readonly browser_agentKey: (a: number, b: number, c: number) => [number, number];
+    readonly browser_agentRefAt: (a: number, b: number, c: number) => [number, number];
     readonly browser_agentScroll: (a: number, b: number) => [number, number];
     readonly browser_agentSelect: (a: number, b: number, c: number, d: number) => [number, number];
     readonly browser_agentType: (a: number, b: number, c: number, d: number, e: number) => [number, number];
@@ -115,9 +117,9 @@ export interface InitOutput {
     readonly wasm_bindgen__convert__closures_____invoke__he3e3914ed696371b: (a: number, b: number, c: any) => [number, number];
     readonly wasm_bindgen__convert__closures_____invoke__h02fbaeaf32f22b48: (a: number, b: number, c: any) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e: (a: number, b: number, c: any) => void;
-    readonly wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_40: (a: number, b: number, c: any) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_41: (a: number, b: number, c: any) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_42: (a: number, b: number, c: any) => void;
+    readonly wasm_bindgen__convert__closures_____invoke__h3dd84e27953d120e_43: (a: number, b: number, c: any) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h27c5e105281d6b36: (a: number, b: number) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

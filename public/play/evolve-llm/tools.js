@@ -20,7 +20,40 @@ function call(obj, allowed = NAMES) {
   if (typeof args === 'string') {
     try { args = JSON.parse(args); } catch { args = {}; }
   }
-  return allowed.has(name) && args && typeof args === 'object' ? { name, args } : null;
+  if (!args || typeof args !== 'object') return null;
+  if (allowed.has(name)) return { name, args };
+  const gui = guiAction(name, args, allowed);
+  if (gui) return gui;
+  // A small model may call a command as if it were a tool: {"name": "git", "arguments":
+  // {"command": "commit -m 'x'"}}. With a bash tool, that is the command line "git commit -m 'x'".
+  const rest = typeof args.command === 'string' ? args.command : typeof args.args === 'string' ? args.args : Array.isArray(args.args) ? args.args.join(' ') : null;
+  if (allowed.has('bash') && typeof name === 'string' && /^[a-z][\w.+-]*$/.test(name) && rest !== null && Object.keys(args).length === 1)
+    return { name: 'bash', args: { command: rest.trim().startsWith(name + ' ') || rest.trim() === name ? rest.trim() : `${name} ${rest}`.trim() } };
+  return null;
+}
+
+// GUI models (GUI-Owl, Qwen-VL, Fara) act in their own vocabulary: a tool that opens a web
+// address, and computer_use {action, coordinate, text, keys, pixels} with points as 0-1000 of
+// the screenshot. Mapped onto the browser tools, so the same checks apply.
+const GUI_KEYS = { enter: 'Enter', return: 'Enter', esc: 'Escape', escape: 'Escape', tab: 'Tab', up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', arrowup: 'ArrowUp', arrowdown: 'ArrowDown', arrowleft: 'ArrowLeft', arrowright: 'ArrowRight', backspace: 'Backspace', pagedown: 'PageDown', page_down: 'PageDown', pageup: 'PageUp', page_up: 'PageUp' };
+function guiAction(name, args, allowed) {
+  if (!allowed.has('browser_open')) return null;
+  const action = String(args.action || '').toLowerCase();
+  if (typeof args.url === 'string' && (!action || /^(open|visit|navigate|go_?to|web|browse|search)/.test(action))) return { name: 'browser_open', args: { url: args.url } };
+  if (!action) return null;
+  const pt = Array.isArray(args.coordinate) ? args.coordinate : Array.isArray(args.coordinates) ? args.coordinates : Array.isArray(args.point) ? args.point : Number.isFinite(args.x) ? [args.x, args.y] : null;
+  if (/^(left_)?click$|^double_click$|^tap$/.test(action) && pt && allowed.has('browser_click_at')) return { name: 'browser_click_at', args: { x: Math.round(Number(pt[0])), y: Math.round(Number(pt[1])) } };
+  if (action === 'type' && typeof args.text === 'string' && allowed.has('browser_type')) return { name: 'browser_type', args: { text: args.text, submit: false } };
+  if (/^(key|press|hotkey)$/.test(action) && allowed.has('browser_key')) {
+    const key = GUI_KEYS[String((Array.isArray(args.keys) ? args.keys.at(-1) : args.keys ?? args.key ?? args.text) || '').toLowerCase()];
+    if (key) return { name: 'browser_key', args: { key } };
+  }
+  if (action === 'scroll' && allowed.has('browser_scroll')) {
+    // Qwen-VL's convention: positive pixels scroll up.
+    const dir = typeof args.direction === 'string' ? args.direction.toLowerCase() : Number(args.pixels) > 0 ? 'up' : 'down';
+    return { name: 'browser_scroll', args: { direction: dir === 'up' ? 'up' : 'down' } };
+  }
+  return null;
 }
 
 function parseJson(text) {
@@ -116,6 +149,29 @@ function familyCalls(text, types) {
  * Llama 3 writes it). `types` maps tool name -> parameter -> JSON-schema type, for syntaxes
  * whose values are untyped text. A reply whose calls are all invalid yields none.
  */
+// A shell command written where the tool name goes, with its quotes unescaped so the JSON does
+// not parse ({"name": "gh pr create --title "Fix" --body "..."}): small models do this. When
+// the name starts with a common command and bash is a tool, it is that bash command.
+const SHELL_WORDS = /^(git|gh|ls|cat|cd|grep|sed|echo|mkdir|touch|rm|mv|cp|python3|node|npm|npx|cargo|head|tail|wc|find|diff|edit)\s/;
+function commandAsName(body, allowed) {
+  if (![...allowed].includes('bash')) return null;
+  const text = String(body).trim();
+  // Extra closing braces are common too ({"name": "gh pr create ..."}}).
+  const m = /^\{\s*"name"\s*:\s*"([\s\S]+)"\s*\}+$/.exec(text);
+  if (m && SHELL_WORDS.test(m[1])) return call({ name: 'bash', arguments: { command: balanced(m[1]) } }, allowed);
+  // A bash call whose command escapes some quotes and not others
+  // ({"command": "gh pr create --title \"X\" --body "Y\""}): its one argument runs to the end.
+  const b = /^\{\s*"name"\s*:\s*"bash"\s*,\s*"arguments"\s*:\s*\{\s*"command"\s*:\s*"([\s\S]*)"\s*\}\s*\}+$/.exec(text);
+  if (b) return call({ name: 'bash', arguments: { command: balanced(b[1].replace(/\\(["\\])/g, '$1').replace(/\\n/g, '\n')) } }, allowed);
+  return null;
+}
+
+// The JSON string's closing quote often also closes the last argument ("--body "Done."}).
+function balanced(command) {
+  const quotes = (command.match(/(?<!\\)"/g) || []).length;
+  return quotes % 2 ? `${command}"` : command;
+}
+
 export function parseToolCalls(text, allowed = NAMES, types = null) {
   text = String(text);
   const native = familyCalls(text, types);
@@ -125,7 +181,14 @@ export function parseToolCalls(text, allowed = NAMES, types = null) {
   }
   const calls = [];
   for (const m of text.matchAll(/<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/g)) {
-    const c = call(parseJson(m[1]), allowed);
+    const c = call(parseJson(m[1]), allowed) || commandAsName(m[1], allowed);
+    if (c) calls.push(c);
+  }
+  // Small models often end the reply right after the JSON, without </tool_call>. What follows
+  // the last opening tag still counts when it is complete JSON (a cut-off call does not parse).
+  const open = text.lastIndexOf('<tool_call>');
+  if (open >= 0 && !text.slice(open).includes('</tool_call>')) {
+    const c = call(parseJson(text.slice(open + '<tool_call>'.length).trim()), allowed);
     if (c) calls.push(c);
   }
   if (calls.length) return calls;

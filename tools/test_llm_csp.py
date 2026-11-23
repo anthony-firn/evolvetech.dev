@@ -27,8 +27,10 @@ class LlmPolicy(unittest.TestCase):
         for source in ('https://raw.githubusercontent.com', 'wss:', 'ws://127.0.0.1:*', 'ws://localhost:*'):
             self.assertIn(source, connect)
         self.assertIn('http://127.0.0.1:8791', connect)
+        # The browser Linux machine's git and gh work on GitHub repositories through its API.
+        self.assertIn('https://api.github.com', connect)
         self.assertNotIn('http:', connect)
-        self.assertEqual(len(connect), 13, connect)
+        self.assertEqual(len(connect), 14, connect)
         self.assertNotIn('https:', connect)
         self.assertNotIn('ws:', connect)
         self.assertNotIn("'unsafe-eval'", policy.replace("'wasm-unsafe-eval'", ''))
