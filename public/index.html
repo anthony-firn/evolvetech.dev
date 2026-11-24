@@ -19,6 +19,7 @@
   <link rel="preload" href="/assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
   <script src="/assets/v2/theme.js"></script>
   <link rel="stylesheet" href="/assets/v2/style.css">
+  <link rel="stylesheet" href="/assets/v2/evidence.css">
   <script type="module" src="/assets/v2/main.js"></script>
   <script type="module" src="/assets/v2/hero.js"></script>
 <link rel="stylesheet" href="/assets/v2/legal.css">
@@ -41,7 +42,7 @@
       <div class="shell hero-grid">
         <div>
           <span class="status"><span class="pulse-dot" aria-hidden="true"></span>Lead Engineer · open to remote roles</span>
-          <h1 id="hero-title">Lead engineer for web, data <em>and AI.</em></h1>
+          <h1 id="hero-title">I build and run <em>web and data systems.</em></h1>
           <p class="lede">I’m <strong>Anthony Firn</strong>. Since 2022 I’ve led engineering at True Native Media, building the web apps, data pipelines and Google Cloud infrastructure behind a podcast advertising business. On my own time I build open-source software, from a GPU language-model engine to encrypted health records.</p>
           <div class="btn-row">
             <a class="btn primary" href="#work">See the work <span class="arrow" aria-hidden="true">→</span></a>
@@ -52,91 +53,6 @@
       </div>
       <a class="hero-caption" href="/play/symmetry-forge/"><span aria-hidden="true">◇</span><span>4D hypercube · <b>384 symmetries</b>, computed by Symmetry Forge</span></a>
       <span class="scroll-cue" aria-hidden="true"></span>
-    </section>
-
-    <section class="section" id="work" aria-labelledby="work-title">
-      <div class="shell">
-        <div class="section-head reveal">
-          <div><p class="label">Selected work</p><h2 id="work-title">Three projects you can try here.</h2></div>
-          <p>Each one runs in your browser and links to its source, its tests and what has and hasn’t been verified. I build them with AI coding agents; <a href="#how-i-build">here’s how I work</a>.</p>
-        </div>
-
-        <article class="case reveal" aria-labelledby="case-evolve-llm" data-glow="ember">
-          <div class="case-media">
-            <div class="browser">
-              <div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/evolve-llm</span></div>
-              <a href="/play/evolve-llm/"><img src="/assets/media/evolve-llm-moe.webp" width="1280" height="860" loading="lazy" alt="Evolve LLM running OLMoE 1B-7B in Chrome with a 1 GB GPU budget, beside the list of models"></a>
-            </div>
-            <p class="media-note">OLMoE, a 7-billion-parameter model, running in Chrome with a 1 GB GPU budget.</p>
-          </div>
-          <div class="case-body">
-            <p class="label">AI inference · Rust · WebGPU</p>
-            <h3 id="case-evolve-llm">Evolve LLM</h3>
-            <p class="pitch">Run open language models on your own GPU from a web page, including models larger than the GPU’s memory. A Rust engine compiled to WebAssembly computes every token in WebGPU shaders and reads the parts of the model each token needs from storage.</p>
-            <ul class="case-points"><li>No machine-learning framework: its own GGUF loader, 25 weight formats, WGSL kernels and tokenizers.</li><li>Output checked against Hugging Face transformers on the same weights; browser replies match the native build word for word.</li></ul>
-            <ul class="chips" aria-label="Built with"><li>Rust</li><li>WebGPU / WGSL</li><li>WebAssembly</li></ul>
-            <div class="btn-row"><a class="btn primary" href="/play/evolve-llm/">Open the chat <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/projects/evolve-llm/">Case study</a><a class="btn" href="https://github.com/anthony-firn/evolve-llm">Source ↗</a></div>
-          </div>
-        </article>
-        <article class="case reveal" aria-labelledby="case-evolve-health" data-glow="cyan">
-          <div class="case-media">
-            <div class="browser">
-              <div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/evolve-health</span></div>
-              <a href="/play/evolve-health/"><img src="/assets/media/evolve-health-profile.webp" width="1280" height="860" loading="lazy" alt="Evolve Health showing a sample profile: an emergency card with allergies, current medicines and conditions, key facts, an upcoming dentist appointment and recent records"></a>
-            </div>
-            <p class="media-note">A fictional sample household. Nothing you enter in the sample is saved.</p>
-          </div>
-          <div class="case-body">
-            <p class="label">Health records · End-to-end encryption</p>
-            <h3 id="case-evolve-health">Evolve Health</h3>
-            <p class="pitch">Health records for a whole household, pets included, encrypted on your device. Give each dentist, pharmacy or vet exactly what they need, let caregivers help, and record appointments.</p>
-            <ul class="case-points"><li>Argon2id in WebAssembly, AES-256-GCM, Ed25519 and X25519; self-hostable sync servers only ever hold ciphertext.</li><li>Imports patient-portal records and vaccine QR cards, and shares and exports FHIR R4.</li></ul>
-            <ul class="chips" aria-label="Built with"><li>JavaScript</li><li>Web Crypto</li><li>FHIR R4</li></ul>
-            <div class="btn-row"><a class="btn primary" href="/play/evolve-health/">Explore with sample data <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/projects/evolve-health/">Case study</a><a class="btn" href="https://github.com/anthony-firn/evolve-health">Source ↗</a></div>
-          </div>
-        </article>
-        <article class="case reveal" aria-labelledby="case-retirement">
-          <div class="case-media">
-            <div class="chart-card">
-              <div class="chart-top">
-                <h4>15 strategies, one question: how much, how safely?</h4>
-                <div class="seg" role="group" aria-label="Market case">
-                  <button type="button" data-scenario="base" aria-pressed="true">Base</button>
-                  <button type="button" data-scenario="trend -4%/yr" aria-pressed="false">Weak trend</button>
-                  <button type="button" data-scenario="recent era 2000-2026 only" aria-pressed="false">2000–2026</button>
-                  <button type="button" data-scenario="middle tax" aria-pressed="false">Higher tax</button>
-                </div>
-              </div>
-              <svg id="income-chart" viewBox="0 0 560 340" role="group" aria-label="Scatter chart of retirement strategies: typical monthly income against the chance of ending below the starting value"></svg>
-              <div class="chart-legend" aria-hidden="true"><span class="lg-ember">Retiree-tuned</span><span class="lg-cyan">Balanced</span><span class="lg-violet">Most income</span><span class="lg-green">Fortress</span><span class="lg-white">Reference</span></div>
-              <p class="chart-readout" id="chart-readout">Hover or tab to a point. Up and to the left is better: more income, less risk.</p>
-            </div>
-            <p class="media-note">Live chart from the project’s published results. Research, not financial advice.</p>
-          </div>
-          <div class="case-body">
-            <p class="label">Simulation · Python · PyTorch</p>
-            <h3 id="case-retirement">Retirement Research</h3>
-            <p class="pitch">How much can savings pay each month, and how often does a plan break? A GPU simulator that answers in spendable dollars after tax.</p>
-            <ul class="case-points"><li>PyTorch runs thousands of 40-year daily market paths at once, with taxes, rebalancing and withdrawal rules.</li><li>The best strategies are re-tested on 2,000 fresh histories and seven stress cases against 60/40 and all-stock baselines.</li></ul>
-            <ul class="chips" aria-label="Built with"><li>Python</li><li>PyTorch / CUDA</li><li>FastAPI</li></ul>
-            <div class="btn-row"><a class="btn primary" href="/play/retirement/">Open the explorer <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/projects/retirement/">Case study</a><a class="btn" href="https://github.com/anthony-firn/retirement-research">Source ↗</a></div>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section class="section tight" id="how-i-build" aria-labelledby="how-title">
-      <div class="shell">
-        <div class="section-head reveal">
-          <div><p class="label">How I build</p><h2 id="how-title">Built with AI coding agents.</h2></div>
-          <p>Most of the code in my open-source projects is written by AI coding agents, mainly Claude Code and Codex. Here is who does what.</p>
-        </div>
-        <div class="how reveal">
-          <div><h3>What I do</h3><p>Choose the problem, set the requirements and what a project must never do, steer the design, and decide what ships.</p></div>
-          <div><h3>What the agents do</h3><p>Write most of the code and tests. That is how one person can build projects of this size in weeks rather than years.</p></div>
-          <div><h3>How it’s checked</h3><p>Automated tests, against independent references where they exist. Each case study lists what hasn’t been verified yet.</p></div>
-        </div>
-      </div>
     </section>
 
     <section class="section" id="experience" aria-labelledby="exp-title">
@@ -173,6 +89,63 @@
       </div>
     </section>
 
+    <section class="section" id="work" aria-labelledby="work-title">
+      <div class="shell">
+        <div class="section-head reveal">
+          <div><p class="label">Selected work</p><h2 id="work-title">Production systems and open-source work.</h2></div>
+          <p>Two case studies from systems I operate, followed by a browser inference project. Each separates what was observed from what remains unverified.</p>
+        </div>
+
+        <article class="case reveal" aria-labelledby="case-campaign-data">
+          <div class="case-media"><figure class="evidence-diagram"><figcaption>A campaign needs every referenced record.</figcaption><ol class="evidence-flow"><li>Airtable<br><small>source records</small></li><li>Workers<br><small>scan and repair</small></li><li>Firestore<br><small>operational mirror</small></li><li>BigQuery<br><small>exports and views</small></li></ol><p>Missing children trigger repair even when the parent is unchanged. Incomplete campaigns remain blocked.</p></figure></div>
+          <div class="case-body"><p class="label">Production · TypeScript · Google Cloud</p><h3 id="case-campaign-data">Keeping campaign data complete</h3>
+            <p class="pitch">The data integrations behind True Native Media’s campaign workspace. A source record can exist while the operational mirror is still missing it; the confirmation path has to detect that gap.</p><ul class="case-points"><li>Dated incident: missing child records, a bounded urgent queue and verification after repair.</li><li>Public synthetic replay; production implementation and customer data remain private.</li></ul>
+            <div class="btn-row"><a class="btn primary" href="/projects/campaign-data/">Read the case study <span aria-hidden="true">→</span></a></div>
+          </div>
+        </article>
+        <article class="case reveal" aria-labelledby="case-site-delivery">
+          <div class="case-media"><figure class="evidence-diagram"><figcaption>Identical files were not enough.</figcaption><ol class="evidence-flow"><li>GitHub Actions<br><small>publish and verify</small></li><li>Two CDNs<br><small>separate origins</small></li><li>HTTPS checks<br><small>per provider</small></li><li>DNS routing<br><small>failover and recovery</small></li></ol><p>A module MIME mismatch and a stale homepage check each broke a different part of delivery. The case study includes both fixes.</p></figure></div>
+          <div class="case-body"><p class="label">Delivery engineering · Python · GitHub Actions</p><h3 id="case-site-delivery">Shipping to two independent CDNs</h3>
+            <p class="pitch">This website has independent Netlify and Bunny copies, with separate health monitoring, DNS failover and certificate renewal. Two actual deployment failures explain the checks it needs.</p><ul class="case-points"><li>Deployment notes for the module content-type bug, and a source diff for the broken health check.</li><li>A recorded failover drill, local regression checks and read-only verification of both providers.</li></ul>
+            <div class="btn-row"><a class="btn primary" href="/projects/site-delivery/">Read the case study <span aria-hidden="true">→</span></a></div>
+          </div>
+        </article>
+        <article class="case reveal" aria-labelledby="case-evolve-llm" data-glow="ember">
+          <div class="case-media">
+            <div class="browser">
+              <div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>evolvetech.dev/play/evolve-llm</span></div>
+              <a href="/play/evolve-llm/"><img src="/assets/media/evolve-llm-moe.webp" width="1280" height="860" loading="lazy" alt="Evolve LLM running OLMoE 1B-7B in Chrome with a 1 GB GPU budget, beside the list of models"></a>
+            </div>
+            <p class="media-note">OLMoE, a 7-billion-parameter model, running in Chrome with a 1 GB GPU budget.</p>
+          </div>
+          <div class="case-body">
+            <p class="label">AI inference · Rust · WebGPU</p>
+            <h3 id="case-evolve-llm">Evolve LLM</h3>
+            <p class="pitch">Run open language models on your own GPU from a web page, including models larger than the GPU’s memory. A Rust engine compiled to WebAssembly computes every token in WebGPU shaders and reads the parts of the model each token needs from storage.</p>
+            <ul class="case-points"><li>No machine-learning framework: its own GGUF loader, 25 weight formats, WGSL kernels and tokenizers.</li><li>Output checked against Hugging Face transformers on the same weights; browser replies match the native build word for word.</li></ul>
+            <ul class="chips" aria-label="Built with"><li>Rust</li><li>WebGPU / WGSL</li><li>WebAssembly</li></ul>
+            <div class="btn-row"><a class="btn primary" href="/play/evolve-llm/">Open the chat <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/projects/evolve-llm/">Case study</a><a class="btn" href="https://github.com/anthony-firn/evolve-llm">Source ↗</a></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section tight" id="how-i-build" aria-labelledby="how-title">
+      <div class="shell">
+        <div class="section-head reveal">
+          <div><p class="label">How I build</p><h2 id="how-title">Built with AI coding agents.</h2></div>
+          <p>Most of the code in my open-source projects is written by AI coding agents, mainly Claude Code and Codex. Here is who does what.</p>
+        </div>
+        <div class="how reveal">
+          <div><h3>What I do</h3><p>Choose the problem, set the requirements and what a project must never do, steer the design, and decide what ships.</p></div>
+          <div><h3>What the agents do</h3><p>Write most of the implementation and tests. I review the changes, investigate failures and decide what to keep.</p></div>
+          <div><h3>How it’s checked</h3><p>Reference comparisons for inference output, concurrent-delivery and interrupted-write checks for Inbox, and a recorded hosting failover drill. Case studies state which paths were exercised and which were not.</p></div>
+        </div>
+      </div>
+    </section>
+
+
+
     <section class="section engineering" id="engineering" aria-labelledby="eng-title">
       <div class="shell">
         <div class="section-head reveal">
@@ -202,6 +175,7 @@
             <div><dt>Recovery</dt><dd>Ten minutes of healthy probes before returning</dd></div>
             <div><dt>Certificates</dt><dd>DNS-validated in both zones, installed on both CDNs</dd></div>
           </dl>
+          <p><a href="/projects/site-delivery/">Deployment bugs, source diffs and verification →</a></p>
           <p class="served">Right now you're being served by <b id="served-by">…</b></p>
         </div>
       </div>
@@ -209,11 +183,13 @@
 
     <section class="section" aria-labelledby="more-title">
       <div class="shell">
-        <div class="section-head reveal"><div><p class="label">More projects</p><h2 id="more-title">Other things I’ve built.</h2></div><p>Smaller or more experimental projects.</p></div>
+        <div class="section-head reveal"><div><p class="label">More work</p><h2 id="more-title">Working tools and experiments.</h2></div><p>Email storage, encrypted health records and smaller research projects. Each page documents its current scope.</p></div>
         <div class="experiments reveal">
+          <a class="exp" href="/projects/evolve-health/"><span class="tag">Health records · Web Crypto</span><h3>Evolve Health</h3><p>Encrypted household health records, with a fictional demo, sharing controls and documented verification limits.</p></a>
+          <a class="exp" href="/projects/retirement/"><span class="tag">Simulation · Python · PyTorch</span><h3>Retirement Research</h3><p>GPU-based withdrawal simulations, with published scenarios and an explorer. Research, not financial advice.</p></a>
           <a class="exp" href="/projects/emergence/"><span class="tag">Simulation · Rust · CUDA</span><h3>Emergence</h3><p>Physics models that report their own error and switch to a finer model when it grows too large, with a browser CAD workspace built on them.</p></a>
           <a class="exp" href="/projects/fairground/"><span class="tag">Social · TypeScript · Nostr</span><h3>Fairground</h3><p>A social app with no company in the middle: creators are paid directly, and your feed is ranked on your own device.</p></a>
-          <a class="exp" href="/projects/evolve-inbox/"><span class="tag">Email · Serverless</span><h3>Evolve Inbox</h3><p>The inbox behind this domain’s email: a serverless reader with a typed client and CLI, and a demo with fictional mail.</p></a>
+          <a class="exp" href="/projects/evolve-inbox/"><span class="tag">Email · Serverless</span><h3>Evolve Inbox</h3><p>The receiving inbox behind this domain. An optional PostgreSQL backend adds atomic message storage, tested with concurrent deliveries and a terminated database connection. The live mailbox still uses Blobs.</p></a>
           <a class="exp" href="/projects/emberwake/"><span class="tag">Games · Godot 4 · Blender</span><h3>Emberwake</h3><p>A 3D action roguelike with seeded rooms and Blender-scripted characters, playable in a browser tab.</p></a>
           <a class="exp" href="/projects/open-case-law/"><span class="tag">Legal research · Python</span><h3>Open Case Law</h3><p>Search U.S. court opinions and save exact passages, in the browser or from a command line.</p></a>
           <a class="exp" href="/play/probate/"><span class="tag">Practical tools</span><h3>California probate forms</h3><p>Plain-language, step-by-step help with California probate court forms. Answers stay in your browser.</p></a>

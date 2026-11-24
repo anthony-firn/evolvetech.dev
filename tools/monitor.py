@@ -16,7 +16,7 @@ NS = {"r": ROUTE53_NS}
 HOMEPAGE_MARKER = "<title>Anthony Firn"
 
 
-def fetch(target, path):
+def fetch(target, path, *, include_headers=False):
     """GET https://<hostname><path> from one CDN, validating that hostname's certificate (like curl --connect-to)."""
     with socket.create_connection((target, 443), timeout=15) as raw:
         with ssl.create_default_context().wrap_socket(raw, server_hostname=C["hostname"]) as tls:
@@ -24,7 +24,10 @@ def fetch(target, path):
                         "Connection: close\r\n\r\n".encode())
             response = http.client.HTTPResponse(tls)
             response.begin()
-            return response.status, response.read().decode(errors="replace")
+            body = response.read().decode(errors="replace")
+            if include_headers:
+                return response.status, body, {key.lower(): value for key, value in response.getheaders()}
+            return response.status, body
 
 
 def healthy(target):

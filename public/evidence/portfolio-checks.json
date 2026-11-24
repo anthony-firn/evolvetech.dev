@@ -1,0 +1,31 @@
+{
+  "recordedAt": "2026-11-24T18:41:38.916464+00:00",
+  "environment": {
+    "system": "Linux",
+    "architecture": "x86_64",
+    "python": "3.12.1"
+  },
+  "scope": "One local run on the development machine. These are verification durations, not a production benchmark, cloud deployment timing or measured improvement.",
+  "checks": [
+    {
+      "command": "python3 tools/test_monitor.py",
+      "exitCode": 0,
+      "elapsedSeconds": 0.0635
+    },
+    {
+      "command": "python3 tools/test_delivery.py",
+      "exitCode": 0,
+      "elapsedSeconds": 0.0862
+    },
+    {
+      "command": "python3 tools/check_delivery.py",
+      "exitCode": 0,
+      "elapsedSeconds": 0.054
+    },
+    {
+      "command": "python3 examples/campaign-freshness.py",
+      "exitCode": 0,
+      "elapsedSeconds": 0.0176
+    }
+  ]
+}

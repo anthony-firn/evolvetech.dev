@@ -1,0 +1,11 @@
+.evidence-diagram { margin: 2rem 0 3rem; padding: clamp(1rem, 3vw, 2rem); border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.evidence-diagram figcaption { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 1rem; }
+.evidence-flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; list-style: none; padding: 0; margin: 0; counter-reset: step; }
+.evidence-flow li { counter-increment: step; border-top: 2px solid var(--cyan); padding: .8rem 0; overflow-wrap: anywhere; }
+.evidence-flow li::before { content: counter(step) ". "; color: var(--cyan); font-variant-numeric: tabular-nums; }
+.evidence-flow small, .evidence-diagram > p { color: var(--muted); font-size: .88rem; }
+.evidence-diagram > p { margin: 1rem 0 0; max-width: 75ch; line-height: 1.7; }
+.case .evidence-diagram { margin: 0; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+.case .evidence-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.prose pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 600px) { .evidence-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
