@@ -1,0 +1,50 @@
+{
+  "styleVersion": 1,
+  "scriptSha256": "54e28b270d3471eaf1ee394d96e8a552182b0548c18fcb671ddf4cdcfa88b4cf",
+  "styleSha256": "76a60302e267e0700f18696bdb76fcc79da5ad09560f423a9a97a26de9a80c08",
+  "renderer": {
+    "scene.js": "dec7c65816b5ae0f93e58e1061be97ffe068ae6c1f247ce5e9694aebab198748",
+    "video.js": "bca08918fc02eccfc2e2f4005f4da94d5299a6c333e02941bd2e4c9bdbf0aafe",
+    "video.css": "7d62d00f46c804939556aa39ada694515974be3c568c29efe6dbd1f2fd32441e",
+    "proof.css": "171ee2f7d9c0b11fd2129276dc94b5411c8746d10a97a5c561292b2dded60a94",
+    "text.js": "04fc43a607190e1ed82d74ff5d6e8c8cbf45287cc48423690fb9b1ff625451ef"
+  },
+  "exporterSha256": "682edc8eb571ee51d8f63361dcad3c48d0b5cca20f467662f9723196d5186e94",
+  "fonts": {
+    "inter.woff2": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+    "jetbrains-mono.woff2": "18be452724bfdc236c074ca94a249a7f41a86752c7d04ab258ce9ed5651f6a7e",
+    "space-grotesk.woff2": "0640890476fc1198ab4de571fb658de443c4d85b66466ec09534a8737ab1ce9d"
+  },
+  "voiceEngine": {
+    "agent.mjs": "45db6f576f05e47266f3c6010d285ef853f65b5464fb44975224ee74ec057ee2",
+    "app.css": "79ed09b72de03f48a338940f84a760dfe6bd0afc12adb94dc079dae5df336497",
+    "app.js": "0e681b3e2a280afda1d3443e50ab0a1fb03bfd685f4c631d2e6ed54ad4cc4a7a",
+    "client.mjs": "97da024927444fb1d7c35c264378845fa4d53dc8c16e67f2e4248cb90dd167c8",
+    "data/LICENSE-misaki.txt": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "data/README.txt": "e34d3d4dd95af27b8c40ae836fe13684d6b6a9d9aa446e1cc9bee1380025bbe8",
+    "data/gb_gold.json": "29e62f4b60261c88f7f3c2c7811ca3825978948090b72d2b27d565b729282f71",
+    "data/gb_silver.json": "48131e2d92ccc41655f4543e87e0f938e71463eb5a54be7f0693bb712ebb6bce",
+    "data/us_gold.json": "dc414872a49a28ae6c141463d502fd945f3b2fde040484fdc47d00cc4612686f",
+    "data/us_silver.json": "de8f67be911bb6c659187b4a65fd966b6a30e56350e0f790d763210b053ac475",
+    "host.mjs": "b9337d44ff71ee1dc02032eaa2aaf8089f5d881fbb3ea1906c3fc5b9bb8c9c61",
+    "icon.svg": "cd9d87b928d8eb251d022f6458c669f498b581fb4634f5e884813ca174567387",
+    "index.html": "eea0b6603e20dc18634870e28bcefabfa1a6646a3fddc776a9031317800cb78f",
+    "mic-worklet.js": "1c7ed27ed7fc174b263cd8bd53828d4186690e3329a7bfb6516f1bee9add8a57",
+    "models.js": "782cb4eaa11e49baf18c1ad068b73a21d30c0e2c667b6f99cea6bfce519d85ed",
+    "opfs-deno.mjs": "355823ae34732df4d6ca54da56ff890e95ccf23835472ff7cdfe48f19434c8bb",
+    "pkg/BUILD.json": "fa9f6a54af7b787b2601a4eaccd1f8b0448eade21a1d2178f56ea57127eb1944",
+    "pkg/evolve_voice.js": "c069b9afd3517c236b2d40a3a0ccbb3bc19ea589b47aec669c08826140850cb1",
+    "pkg/evolve_voice_bg.wasm": "22aea494164111a183ad9a943fad42a61988a66ca57e41b6f9994ddece46c7f5",
+    "serve.mjs": "0709f486421130bf6c55993a9de899243407470bedd4e8631ff84bdcb78efac8",
+    "sw.js": "0e2f1e44b7805051eba760ef973ede5d476a201cc06576a0b9c04d6022c2514a",
+    "wav.mjs": "148ccb9fe80932b17edc2645c65963c437651fc7e71f56998588f3631f206d13",
+    "worker.js": "5a3f3fa1c9703cd646eeeef04eb6707ee73b92c19965ba1da20609a7c6ffd2e1"
+  },
+  "voiceModels": {
+    "config.json": "5abb01e2403b072bf03d04fde160443e209d7a0dad49a423be15196b9b43c17f",
+    "kokoro-v1_0.pth": "496dba118d1a58f5f3db2efc88dbdc216e0483fc89fe6e47ee1f2c53f18ad1e4",
+    "af_heart.pt": "0ab5709b8ffab19bfd849cd11d98f75b60af7733253ad0d67b12382a102cb4ff"
+  },
+  "seconds": 77.4,
+  "videoSha256": "d1acd6ba25e2f925392747ddde429eef1f7b326f4ef5660feda3797e2483a8fb"
+}

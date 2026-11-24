@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "asOf": "2026-11-24",
+  "listings": 3,
+  "payFloor": 170000,
+  "basis": "A saved, curated sample of 3 unique postings marked eligible by the configured job-search model, with estimated annual pay of at least $170,000 and nonnegative impact scores. Counts are keyword mentions in descriptions, not required-skill ratings or a labor-market survey. Pay and impact estimates may be incomplete. Only skills mentioned in at least three postings are shown.",
+  "skills": [
+    {
+      "skill": "TypeScript",
+      "count": 3,
+      "share": 1.0
+    }
+  ]
+}

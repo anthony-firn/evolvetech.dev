@@ -4,14 +4,19 @@ import {createPlayer} from './player.js';
 import {runPython} from './runner.js';
 import {coach, MODELS} from './coach.js';
 
-const store = window.localStorage;
+let store;
+try { store = window.localStorage; } catch { store = {getItem: () => null, setItem: () => { throw new Error('Storage unavailable'); }}; }
 const app = document.querySelector('#app');
 const status = document.querySelector('#status');
 let state = S.load(store);
 let index = [];
-let episode = null;
+let demand = null;
+let mission = null;
 let player = null;
 const today = () => S.localDate();
+const words = text => text.trim().split(/\s+/).filter(Boolean).length;
+const note = key => state.notes[`${mission.id}:${key}`];
+const setNote = (key, value) => { state.notes[`${mission.id}:${key}`] = value; persist(); };
 
 function persist() { if (!S.save(store, state)) say('Progress could not be saved in this browser (private mode or full storage).'); }
 function say(text) { status.textContent = text; }
@@ -21,252 +26,390 @@ async function getJSON(url) {
   return res.json();
 }
 
-// Updates the finished stage and the stats in place, so test results and answers stay on screen.
-function finish(stage, detail) {
-  const gained = S.complete(state, episode.id, stage, today(), detail);
+// Marks a stage done in place, so answers and results stay on screen.
+function finish(stage, earned, detail) {
+  const gained = S.complete(state, mission, stage, today(), earned, detail);
   persist();
   const card = document.getElementById(`stage-${stage}`);
   if (card) {
     card.classList.add('done');
-    card.querySelector('.meta').textContent = 'Done';
+    card.querySelector('.meta').textContent = `Done · +${gained} XP`;
     card.querySelectorAll('[data-hide-when-done]').forEach(n => n.remove());
   }
+  const stages = S.stagesOf(mission);
+  const next = stages[stages.indexOf(stage) + 1];
+  if (next) {
+    const nextCard = document.getElementById(`stage-${next}`);
+    nextCard?.querySelector('.stage-body')?.removeAttribute('hidden');
+    nextCard?.querySelector('.locked-note')?.remove();
+  }
   document.querySelector('.stats')?.replaceWith(stats());
-  const finished = gained && state.episodes[episode.id]?.doneOn === today();
-  say(finished ? `+${gained} XP. Episode finished. Streak: ${S.streak(state, today())} days.` : gained ? `+${gained} XP` : '');
+  const finished = state.missions[mission.id]?.doneOn === today();
+  say(finished && gained ? `+${gained} XP. Mission complete. Streak: ${S.streak(state, today())} days.${mission.recall?.length ? ' Recall starts tomorrow.' : ''}` : gained ? `+${gained} XP` : '');
   return gained;
 }
 
 function stats() {
   const n = S.streak(state, today());
   const lvl = S.level(state.xp);
-  const next = 50 * lvl * lvl;
-  const prev = 50 * (lvl - 1) * (lvl - 1);
-  const skills = Object.entries(S.skills(state, index)).sort((a, b) => b[1] - a[1]);
+  const next = 50 * lvl * lvl, prev = 50 * (lvl - 1) * (lvl - 1);
+  const top = Math.max(60, ...S.SKILLS.map(s => state.skills[s] || 0));
   return el('section', {class: 'stats', 'aria-label': 'Your progress'},
     el('div', {class: 'stat'}, el('b', {}, String(n)), el('span', {}, 'day streak')),
     el('div', {class: 'stat'}, el('b', {}, `Level ${lvl}`), el('span', {}, `${state.xp} XP`),
       el('progress', {max: next - prev, value: state.xp - prev, 'aria-label': 'Progress to next level'})),
-    el('div', {class: 'skills'}, skills.length ? skills.slice(0, 6).map(([t, xp]) =>
-      el('div', {class: 'skill'}, el('span', {}, t), el('meter', {min: 0, max: Math.max(100, skills[0][1]), value: xp}), el('small', {}, `${xp}`)))
-      : el('p', {class: 'muted'}, 'Skills appear here as you finish stages.')));
+    el('div', {class: 'skills'}, S.SKILLS.map(s =>
+      el('div', {class: 'skill'}, el('span', {}, S.SKILL_LABELS[s]), el('meter', {min: 0, max: top, value: state.skills[s] || 0}), el('small', {}, String(state.skills[s] || 0))))));
 }
 
 function reviewDeck() {
   const due = S.dueCards(state, today());
-  if (!due.length) return el('section', {class: 'review quiet'}, el('p', {}, 'No reviews due. Questions you answer come back after 1, 3, 7, 14 and 30 days, sooner if you miss them.'));
-  return el('section', {class: 'review', 'aria-labelledby': 'review-h'},
-    el('h2', {id: 'review-h'}, `Review · ${due.length} due`),
-    el('p', {class: 'muted'}, 'Answer from memory first. These are questions from earlier episodes.'),
+  if (!due.length) return el('section', {class: 'review-deck quiet'}, el('p', {}, 'No recall due. Each finished mission adds questions that come back after 1, 3, 7, 14 and 30 days, sooner if you miss them.'));
+  return el('section', {class: 'review-deck', 'aria-labelledby': 'recall-h'},
+    el('h2', {id: 'recall-h'}, `Recall · ${due.length} due`),
+    el('p', {class: 'muted'}, 'From memory, before today’s mission.'),
     due.map(card => {
       const out = el('p', {class: 'why', hidden: true});
-      const box = el('div', {class: 'card'}, el('p', {class: 'q'}, inline(card.q)));
       const buttons = card.choices.map((choice, i) => el('button', {type: 'button', class: 'choice', onclick: () => {
         const right = i === card.answer;
         buttons.forEach((b, j) => { b.disabled = true; b.classList.toggle('right', j === card.answer); b.classList.toggle('wrong', j === i && !right); });
         const gained = S.review(state, card.id, right, today()); persist();
         out.hidden = false; out.replaceChildren(el('strong', {}, right ? `Right. +${gained} XP. ` : 'Not quite. '), ...inline(card.why));
+        document.querySelector('.stats')?.replaceWith(stats());
       }}, inline(choice)));
-      box.append(el('div', {class: 'choices'}, buttons), out);
-      return box;
+      return el('div', {class: 'card'}, el('p', {class: 'q'}, inline(card.q)), el('div', {class: 'choices'}, buttons), out);
     }));
 }
 
-function stageCard(stage, title, minutes, body) {
-  const done = S.stageDone(state, episode.id, stage);
+const TITLES = {briefing: 'Briefing', problem: 'Pick the problem', research: 'Read the source', design: 'Design it yourself',
+  review: 'Review the agent', build: 'Build the core by hand', ship: 'Ship note', project: 'Apply it to your work'};
+const MINUTES = {briefing: 3, problem: 3, research: 15, design: 10, review: 7, build: 20, ship: 2, project: 120};
+
+function stageCard(stage, n, body) {
+  const done = state.missions[mission.id]?.stages[stage];
+  const locked = n > 1 && !S.stageDone(state, mission.id, S.stagesOf(mission)[n - 2]);
   return el('section', {class: `stage-card${done ? ' done' : ''}`, id: `stage-${stage}`, 'aria-labelledby': `h-${stage}`},
-    el('header', {}, el('span', {class: 'step'}, String(S.STAGES.indexOf(stage) + 1)),
-      el('h2', {id: `h-${stage}`}, title), el('span', {class: 'meta'}, done ? 'Done' : `${minutes} min · ${stage === 'prove' ? `${S.XP.prove} XP each` : `${S.XP[stage]} XP`}`)),
-    body);
+    el('header', {}, el('span', {class: 'step'}, String(n)), el('h2', {id: `h-${stage}`}, TITLES[stage]),
+      el('span', {class: 'meta'}, done ? `Done · +${done.xp} XP` : `${MINUTES[stage]} min`)),
+    locked ? el('p', {class: 'locked-note muted'}, 'Finish the previous stage to continue.') : null,
+    el('div', {class: 'stage-body', hidden: locked}, body));
 }
 
-function watch() {
-  if (!player) player = createPlayer(episode.scenes, {onFinish: () => finish('watch')});
-  return el('div', {}, player.root,
-    el('details', {}, el('summary', {}, 'Read the script instead'), episode.scenes.map(s => el('p', {}, el('strong', {}, `${s.title}. `), ...inline(s.narration)))),
-    S.stageDone(state, episode.id, 'watch') ? null : el('button', {type: 'button', 'data-hide-when-done': true, onclick: () => finish('watch')}, 'Mark as watched'));
+function briefing() {
+  if (!player) player = createPlayer(mission.briefing.scenes, {onFinish: () => finish('briefing', {research: 5})});
+  const video = mission.briefing.video;
+  const recorded = video ? el('video', {controls: true, preload: 'metadata', poster: video.poster, 'aria-label': 'Daily briefing video', onended: () => finish('briefing', {research: 5})},
+    el('source', {src: video.src, type: 'video/mp4'}),
+    el('track', {kind: 'captions', src: video.captions, srclang: 'en', label: 'English'})) : null;
+  return el('div', {}, recorded,
+    video ? el('details', {}, el('summary', {}, 'Interactive scenes and browser narration'), player.root) : player.root,
+    el('details', {}, el('summary', {}, 'Read the script instead'), mission.briefing.scenes.map(s => el('p', {}, el('strong', {}, `${s.title}. `), ...inline(s.narration)))),
+    S.stageDone(state, mission.id, 'briefing') ? null : el('button', {type: 'button', 'data-hide-when-done': true, onclick: () => finish('briefing', {research: 5})}, 'Mark as watched'));
 }
 
-function read() {
+// One multiple-choice block whose result is revealed once picked.
+function choiceBlock({question, options, verdictOf, labelOf, priorIndex, onPick}) {
+  const whys = options.map(() => el('p', {class: 'why', hidden: priorIndex === undefined}));
+  const buttons = options.map((o, i) => el('button', {type: 'button', class: 'choice', disabled: priorIndex !== undefined, onclick: () => {
+    buttons.forEach((b, k) => { b.disabled = true; b.classList.add(verdictOf(k)); whys[k].hidden = false; });
+    buttons[i].classList.add('picked');
+    onPick(i);
+  }}, inline(o.text ?? o)));
+  options.forEach((o, i) => {
+    whys[i].replaceChildren(el('strong', {}, `${labelOf(i)}: `), ...inline(o.why ?? ''));
+    if (priorIndex !== undefined) buttons[i].classList.add(verdictOf(i), ...(priorIndex === i ? ['picked'] : []));
+  });
+  return el('div', {}, question ? el('p', {class: 'prompt'}, inline(question)) : null, options.map((o, i) => el('div', {class: 'judge-opt'}, buttons[i], whys[i])));
+}
+
+function problem() {
+  const p = mission.problem;
+  const prior = state.missions[mission.id]?.stages.problem;
+  const picks = {...(prior || {})};
+  const VERDICT = {best: 'Strongest', ok: 'Defensible', poor: 'Weak'};
+  const XP = {best: 15, ok: 8, poor: 3};
+  const tryFinish = () => {
+    if (picks.option === undefined || picks.cost === undefined || prior) return;
+    finish('problem', {wisdom: XP[p.options[picks.option].verdict], cost: picks.cost === p.cost.answer ? 10 : 2}, {option: picks.option, cost: picks.cost});
+  };
+  return el('div', {},
+    el('div', {class: 'scenario'}, prose(p.context)),
+    el('p', {class: 'muted'}, 'Intellect solves the problem; wisdom picks which one. Choose before you read anything else.'),
+    choiceBlock({question: p.question, options: p.options, priorIndex: prior?.option, verdictOf: i => p.options[i].verdict,
+      labelOf: i => VERDICT[p.options[i].verdict], onPick: i => { picks.option = i; tryFinish(); }}),
+    el('h3', {}, 'Cost sense'),
+    choiceBlock({question: p.cost.q, options: p.cost.choices.map((c, i) => ({text: c, why: i === p.cost.answer ? p.cost.why : ''})), priorIndex: prior?.cost,
+      verdictOf: i => (i === p.cost.answer ? 'best' : 'poor'), labelOf: i => (i === p.cost.answer ? 'Right' : 'No'),
+      onPick: i => { picks.cost = i; tryFinish(); }}));
+}
+
+// A self-checked list: tick what your own answer actually covered.
+function checklist(items, prior, onScore, label) {
+  const boxes = items.map((t, i) => el('label', {class: 'opt'}, el('input', {type: 'checkbox', checked: Boolean(prior?.hit?.includes(i)), disabled: Boolean(prior)}), el('span', {}, inline(t))));
+  const btn = el('button', {type: 'button', class: 'primary', disabled: Boolean(prior), 'data-hide-when-done': true, onclick: () => {
+    const hit = boxes.map((b, i) => (b.querySelector('input').checked ? i : -1)).filter(i => i >= 0);
+    boxes.forEach(b => { b.querySelector('input').disabled = true; });
+    onScore(hit);
+  }}, label);
+  return el('div', {class: 'checklist'}, el('p', {class: 'muted'}, 'Be honest: tick only what your answer actually said.'), boxes, prior ? null : btn);
+}
+
+function research() {
+  const r = mission.research;
+  const prior = state.missions[mission.id]?.stages.research;
+  const reveal = el('div', {class: 'reveal', hidden: !prior && !note('research-submitted')});
+  const areas = r.questions.map(q => {
+    const a = el('textarea', {class: 'prose-input', rows: 4, 'aria-label': q.q});
+    a.value = note(`research:${q.id}`) ?? '';
+    a.readOnly = Boolean(prior || note('research-submitted'));
+    a.addEventListener('input', () => setNote(`research:${q.id}`, a.value));
+    return a;
+  });
+  const fill = () => reveal.replaceChildren(
+    el('h3', {}, 'Reference answers'),
+    r.questions.map(q => el('div', {class: 'ref'}, el('p', {class: 'q'}, inline(q.q)), prose(q.answer))),
+    el('h3', {}, 'Key points'),
+    checklist(r.questions.flatMap(q => q.points), prior, hit => finish('research', {research: 5 * hit.length}, {hit}), 'Score my reading'));
+  if (!reveal.hidden) fill();
+  const submit = el('button', {type: 'button', class: 'primary', hidden: !reveal.hidden, onclick: () => {
+    const short = r.questions.filter((q, i) => words(areas[i].value) < 12);
+    if (short.length) { say(`Answer every question from the source in your own words (12+ words each). ${short.length} to go.`); return; }
+    areas.forEach(a => { a.readOnly = true; });
+    setNote('research-submitted', true); submit.hidden = true; reveal.hidden = false; fill();
+  }}, 'Lock in my answers');
   return el('div', {class: 'reading'},
-    episode.read.sections.map(s => el('article', {}, el('h3', {}, s.heading), prose(s.body))),
-    el('h3', {}, 'Sources'),
-    el('ul', {class: 'sources'}, episode.read.sources.map(s => el('li', {},
-      el('a', {href: s.url, target: '_blank', rel: 'noopener noreferrer'}, s.title), s.note ? ` · ${s.note}` : ''))),
-    S.stageDone(state, episode.id, 'read') ? null : el('button', {type: 'button', 'data-hide-when-done': true, onclick: () => finish('read')}, 'Done reading'));
+    el('p', {class: 'muted'}, 'Open the source and read the named sections. Submit your own answers before seeing the references.'),
+    el('ul', {class: 'sources primary'}, r.sources.map(s => el('li', {},
+      el('a', {href: s.url, target: '_blank', rel: 'noopener noreferrer'}, s.title), ` · ${s.note}${s.minutes ? ` · about ${s.minutes} min` : ''}`))),
+    el('h3', {}, 'What to look for'), prose(r.guide),
+    r.questions.map((q, i) => el('div', {class: 'qa'}, el('p', {class: 'q'}, `${i + 1}. `, ...inline(q.q)), areas[i])),
+    submit, reveal);
 }
 
-function prove() {
-  const prior = state.episodes[episode.id]?.stages.prove;
-  const form = el('form', {class: 'quiz'});
-  const blocks = episode.quiz.map((q, qi) => el('fieldset', {},
-    el('legend', {}, `${qi + 1}. `, ...inline(q.q)),
-    q.choices.map((c, ci) => el('label', {class: 'opt'}, el('input', {type: 'radio', name: q.id, value: String(ci), required: true}), el('span', {}, inline(c)))),
-    el('p', {class: 'why', hidden: true})));
-  form.append(...blocks, el('button', {type: 'submit', class: 'primary'}, prior ? 'Check again' : 'Check my answers'));
-  form.addEventListener('submit', event => {
-    event.preventDefault();
-    let correct = 0;
-    episode.quiz.forEach((q, qi) => {
-      const picked = Number(new FormData(form).get(q.id));
-      const right = picked === q.answer;
-      correct += right;
-      const why = blocks[qi].querySelector('.why');
-      why.hidden = false; why.className = `why ${right ? 'right' : 'wrong'}`;
-      why.replaceChildren(el('strong', {}, right ? 'Right. ' : `Answer: ${q.choices[q.answer].replace(/[`*]/g, '')}. `), ...inline(q.why));
-      if (!prior) S.schedule(state, {id: `${episode.id}:${q.id}`, episode: episode.id, q: q.q, choices: q.choices, answer: q.answer, why: q.why}, right, today());
+function coachPanel(task, prompt, focus, getAnswer, unlocked) {
+  const model = el('select', {'aria-label': 'Coach model'}, MODELS.map(m => el('option', {value: m.id}, m.label)));
+  const output = el('div', {class: 'coach-out', 'aria-live': 'polite'});
+  const line = el('p', {class: 'muted'});
+  let controller = null;
+  const stop = el('button', {type: 'button', hidden: true, onclick: () => controller?.abort()}, 'Stop');
+  const ask = el('button', {type: 'button', disabled: !unlocked, onclick: async () => {
+    controller = new AbortController(); ask.disabled = true; stop.hidden = false; output.textContent = '';
+    try {
+      await coach({task, model: model.value, prompt, focus, answer: getAnswer(), signal: controller.signal,
+        onStatus: t => { line.textContent = t; }, onToken: t => { output.textContent += t; }});
+    } catch (error) {
+      line.textContent = /abort/i.test(`${error.name} ${error.message}`) ? 'Stopped.' : `Coach unavailable: ${error.message}`;
+    } finally { ask.disabled = false; stop.hidden = true; controller = null; }
+  }}, 'Ask the coach');
+  return {node: el('div', {class: 'coach'}, el('h3', {}, 'Coach (optional, on your GPU)'),
+    el('p', {class: 'muted'}, 'Unlocks after you submit. A small local model reviews it bluntly and asks the next question. It won’t write it for you.'),
+    el('div', {class: 'row'}, model, ask, stop), line, output), unlock: () => { ask.disabled = false; }};
+}
+
+function design() {
+  const d = mission.design;
+  const prior = state.missions[mission.id]?.stages.design;
+  const submitted = Boolean(prior || note('design-submitted'));
+  const areas = d.fields.map(f => {
+    const a = el('textarea', {class: 'prose-input', rows: 3, 'aria-label': f.label, placeholder: f.hint || ''});
+    a.value = note(`design:${f.id}`) ?? '';
+    a.readOnly = submitted;
+    a.addEventListener('input', () => { setNote(`design:${f.id}`, a.value); count(); });
+    return a;
+  });
+  const counter = el('span', {class: 'muted'});
+  const total = () => areas.reduce((n, a) => n + words(a.value), 0);
+  const count = () => { counter.textContent = `${total()} / ${d.wordLimit} words`; counter.classList.toggle('over', total() > d.wordLimit); };
+  const answer = () => d.fields.map((f, i) => `${f.label}: ${areas[i].value}`).join('\n');
+  const panel = coachPanel('design', d.prompt, d.coachFocus, answer, submitted);
+  const reveal = el('div', {class: 'reveal', hidden: !submitted});
+  const fill = () => reveal.replaceChildren(el('h3', {}, 'A reference design'), prose(d.reference), el('h3', {}, 'Rubric'),
+    checklist(d.rubric, prior, hit => finish('design', {design: 10 + 5 * hit.length}, {hit}), 'Score my design'));
+  if (submitted) fill();
+  const submit = el('button', {type: 'button', class: 'primary', hidden: submitted, onclick: () => {
+    if (areas.some(a => !a.value.trim())) { say('Fill in every part before submitting.'); return; }
+    if (total() > d.wordLimit) { say(`Cut it to ${d.wordLimit} words. Short designs are reviewed; long ones are skimmed.`); return; }
+    areas.forEach(a => { a.readOnly = true; });
+    setNote('design-submitted', true); submit.hidden = true; reveal.hidden = false; fill(); panel.unlock();
+  }}, 'Submit my design');
+  count();
+  return el('div', {}, el('p', {class: 'prompt'}, inline(d.prompt)), el('p', {class: 'muted'}, 'Your own thinking first: no AI until you submit.'),
+    d.fields.map((f, i) => el('label', {class: 'field'}, el('span', {}, f.label), areas[i])), el('div', {class: 'row'}, submit, counter), reveal, panel.node);
+}
+
+function reviewStage() {
+  const r = mission.review;
+  const prior = state.missions[mission.id]?.stages.review;
+  const boxes = r.issues.map((issue, i) => el('label', {class: 'opt issue'},
+    el('input', {type: 'checkbox', checked: Boolean(prior?.flagged?.includes(i)), disabled: Boolean(prior)}), el('span', {}, inline(issue.text))));
+  const results = el('div', {class: 'results-list'});
+  const show = flagged => {
+    const score = S.reviewScore(r.issues, flagged);
+    r.issues.forEach((issue, i) => {
+      const mark = issue.real ? (flagged.has(i) ? 'caught' : 'missed') : (flagged.has(i) ? 'false alarm' : 'fine');
+      boxes[i].classList.add(issue.real ? 'real' : 'not-real');
+      boxes[i].append(el('span', {class: `verdict ${mark.replace(' ', '-')}`}, ` ${mark}. `), el('span', {class: 'why'}, ...inline(issue.why)));
     });
-    if (prior) { say(`${correct}/${episode.quiz.length} this time. XP counts your first try.`); return; }
-    const gained = finish('prove', {correct, total: episode.quiz.length});
-    form.querySelector('button[type=submit]').textContent = 'Check again';
-    say(`${correct}/${episode.quiz.length} correct, +${gained} XP. Missed questions come back tomorrow.`);
-  });
-  return el('div', {}, el('p', {class: 'muted'}, 'No AI for this part. Answer from what you watched and read; your first try is what counts.'),
-    prior ? el('p', {class: 'score'}, `First try: ${prior.correct}/${prior.total} on ${prior.on}.`) : null, form);
-}
-
-function judge() {
-  const j = episode.judgment;
-  const prior = state.episodes[episode.id]?.stages.judge;
-  const options = j.options.map((o, i) => {
-    const why = el('p', {class: 'why', hidden: !prior});
-    const btn = el('button', {type: 'button', class: 'choice', disabled: Boolean(prior), onclick: () => {
-      options.forEach(({btn: b, why: w}, k) => { b.disabled = true; w.hidden = false; b.classList.add(j.options[k].verdict); });
-      btn.classList.add('picked');
-      finish('judge', {picked: i, verdict: o.verdict});
-    }}, inline(o.text));
-    why.replaceChildren(el('strong', {}, `${o.verdict === 'best' ? 'Strongest' : o.verdict === 'ok' ? 'Defensible' : 'Weak'}: `), ...inline(o.why));
-    if (prior) btn.classList.add(o.verdict, ...(prior.picked === i ? ['picked'] : []));
-    return {btn, why, node: el('div', {class: 'judge-opt'}, btn, why)};
-  });
-  return el('div', {}, el('div', {class: 'scenario'}, prose(j.scenario)), el('p', {class: 'muted'}, 'Pick what you would actually do. There is a best answer, but the reasons matter more.'),
-    options.map(o => o.node));
+    results.replaceChildren(el('p', {class: 'score'}, `Caught ${score.found}, missed ${score.missed}, false alarms ${score.wrong}.`));
+    return score;
+  };
+  if (prior) show(new Set(prior.flagged));
+  const submit = el('button', {type: 'button', class: 'primary', hidden: Boolean(prior), onclick: () => {
+    const flagged = new Set(boxes.map((b, i) => (b.querySelector('input').checked ? i : -1)).filter(i => i >= 0));
+    boxes.forEach(b => { b.querySelector('input').disabled = true; });
+    submit.hidden = true;
+    const score = show(flagged);
+    finish('review', {review: score.xp}, {flagged: [...flagged]});
+  }}, 'Submit my review');
+  const artifact = r.artifact.format === 'code' ? el('pre', {class: 'artifact'}, el('code', {}, r.artifact.body)) : el('div', {class: 'artifact'}, prose(r.artifact.body));
+  return el('div', {}, prose(r.intro), el('h3', {}, r.artifact.title), artifact,
+    el('p', {class: 'prompt'}, 'Tick every statement that is a real problem with this design. Flagging something that’s fine costs points.'),
+    boxes, submit, results);
 }
 
 function build() {
-  const b = episode.build;
-  const key = `${episode.id}:code`;
+  const b = mission.build;
   const editor = el('textarea', {class: 'code', spellcheck: 'false', 'aria-label': 'Your Python code', autocapitalize: 'off', autocomplete: 'off'});
-  editor.value = state.notes[key] ?? b.starter;
-  let saveTimer;
-  editor.addEventListener('input', () => { clearTimeout(saveTimer); saveTimer = setTimeout(() => { state.notes[key] = editor.value; persist(); }, 400); });
+  editor.value = note('code') ?? b.starter;
+  let timer;
+  editor.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => setNote('code', editor.value), 400); });
   editor.addEventListener('keydown', event => {
     if (event.key !== 'Tab' || event.shiftKey) return;
     event.preventDefault();
     editor.setRangeText('    ', editor.selectionStart, editor.selectionEnd, 'end');
   });
   const results = el('ul', {class: 'results'});
-  const solution = el('details', {class: 'solution', hidden: !state.notes[`${episode.id}:ran`]},
-    el('summary', {}, 'Reference solution (after your own attempt)'), el('pre', {}, el('code', {}, 'Loading…')));
+  const solution = el('details', {class: 'solution', hidden: !note('ran')}, el('summary', {}, 'Reference solution (after your own attempt)'), el('pre', {}, el('code', {}, 'Loading…')));
   solution.addEventListener('toggle', async () => {
     if (!solution.open || solution.dataset.loaded) return;
     try {
-      const res = await fetch(`./episodes/${episode.id}.solution.py`);
-      solution.querySelector('code').textContent = res.ok ? await res.text() : 'No reference solution for this episode.';
+      const res = await fetch(`./episodes/${mission.id}.solution.py`);
+      solution.querySelector('code').textContent = res.ok ? await res.text() : 'No reference solution for this mission.';
       solution.dataset.loaded = '1';
     } catch { solution.querySelector('code').textContent = 'Could not load the reference solution.'; }
   });
   const hints = el('ol', {class: 'hints'});
-  let shown = 0;
+  let shown = note('hints') || 0;
+  b.hints.slice(0, shown).forEach(h => hints.append(el('li', {}, inline(h))));
   const hintBtn = el('button', {type: 'button', onclick: () => {
-    if (shown < b.hints.length) hints.append(el('li', {}, inline(b.hints[shown++])));
+    if (shown < b.hints.length) { hints.append(el('li', {}, inline(b.hints[shown++]))); setNote('hints', shown); }
     if (shown >= b.hints.length) hintBtn.disabled = true;
   }}, 'Show a hint');
-  const runBtn = el('button', {type: 'button', class: 'primary', onclick: async () => {
-    runBtn.disabled = true;
-    state.notes[key] = editor.value; state.notes[`${episode.id}:ran`] = true; persist();
+  hintBtn.disabled = shown >= b.hints.length;
+  const run = el('button', {type: 'button', class: 'primary', onclick: async () => {
+    run.disabled = true;
+    setNote('code', editor.value); setNote('ran', true);
     try {
       const out = await runPython(editor.value, b.tests, {onStatus: say});
       results.replaceChildren(
         ...(out.error ? [el('li', {class: 'fail'}, el('pre', {}, out.error))] : []),
-        ...out.results.map(r => el('li', {class: r.ok ? 'pass' : 'fail'}, el('strong', {}, `${r.ok ? '✓' : '✗'} ${r.name}`), r.ok ? '' : el('pre', {}, r.error))),
+        ...out.results.map(r => el('li', {class: r.ok ? 'pass' : 'fail'}, el('strong', {}, `${r.ok ? '✓' : '✗'} ${r.name}`), r.ok ? '' : el('pre', {}, r.error), r.stdout ? el('pre', {class: 'stdout'}, r.stdout) : '')),
         ...(out.stdout ? [el('li', {class: 'stdout'}, el('pre', {}, out.stdout))] : []));
       const passed = !out.error && out.results.length === b.tests.length && out.results.every(r => r.ok);
       solution.hidden = false;
       say(passed ? 'All tests pass.' : `${out.results.filter(r => r.ok).length}/${b.tests.length} tests pass.`);
-      if (passed && !S.stageDone(state, episode.id, 'build')) finish('build', {});
+      if (passed && !S.stageDone(state, mission.id, 'build')) finish('build', {craft: 40 - 5 * Math.min(shown, 3)}, {hints: shown});
     } catch (error) {
       results.replaceChildren(el('li', {class: 'fail'}, String(error.message || error)));
-    } finally { runBtn.disabled = false; }
+    } finally { run.disabled = false; }
   }}, 'Run tests');
   return el('div', {}, el('h3', {}, b.title), prose(b.brief),
-    el('p', {class: 'muted'}, 'Python runs in your browser. Write it yourself first; hints and the reference unlock as you go.'),
-    editor, el('div', {class: 'row'}, runBtn, hintBtn,
-      el('button', {type: 'button', onclick: () => { if (confirm('Replace your code with the starter?')) { editor.value = b.starter; state.notes[key] = b.starter; persist(); } }}, 'Reset to starter')),
+    el('p', {class: 'muted'}, 'By hand, no AI: this is live-coding practice. Python runs in your browser. Each hint costs 5 XP.'),
+    editor, el('div', {class: 'row'}, run, hintBtn,
+      el('button', {type: 'button', onclick: () => { if (confirm('Replace your code with the starter?')) { editor.value = b.starter; setNote('code', b.starter); } }}, 'Reset to starter')),
     hints, results, solution);
 }
 
-function explain() {
-  const x = episode.explain;
-  const key = `${episode.id}:explain`;
-  const area = el('textarea', {class: 'prose-input', rows: 6, 'aria-label': 'Your explanation'});
-  area.value = state.notes[key] ?? '';
-  const count = el('span', {class: 'muted'});
-  const words = () => area.value.trim().split(/\s+/).filter(Boolean).length;
-  const update = () => { count.textContent = `${words()} words${words() < 40 ? ' (40 to save)' : ''}`; saveBtn.disabled = words() < 40; };
-  const saveBtn = el('button', {type: 'button', class: 'primary', onclick: () => {
-    state.notes[key] = area.value; persist();
-    if (!S.stageDone(state, episode.id, 'explain')) finish('explain', {words: words()}); else say('Saved.');
-    askBtn.disabled = false;
-  }}, 'Save my answer');
-  area.addEventListener('input', () => { update(); state.notes[key] = area.value; persist(); });
-  const model = el('select', {'aria-label': 'Coach model'}, MODELS.map(m => el('option', {value: m.id}, m.label)));
-  const output = el('div', {class: 'coach-out', 'aria-live': 'polite'});
-  const coachStatus = el('p', {class: 'muted'});
-  let controller = null;
-  const stopBtn = el('button', {type: 'button', hidden: true, onclick: () => controller?.abort()}, 'Stop');
-  const askBtn = el('button', {type: 'button', disabled: !S.stageDone(state, episode.id, 'explain'), onclick: async () => {
-    controller = new AbortController(); askBtn.disabled = true; stopBtn.hidden = false; output.textContent = '';
-    try {
-      await coach({model: model.value, prompt: x.prompt, focus: x.coachFocus, answer: area.value, signal: controller.signal,
-        onStatus: t => { coachStatus.textContent = t; }, onToken: t => { output.textContent += t; }});
-    } catch (error) {
-      coachStatus.textContent = error.name === 'AbortError' || /abort/i.test(error.message) ? 'Stopped.' : `Coach unavailable: ${error.message}`;
-    } finally { askBtn.disabled = false; stopBtn.hidden = true; controller = null; }
-  }}, 'Ask the coach');
-  update();
-  return el('div', {}, el('p', {class: 'prompt'}, inline(x.prompt)), area, el('div', {class: 'row'}, saveBtn, count),
-    el('div', {class: 'coach'}, el('h3', {}, 'Coach (optional, runs on your GPU)'),
-      el('p', {class: 'muted'}, 'Unlocks after you save your own answer. A small local model reads it and asks the next question. It will not write the answer for you, and nothing leaves this device except the one-time model download.'),
-      el('div', {class: 'row'}, model, askBtn, stopBtn), coachStatus, output));
+function ship() {
+  const s = mission.ship;
+  const prior = state.missions[mission.id]?.stages.ship;
+  const area = el('textarea', {class: 'prose-input', rows: 4, 'aria-label': 'Your ship note'});
+  area.value = note('ship') ?? '';
+  const lint = el('ul', {class: 'lint'});
+  const counter = el('span', {class: 'muted'});
+  const check = () => {
+    const r = S.lintShipNote(area.value, s.wordLimit);
+    counter.textContent = `${r.words} / ${s.wordLimit} words`;
+    lint.replaceChildren(...r.problems.map(p => el('li', {}, p)));
+    return r;
+  };
+  area.addEventListener('input', () => { setNote('ship', area.value); check(); });
+  const panel = coachPanel('ship', s.prompt, s.coachFocus, () => area.value, Boolean(prior));
+  const example = el('details', {class: 'example', open: Boolean(prior), hidden: !prior}, el('summary', {}, 'One way to write it'), prose(s.example));
+  const submit = el('button', {type: 'button', class: 'primary', 'data-hide-when-done': true, onclick: () => {
+    const r = check();
+    if (!r.clean) { say('Revise the note using the feedback before shipping.'); return; }
+    finish('ship', {communication: r.clean ? 12 : 5}, {clean: r.clean});
+    area.readOnly = true; example.hidden = false; example.open = true; panel.unlock();
+  }}, prior ? 'Shipped' : 'Ship it');
+  area.readOnly = Boolean(prior);
+  if (prior) submit.disabled = true;
+  check();
+  return el('div', {}, el('p', {class: 'prompt'}, inline(s.prompt)),
+    el('p', {class: 'muted'}, 'Two lines on what changed and why, then how a reviewer can verify it. No walls of text.'),
+    area, el('div', {class: 'row'}, submit, counter), lint, example, panel.node);
+}
+
+function project() {
+  const p = mission.project;
+  const prior = state.missions[mission.id]?.stages.project;
+  const link = el('input', {type: 'url', class: 'link-input', placeholder: 'https://github.com/… (your pull request or commit)', 'aria-label': 'Link to your work'});
+  link.value = note('project-link') ?? '';
+  link.addEventListener('input', () => setNote('project-link', link.value));
+  const done = el('button', {type: 'button', class: 'primary', 'data-hide-when-done': true, onclick: () => {
+    if (!/^https:\/\/\S+$/.test(link.value.trim())) { say('Paste an https link to the pull request or commit.'); return; }
+    finish('project', {apply: 50}, {link: link.value.trim()});
+  }}, 'Mark it shipped');
+  return el('div', {}, prose(p.brief), el('h3', {}, 'Deliverable'), prose(p.deliverable),
+    p.suggestions?.length ? el('ul', {}, p.suggestions.map(x => el('li', {}, inline(x)))) : null,
+    prior ? el('p', {class: 'score'}, 'Shipped: ', el('a', {href: prior.link, target: '_blank', rel: 'noopener noreferrer'}, prior.link)) : el('div', {class: 'row'}, link, done));
+}
+
+const RENDER = {briefing, problem, research, design, review: reviewStage, build, ship, project};
+
+function demandPanel() {
+  if (!demand?.skills?.length) return null;
+  return el('details', {class: 'demand'}, el('summary', {}, `Skills in the selected job postings (${demand.listings} postings, ${demand.asOf})`),
+    el('p', {class: 'muted'}, inline(demand.basis)),
+    el('ul', {}, demand.skills.slice(0, 12).map(s => el('li', {}, el('span', {}, s.skill), el('meter', {min: 0, max: 1, value: s.share}), el('small', {}, `${Math.round(100 * s.share)}%`)))));
 }
 
 function archive() {
-  return el('section', {class: 'archive', 'aria-labelledby': 'archive-h'}, el('h2', {id: 'archive-h'}, 'Episodes'),
-    el('ul', {}, [...index].sort((a, b) => b.date.localeCompare(a.date)).map(e => {
-      const done = state.episodes[e.id]?.doneOn;
-      return el('li', {class: e.id === episode.id ? 'current' : ''},
-        el('a', {href: `#/${e.id}`}, el('time', {datetime: e.date}, e.date), ' ', e.title),
-        el('span', {class: 'muted'}, ` · ${(e.tracks || []).join(', ')}${done ? ' · finished' : ''}`));
-    })));
+  return el('section', {class: 'archive', 'aria-labelledby': 'archive-h'}, el('h2', {id: 'archive-h'}, 'Missions'),
+    el('ul', {}, [...index].sort((a, b) => b.date.localeCompare(a.date)).map(e => el('li', {class: e.id === mission.id ? 'current' : ''},
+      el('a', {href: `#/${e.id}`}, el('time', {datetime: e.date}, e.date), ' ', e.title),
+      el('span', {class: 'muted'}, ` · ${e.kind === 'project' ? 'weekly project · ' : ''}${(e.tracks || []).join(', ')}${state.missions[e.id]?.doneOn ? ' · finished' : ''}`)))));
 }
 
-function render({keepPlayer = false} = {}) {
-  if (!keepPlayer) { player?.pause(); player = null; }
-  const latest = S.pick(index, today());
-  const isToday = latest && episode.id === latest.id;
+function render() {
+  player?.pause(); player = null;
+  const latest = S.pick(index.filter(e => e.kind !== 'project'), today());
+  const isToday = latest && mission.id === latest.id;
+  const stages = S.stagesOf(mission);
   app.replaceChildren(
     stats(),
     reviewDeck(),
     el('section', {class: 'hero'},
-      el('p', {class: 'kicker'}, `${isToday ? 'Today' : 'Episode'} · ${episode.date} · about ${episode.minutes} minutes`),
-      el('h2', {class: 'ep-title'}, episode.title),
-      el('p', {class: 'lede'}, inline(episode.hook)),
-      el('ul', {class: 'chips'}, episode.tracks.map(t => el('li', {}, t))),
-      latest && latest.date < today() && isToday ? el('p', {class: 'muted'}, 'Today’s new episode isn’t out yet. This is the latest one.') : null),
-    stageCard('watch', 'Watch', 3, watch()),
-    stageCard('read', 'Read', 6, read()),
-    stageCard('prove', 'Prove it', 4, prove()),
-    stageCard('judge', 'Judgment call', 3, judge()),
-    stageCard('build', 'Build', 25, build()),
-    stageCard('explain', 'Explain it', 5, explain()),
+      el('p', {class: 'kicker'}, `${isToday ? 'Today' : 'Mission'} · ${mission.date} · about ${mission.minutes} minutes${mission.kind === 'project' ? ' · weekly project' : ''}`),
+      el('h2', {class: 'ep-title'}, mission.title),
+      el('p', {class: 'lede'}, inline(mission.hook)),
+      el('ul', {class: 'chips'}, mission.tracks.map(t => el('li', {}, t))),
+      isToday && latest.date < today() ? el('p', {class: 'muted'}, 'Today’s mission isn’t out yet. This is the latest one.') : null,
+      demandPanel()),
+    ...stages.map((s, i) => stageCard(s, i + 1, RENDER[s]())),
+    el('section', {class: 'about'}, el('h2', {}, 'Reading list'), el('ul', {class: 'sources'}, mission.sources.map(s => el('li', {},
+      el('a', {href: s.url, target: '_blank', rel: 'noopener noreferrer'}, s.title), s.note ? ` · ${s.note}` : '')))),
     archive(),
-    el('section', {class: 'about'}, el('h2', {}, 'How this works'), prose(episode.disclosure)));
+    el('section', {class: 'about'}, el('h2', {}, 'How this works'), prose(mission.disclosure)));
 }
 
+let openRequest = 0;
 async function open(id) {
-  episode = await getJSON(`./episodes/${id}.json`);
-  document.title = `${episode.title} · Proof`;
+  const request = ++openRequest;
+  const loaded = await getJSON(`./episodes/${encodeURIComponent(id)}.json`);
+  if (request !== openRequest) return;
+  mission = loaded;
+  document.title = `${mission.title} · Proof`;
   render();
   window.scrollTo({top: 0});
 }
@@ -274,9 +417,10 @@ async function open(id) {
 async function main() {
   try {
     index = (await getJSON('./episodes/index.json')).episodes;
+    demand = await getJSON('./demand.json').catch(() => null);
     const wanted = location.hash.replace(/^#\//, '');
-    const choice = index.find(e => e.id === wanted) || S.pick(index, today()) || index[0];
-    if (!choice) { say('No episodes yet.'); return; }
+    const choice = index.find(e => e.id === wanted) || S.pick(index.filter(e => e.kind !== 'project'), today()) || index[0];
+    if (!choice) { say('No missions yet.'); return; }
     await open(choice.id);
     say('');
   } catch (error) {
@@ -286,6 +430,6 @@ async function main() {
 
 window.addEventListener('hashchange', () => {
   const id = location.hash.replace(/^#\//, '');
-  if (index.some(e => e.id === id) && id !== episode?.id) open(id).catch(error => say(error.message));
+  if (index.some(e => e.id === id) && id !== mission?.id) open(id).catch(error => say(error.message));
 });
 main();

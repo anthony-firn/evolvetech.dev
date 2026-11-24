@@ -1,0 +1,44 @@
+{
+  "version": 2,
+  "id": "2026-11-24-project",
+  "date": "2026-11-24",
+  "kind": "project",
+  "title": "Make one real workload observable",
+  "minutes": 120,
+  "tracks": [
+    "applied-engineering",
+    "impact",
+    "cost"
+  ],
+  "hook": "Take the week’s practice into a tool someone actually uses. Show the decision and measure whether it helps.",
+  "project": {
+    "brief": "Choose an existing personal project with a queue, expensive background work or a hard-to-debug state transition. Identify the person waiting and a measurable problem before changing code. Check who benefits and who could be harmed. Use synthetic data for public evidence.",
+    "deliverable": "A pull request or commit with one behavior change, a snapshot emitted by the real code, a regression test and a short before/after note. Record time saved or failures avoided, operating cost, and any new risk. If the evidence does not justify a change, ship the measurement and explain that decision.",
+    "suggestions": [
+      "Evolve LLM: make a model-loading or cancellation transition inspectable.",
+      "Evolve Jobs: inspect a search/match decision using synthetic listings, without submitting applications.",
+      "Site delivery: expose a failover decision and reproduce a recovery case locally."
+    ]
+  },
+  "sources": [
+    {
+      "title": "Slurm scheduling configuration",
+      "url": "https://slurm.schedmd.com/sched_config.html",
+      "note": "Read Overview and Backfill Scheduling; focus on the reservation rule.",
+      "minutes": 5
+    },
+    {
+      "title": "Slurm multifactor priority",
+      "url": "https://slurm.schedmd.com/priority_multifactor.html",
+      "note": "Read the priority formula and Age Factor. Which waiting time counts?",
+      "minutes": 4
+    },
+    {
+      "title": "Kubernetes scheduler",
+      "url": "https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/",
+      "note": "Read Node selection: distinguish filtering from scoring.",
+      "minutes": 3
+    }
+  ],
+  "disclosure": "This weekly project is separate from the daily mission. Its XP is self-reported from the work link; the game does not inspect the pull request or judge its impact. Use a personal repository or an authorized work task, and remove private data before sharing."
+}

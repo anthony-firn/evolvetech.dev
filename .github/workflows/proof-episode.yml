@@ -26,15 +26,18 @@ jobs:
           changed=$(git diff --name-only origin/main...HEAD)
           printf '%s\n' "$changed"
           test -n "$changed"
-          if printf '%s\n' "$changed" | grep -v '^public/play/proof/episodes/'; then
-            echo "This branch changes files outside public/play/proof/episodes/. Publish it through a normal pull request."
+          if printf '%s\n' "$changed" | grep -Ev '^public/play/proof/(episodes/|media/)' ; then
+            echo "This branch changes files outside Proof episodes/media. Publish it through a normal pull request."
             exit 1
           fi
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
       - name: Episode gate (structure, exercise, voice, live sources)
-        run: python3 tools/check_proof.py --online
+        run: |
+          python3 tools/check_proof.py
+          python3 tools/check_proof.py --online --require-video "${GITHUB_REF_NAME#proof/episode-}"
       - name: Play the episode in Chromium under the /play CSP
         run: |
           python3 -m pip install --quiet playwright
