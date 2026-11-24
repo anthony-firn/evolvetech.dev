@@ -95,6 +95,7 @@ To reproduce this hosting arrangement in another account, create a Netlify site,
 | `/play/emberwake/` | emberwake | Godot 4.7.2 web export, no threads |
 | `/play/pulse-pop/` | pulse-pop | Expo web export |
 | `/play/symmetry-forge/` | symmetry-forge `src/symforge` | `demos/symmetry-forge/` + Pyodide 314.0.7 |
+| `/play/proof/` | this repository, `public/play/proof/` | Buildless; Python exercises run in Symmetry Forge's Pyodide copy; optional coach through the Evolve LLM SDK |
 | `/play/fairground/` | fairground `app/` | Vite build of the React app (same code as its iOS and Android apps) |
 
 `python3 tools/build_demos.py [name ...]` clones each project's current `main`, builds it, and records the commit in
@@ -126,6 +127,32 @@ Bunny edge rule; the rest of the site keeps the strict policy. Change both toget
 host (`https:`) and a local Ollama, and images and video from `https:`. It needs a matching Bunny edge rule too.
 Bunny Storage serves unknown extensions as `application/octet-stream`, so a further edge rule sets `text/javascript` for
 `*.mjs` (Pyodide's modules); browsers refuse to run module scripts with any other type.
+
+## Proof (daily practice game)
+
+`/play/proof/` is a daily practice game for staying technically sharp. Each episode has six stages: a narrated
+scene player (browser speech, captions always on), a reading with sources, a quiz answered without AI, a judgment
+call, a Python exercise that runs in the browser, and an answer in your own words. A small model on your own GPU
+can coach the answer, but only after you've saved it. Streaks, XP and spaced review (1, 3, 7, 14 and 30 days) live
+in localStorage.
+
+An episode is `public/play/proof/episodes/<date>.json`, plus `<date>.solution.py` and an entry in `episodes/index.json`.
+The newest episode dated on or before the visitor's local date is "today". Publish one only after this passes:
+
+```sh
+python3 tools/check_proof.py --online <date>   # structure, starter fails, reference passes, voice, live sources
+python3 tools/test_proof.py <date>             # plays the episode in Chromium under the /play CSP
+node --test tools/test_proof_state.mjs         # streak, XP and review rules
+```
+
+A daily cloud routine writes each episode and pushes it to a `proof/episode-<date>` branch. The **Publish Proof
+episode** workflow re-runs both checks there. Only if they pass, and only if the branch touches nothing outside
+`public/play/proof/episodes/`, does it squash-merge into `main` and dispatch a deploy. A failed run leaves `main`
+alone; GitHub's failed-workflow email is the alert.
+
+`harness.py` runs exercises the same way in the browser (Pyodide) and in `check_proof.py`. The game reuses
+`/play/symmetry-forge/pyodide/`; `check_proof.py` fails if that copy moves. No extra CSP is needed: exercises run in
+WebAssembly, and the coach's model downloads happen inside Evolve LLM's own worker.
 
 ## Evolve LLM
 

@@ -1,0 +1,17 @@
+{
+ "version": 1,
+ "episodes": [
+  {
+   "id": "2026-11-24",
+   "date": "2026-11-24",
+   "title": "Prove it: checking code you didn't write",
+   "tracks": [
+    "verification",
+    "ai-engineering",
+    "math"
+   ],
+   "minutes": 45,
+   "hook": "Agents can write a thousand lines in a minute. Reading them still takes as long as it always did. Today: the checks that scale, from example tests to property tests to machine-checked proofs."
+  }
+ ]
+}
