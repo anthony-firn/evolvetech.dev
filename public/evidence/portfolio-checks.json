@@ -1,5 +1,5 @@
 {
-  "recordedAt": "2026-11-24T18:38:47.120345+00:00",
+  "recordedAt": "2026-11-24T18:41:38.916464+00:00",
   "environment": {
     "system": "Linux",
     "architecture": "x86_64",
@@ -10,22 +10,22 @@
     {
       "command": "python3 tools/test_monitor.py",
       "exitCode": 0,
-      "elapsedSeconds": 0.0745
+      "elapsedSeconds": 0.0635
     },
     {
       "command": "python3 tools/test_delivery.py",
       "exitCode": 0,
-      "elapsedSeconds": 0.081
+      "elapsedSeconds": 0.0862
     },
     {
       "command": "python3 tools/check_delivery.py",
       "exitCode": 0,
-      "elapsedSeconds": 0.0502
+      "elapsedSeconds": 0.054
     },
     {
       "command": "python3 examples/campaign-freshness.py",
       "exitCode": 0,
-      "elapsedSeconds": 0.0183
+      "elapsedSeconds": 0.0176
     }
   ]
 }
