@@ -45,7 +45,7 @@ function finish(stage, earned, detail) {
   }
   document.querySelector('.stats')?.replaceWith(stats());
   const finished = state.missions[mission.id]?.doneOn === today();
-  say(finished && gained ? `+${gained} XP. Mission complete. Streak: ${S.streak(state, today())} days. Its recall questions start tomorrow.` : gained ? `+${gained} XP` : '');
+  say(finished && gained ? `+${gained} XP. Mission complete. Streak: ${S.streak(state, today())} days.${mission.recall?.length ? ' Recall starts tomorrow.' : ''}` : gained ? `+${gained} XP` : '');
   return gained;
 }
 
@@ -396,7 +396,7 @@ function render() {
       el('ul', {class: 'chips'}, mission.tracks.map(t => el('li', {}, t))),
       isToday && latest.date < today() ? el('p', {class: 'muted'}, 'Today’s mission isn’t out yet. This is the latest one.') : null,
       demandPanel()),
-    stages.map((s, i) => stageCard(s, i + 1, RENDER[s]())),
+    ...stages.map((s, i) => stageCard(s, i + 1, RENDER[s]())),
     el('section', {class: 'about'}, el('h2', {}, 'Reading list'), el('ul', {class: 'sources'}, mission.sources.map(s => el('li', {},
       el('a', {href: s.url, target: '_blank', rel: 'noopener noreferrer'}, s.title), s.note ? ` · ${s.note}` : '')))),
     archive(),

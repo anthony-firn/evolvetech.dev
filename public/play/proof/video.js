@@ -6,6 +6,12 @@ window.renderProofFrame = async ({scene, caption, date, number, total}) => {
   document.querySelector('#video-caption').textContent = caption;
   await document.fonts.ready;
   await new Promise(requestAnimationFrame);
-  const overflow = [...document.querySelectorAll('.scene, #video-caption')].some(n => n.scrollHeight > n.clientHeight + 1 || n.scrollWidth > n.clientWidth + 1);
+  const stage = document.querySelector('#video-scene').getBoundingClientRect();
+  const content = document.querySelector('.scene');
+  const box = content.getBoundingClientRect();
+  const captionNode = document.querySelector('#video-caption');
+  const overflow = box.top < stage.top + 40 || box.top + content.scrollHeight > stage.bottom - 40
+    || content.scrollWidth > content.clientWidth + 1
+    || captionNode.scrollHeight > captionNode.clientHeight + 1;
   if (overflow) throw new Error('Video content exceeds its safe area; shorten the scene or caption.');
 };

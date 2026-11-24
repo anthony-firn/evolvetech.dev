@@ -121,6 +121,10 @@ def daily(page, ep):
     expect(page.locator('.stats .stat b').first).to_have_text('1')
     assert page.evaluate("JSON.parse(localStorage.getItem('proof-progress-v2')).xp") == xp
     assert len(page.evaluate("JSON.parse(localStorage.getItem('proof-progress-v2')).cards")) == len(ep['recall'])
+    page.set_viewport_size({'width': 360, 'height': 780})
+    assert page.evaluate('document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1'), 'completed mission overflows mobile'
+    page.evaluate('window.scrollTo(0, 0)')
+    page.screenshot(path='/tmp/proof-completed-mobile.png')
 
 
 def main(argv):

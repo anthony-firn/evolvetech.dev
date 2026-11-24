@@ -3,6 +3,8 @@ import copy
 import importlib.util
 import json
 import random
+import tempfile
+from unittest.mock import patch
 import unittest
 from pathlib import Path
 
@@ -73,8 +75,15 @@ class PublicationGate(unittest.TestCase):
 
     def test_missing_video_blocks_publication(self):
         ep = json.loads((EP / '2026-11-24.json').read_text())
-        if not ep['briefing'].get('video'):
-            with self.assertRaises(SystemExit) as failure:
+        ep['briefing'].pop('video', None)
+        index = json.loads((EP / 'index.json').read_text())
+        index['episodes'] = [m for m in index['episodes'] if m['id'] == ep['id']]
+        with tempfile.TemporaryDirectory() as scratch:
+            temp = Path(scratch)
+            (temp / 'index.json').write_text(json.dumps(index))
+            (temp / '2026-11-24.json').write_text(json.dumps(ep))
+            (temp / '2026-11-24.solution.py').write_text((EP / '2026-11-24.solution.py').read_text())
+            with patch.object(gate, 'EPISODES', temp), self.assertRaises(SystemExit) as failure:
                 gate.main(['--require-video', '2026-11-24'])
             self.assertIn('MP4 required', str(failure.exception))
 

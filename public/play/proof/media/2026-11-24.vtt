@@ -1,0 +1,46 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.275
+A developer runs browser agents and builds on the same machine.
+
+00:00:04.275 --> 00:00:11.225
+Small agent tasks keep finding spare capacity, while a build waits for enough CPU and memory together.
+
+00:00:11.225 --> 00:00:14.125
+Buying another machine might hide the problem.
+
+00:00:14.125 --> 00:00:18.400
+First work out who is waiting and what guarantee they actually need.
+
+00:00:18.400 --> 00:00:27.275
+In his reaction to Michael Hoff, ThePrimeagen describes researching Slurm and Kubernetes before designing local and global job queues.
+
+00:00:27.275 --> 00:00:30.850
+Hoff describes the shift toward supervising agents.
+
+00:00:30.850 --> 00:00:37.425
+Both leave you with a practical question: can you explain why the work an agent produced deserves to run?
+
+00:00:37.425 --> 00:00:43.075
+Open the scheduling documents and look for how a waiting job gets a future start time.
+
+00:00:43.075 --> 00:00:47.450
+Find the difference between deciding what fits and deciding what wins.
+
+00:00:47.450 --> 00:00:50.950
+Write your own answers before revealing the reference.
+
+00:00:50.950 --> 00:00:55.475
+Today uses one machine so the decision is small enough to inspect.
+
+00:00:55.475 --> 00:01:03.825
+You will review an intentionally flawed proposal, then implement a deterministic scheduler with CPU and memory accounting.
+
+00:01:03.825 --> 00:01:07.725
+Export its real inputs and decision as JSON.
+
+00:01:07.725 --> 00:01:13.125
+Your final note should give another engineer a short way to reproduce the behavior.
+
+00:01:13.125 --> 00:01:17.400
+The weekly project asks whether this policy helps a real workload.

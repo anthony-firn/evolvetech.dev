@@ -69,7 +69,13 @@
           ]
         }
       }
-    ]
+    ],
+    "video": {
+      "src": "./media/2026-11-24.mp4",
+      "captions": "./media/2026-11-24.vtt",
+      "poster": "./media/2026-11-24.poster.png",
+      "manifest": "./media/2026-11-24.manifest.json"
+    }
   },
   "problem": {
     "context": "You share a 4-CPU, 8-GB worker between browser agents and builds. A build needs all 4 CPUs for 5 minutes. A stream of 1-CPU agents keeps arriving. The build has waited 40 minutes; developers cannot test their change.",

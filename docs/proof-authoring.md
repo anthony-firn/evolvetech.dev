@@ -55,7 +55,7 @@ commit applicant records, company review notes, tokens, browser sessions or raw 
 The production contract is `public/play/proof/video-style.json` (version 1). Both agents must use:
 
 - Evolve Voice's Kokoro-82M engine, voice `af_heart`, speed 1, seed 1. Do not silently substitute browser speech,
-  another voice provider or a different model. Browser speech is an explicitly labeled interactive fallback.
+  another voice provider or a different model. Keep the shared pronunciation dictionary for proper names. Browser speech is an explicitly labeled interactive fallback.
 - 1920×1080, 30 fps, H.264/yuv420p MP4 and AAC mono audio; normalize toward -16 LUFS and -1.5 dB true peak.
 - Space Grotesk headings, Inter prose, JetBrains Mono code; charcoal background, orange accents and cyan links.
 - The existing six scene types. `scene.js` is shared by the player and the exporter. `video.html`, `video.css`
@@ -82,7 +82,7 @@ Outputs go in `public/play/proof/media/<id>.{mp4,vtt,poster.png,manifest.json}` 
 `briefing.video` in the mission. Audio cache stays ignored in `.cache/proof-video/`. The manifest records the
 script, style, renderer, engine and model hashes. Editing the narration or renderer requires rerendering.
 Listen to the complete video, inspect captions and pronunciation, and inspect at least the title, diagram
-and code frames before publishing. Automated format checks cannot replace this review. Change the look or
+and any code frames before publishing. Automated format checks cannot replace this review. Change the look or
 voice only through an intentional style-version change and a reviewed reference video, never ad hoc per day.
 
 ## Verification and publication

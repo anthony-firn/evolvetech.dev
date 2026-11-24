@@ -79,11 +79,28 @@ def video(ep, where):
     audio = next(s for s in streams['streams'] if s['codec_type'] == 'audio')
     style = json.loads((GAME / 'video-style.json').read_text())
     need((vs['width'], vs['height'], vs['codec_name'], vs['pix_fmt']) == (style['width'], style['height'], 'h264', 'yuv420p'), f'{where}: unexpected video format')
+    need(vs.get('r_frame_rate') == f"{style['fps']}/1" and vs.get('avg_frame_rate') == f"{style['fps']}/1", f'{where}: video must have the shared constant frame rate')
     need(audio['codec_name'] == 'aac', f'{where}: audio must be AAC')
+    need(manifest.get('exporterSha256') == sha(ROOT / 'tools/render_proof_video.py'), f'{where}: stale exporter')
+    for font in (ROOT / 'public/assets/fonts').glob('*.woff2'):
+        need(manifest.get('fonts', {}).get(font.name) == sha(font), f'{where}: stale font {font.name}')
     duration = float(streams['format']['duration'])
     lo, hi = style['rules']['durationSeconds']
     need(lo <= duration <= hi and abs(duration - manifest['seconds']) < 2, f'{where}: video duration differs from manifest/budget')
-    need(paths['captions'].read_text().startswith('WEBVTT\n'), f'{where}: missing WebVTT header')
+    vtt = paths['captions'].read_text()
+    need(vtt.startswith('WEBVTT\n'), f'{where}: missing WebVTT header')
+    cues = re.findall(r'(\d\d:\d\d:\d\d\.\d{3}) --> (\d\d:\d\d:\d\d\.\d{3})\n([^\n]+)', vtt)
+    normalize = lambda text: ' '.join(text.split())
+    need(normalize(' '.join(c[2] for c in cues)) == normalize(script), f'{where}: captions differ from narration')
+    def seconds(t):
+        h, m, s = t.split(':')
+        return int(h) * 3600 + int(m) * 60 + float(s)
+    last = 0
+    for start, end, _ in cues:
+        a, b = seconds(start), seconds(end)
+        need(a >= last - .002 and b > a and b <= duration + .1, f'{where}: caption timing outside video or overlaps')
+        last = b
+    need(abs(last - manifest['seconds']) < .05, f'{where}: captions stop before narration ends')
 
 
 def check_episode(meta, online, require_video=False):

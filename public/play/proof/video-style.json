@@ -4,17 +4,52 @@
   "width": 1920,
   "height": 1080,
   "fps": 30,
-  "voice": {"engine": "evolve-voice-kokoro-82m", "id": "af_heart", "speed": 1, "seed": 1},
-  "audio": {"sampleRate": 24000, "loudnessLUFS": -16, "truePeakDB": -1.5},
-  "palette": {"background": "#0b0d12", "panel": "#12161f", "accent": "#ff7a3d", "text": "#e8ebf2", "cyan": "#5cc8ff"},
-  "fonts": {"heading": "Space Grotesk", "body": "Inter", "code": "JetBrains Mono"},
-  "sceneTypes": ["title", "statement", "bullets", "code", "compare", "flow"],
+  "voice": {
+    "engine": "evolve-voice-kokoro-82m",
+    "id": "af_heart",
+    "speed": 1,
+    "seed": 1
+  },
+  "audio": {
+    "sampleRate": 24000,
+    "loudnessLUFS": -16,
+    "truePeakDB": -1.5
+  },
+  "palette": {
+    "background": "#0b0d12",
+    "panel": "#12161f",
+    "accent": "#ff7a3d",
+    "text": "#e8ebf2",
+    "cyan": "#5cc8ff"
+  },
+  "fonts": {
+    "heading": "Space Grotesk",
+    "body": "Inter",
+    "code": "JetBrains Mono"
+  },
+  "sceneTypes": [
+    "title",
+    "statement",
+    "bullets",
+    "code",
+    "compare",
+    "flow"
+  ],
   "rules": {
     "tone": "Plain engineering field notes. Start with a person and a concrete problem. Separate a source's claim from the exercise's assumptions.",
-    "durationSeconds": [60, 210],
+    "durationSeconds": [
+      60,
+      210
+    ],
     "maxWords": 420,
     "motion": "Static diagrams and clean cuts at sentence boundaries; no stock footage, avatars, music or dramatic zooms.",
     "captions": "Sentence captions burned into the safe bottom area and a matching WebVTT sidecar. Timings come from synthesized audio.",
     "ending": "A question or test to try next, not a motivational slogan."
+  },
+  "pronunciations": {
+    "Hoff": "hˈɑf",
+    "ThePrimeagen": "ðə pɹˈImədʒən",
+    "Slurm": "slˈɜɹm",
+    "Kubernetes": "kubɚnˈɛtiz"
   }
 }
