@@ -23,6 +23,10 @@ python3 -m http.server 8080 --directory public
 
 Open http://localhost:8080. Public assets are all under `public/`.
 
+`tools/voice_check.py` lints the homepage, résumé and the two production case studies for stock phrases and the
+hedging register coding agents write in (`verify_portfolio.py` runs it strictly). Pass it any text, HTML or JSON
+file, such as a cover letter, to check that too. After changing the résumé, re-print the PDF so the download matches.
+
 ## Hosting and recovery
 
 The canonical website is **https://www.evolvetech.dev**. The bare domain redirects to it on both providers, preserving paths and query strings.
