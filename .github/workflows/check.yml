@@ -23,6 +23,7 @@ jobs:
       - run: python3 tools/test_health_csp.py
       - run: node --test netlify/lib/open-case-law/search.test.mjs tools/test_case_law_engine.mjs
       - run: node --test tools/test_wallet_setup.mjs
+      - run: node --test tools/test_proof_state.mjs
       - run: node --test tools/bootstrap-miner/test.mjs
       - run: node tools/bootstrap-miner/verify-engine.cjs
       - run: npm ci --prefix tools/bootstrap-miner/settlement --ignore-scripts --no-audit

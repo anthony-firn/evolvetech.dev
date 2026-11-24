@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Proof · a daily practice for staying technically sharp</title>
+  <meta name="description" content="A daily practice game: a short narrated episode on something new in computing, a reading with sources, a quiz, a judgment call, a Python exercise in the browser and an answer in your own words.">
+  <link rel="canonical" href="https://www.evolvetech.dev/play/proof/">
+  <meta name="theme-color" content="#0b0d12">
+  <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+  <link rel="preload" href="/assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./proof.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="top">
+    <a class="home" href="/">evolvetech.dev</a>
+    <div>
+      <h1>Proof</h1>
+      <p class="tag">One new idea a day. Watch it, read it, prove you get it, build it, explain it. Your own thinking first.</p>
+    </div>
+  </header>
+  <main id="app" aria-live="polite"><p class="muted">Loading today’s episode…</p></main>
+  <p id="status" class="toast" role="status" aria-live="polite"></p>
+  <footer class="foot">
+    <p>Progress stays in this browser. Nothing is sent anywhere except the optional one-time coach model download.</p>
+    <p><a href="https://github.com/anthony-firn/evolvetech.dev/tree/main/public/play/proof">Source</a> · <a href="/play/evolve-llm/">Evolve LLM</a> · <a href="https://www.slopmanifesto.com/">No AI Slop manifesto</a></p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,282 @@
+{
+ "version": 1,
+ "id": "2026-11-24",
+ "date": "2026-11-24",
+ "title": "Prove it: checking code you didn't write",
+ "tracks": [
+  "verification",
+  "ai-engineering",
+  "math"
+ ],
+ "minutes": 45,
+ "hook": "Agents can write a thousand lines in a minute. Reading them still takes as long as it always did. Today: the checks that scale, from example tests to property tests to machine-checked proofs.",
+ "scenes": [
+  {
+   "title": "Prove it",
+   "visual": {
+    "type": "title",
+    "kicker": "Day 1 · Verification",
+    "text": "Prove it"
+   },
+   "narration": "Today's idea is the one the rest of this game depends on: how to check code you didn't write. An agent can produce a thousand lines in a minute. Reading them still takes you as long as it always did."
+  },
+  {
+   "title": "Slop, defined",
+   "visual": {
+    "type": "statement",
+    "text": "Slop is when making it took less effort than understanding it will.",
+    "sub": "Paraphrased from the No AI Slop manifesto"
+   },
+   "narration": "A manifesto ThePrimeagen covered today puts the problem plainly. Something is slop when less effort went into making it than its reader has to spend understanding it. Using AI isn't the problem. Passing output along without owning it is."
+  },
+  {
+   "title": "What scales",
+   "visual": {
+    "type": "compare",
+    "left": {
+     "title": "Reading every line",
+     "items": [
+      "Cost grows with the diff",
+      "Tired eyes miss boundary bugs",
+      "Can't keep up with agents"
+     ]
+    },
+    "right": {
+     "title": "Checking properties",
+     "items": [
+      "Cost grows with the risk",
+      "A machine tries thousands of inputs",
+      "Works on code from anyone"
+     ]
+    }
+   },
+   "narration": "You can't read your way out of that. What scales is deciding what must always be true, then letting a machine try hard to break it."
+  },
+  {
+   "title": "Two properties of sort",
+   "visual": {
+    "type": "code",
+    "highlight": [
+     5,
+     6
+    ],
+    "code": "from collections import Counter\n\ndef check_sort(sort, xs):\n    out = sort(xs)\n    assert all(a <= b for a, b in zip(out, out[1:]))  # in order\n    assert Counter(out) == Counter(xs)                 # same items"
+   },
+   "narration": "Take sorting. You don't need the right answer for every list. You need two properties: the output is in order, and it holds exactly the same items. Any function that passes both on every input is a correct sort."
+  },
+  {
+   "title": "Property-based testing",
+   "visual": {
+    "type": "flow",
+    "steps": [
+     "Generate random inputs",
+     "Check the properties",
+     "Shrink a failure to its smallest case",
+     "Keep it as a regression test"
+    ]
+   },
+   "narration": "Property-based testing automates this. QuickCheck started it in Haskell around the year 2000, and Hypothesis does it in Python. It generates inputs and checks your properties. When one fails, it shrinks the input to the smallest example that still breaks, which is usually the bug in plain sight."
+  },
+  {
+   "title": "From tests to proofs",
+   "visual": {
+    "type": "statement",
+    "text": "Tests try many inputs. A proof covers all of them.",
+    "sub": "Lean checks every step of a proof mechanically"
+   },
+   "narration": "Proofs go one step further. In the Lean proof assistant, a theorem is checked step by step for every input it covers. Mathematicians and AI labs use it to check machine-assisted math. In 2023 Terence Tao's group formalized a new proof in about three weeks. In 2024 DeepMind's AlphaProof, which writes its proofs in Lean, helped reach silver-medal level at the International Mathematical Olympiad."
+  },
+  {
+   "title": "Your turn",
+   "visual": {
+    "type": "title",
+    "kicker": "Today's build",
+    "text": "Catch the agent's bug"
+   },
+   "narration": "Today's build: an agent wrote a function that merges overlapping intervals, and it passes its own example. You'll write the properties, a small random tester that finds where it breaks, and then a merge that survives your own checks. By hand."
+  }
+ ],
+ "read": {
+  "sections": [
+   {
+    "heading": "What happened",
+    "body": "ThePrimeagen's video today walks through **No AI Slop: A Manifesto**, written by speakers and attendees of the AIE Code Summit 2026. More than a thousand engineers had signed it when this episode was written. It borrows the Agile Manifesto's form: outcomes over output, understanding over speed, your own thinking over a model's first draft.\n\nIts working definition is useful: something is slop when less effort went into making it than its reader has to spend understanding it. Using AI doesn't make something slop. Passing the output along without taking responsibility for it does. It also commits its signers to say when an agent wrote something they send, and to check the parts that matter before it goes out.\n\nA second video today reacts to Michael Hoff's piece on AI agents and the joy of coding, and asks whether engineers are moving from craftsmen to system architects. One answer, and the bet this game makes: the craft moves into judgment. Deciding what must be true, and noticing when it isn't."
+   },
+   {
+    "heading": "Why it matters",
+    "body": "Everyone has the same models now. What separates engineers is whether they can tell when output is wrong, cheaply, and explain how they know.\n\n\"I wrote properties for the risky part and let a tester try to break them\" is a concrete answer to the review question you'll get in interviews. It's also the habit that stops a codebase from compounding slop, which the manifesto warns about: the next agent reads and copies whatever is already there."
+   },
+   {
+    "heading": "Properties in practice",
+    "body": "A property is a statement that must hold for every input. A few patterns cover most code:\n\n- **Invariants:** a sorted list is in order, a balance is never negative.\n- **Round trips:** `decode(encode(x)) == x`.\n- **Idempotence:** `merge(merge(x)) == merge(x)`.\n- **Agreement with a slow, obvious version:** a clever function returns what a brute-force one does.\n\nIn Python, [Hypothesis](https://hypothesis.readthedocs.io/en/latest/) generates the inputs and shrinks failures for you. Today you'll write a tiny version by hand, so you know what it's doing."
+   },
+   {
+    "heading": "From tests to proofs",
+    "body": "Tests, even thousands of random ones, sample the input space. A proof covers all of it. [Lean](https://lean-lang.org/) is a programming language and proof assistant: you state a theorem, write a proof, and Lean checks every step.\n\nThat's why it has become the checker for machine-assisted mathematics. In late 2023 Terence Tao led a group that formalized the proof of the polynomial Freiman–Ruzsa conjecture in Lean in about three weeks. In 2024 Google DeepMind's AlphaProof, which writes its proofs in Lean, and AlphaGeometry 2 together solved four of the six International Mathematical Olympiad problems, silver-medal standard.\n\nMost code doesn't need a proof. The ladder still helps you choose: example tests for behavior, property tests for whole input spaces, proofs for the few things that must never break."
+   },
+   {
+    "heading": "Today's build",
+    "body": "The starter holds `agent_merge`, which merges overlapping closed intervals. It has two bugs, and its own example doesn't show either one. Write `violations()` to list what's wrong with a claimed merge, `find_counterexample()` to hunt with random inputs, and your own `merge()`. Then make your merge pass your own checks."
+   }
+  ],
+  "sources": [
+   {
+    "title": "No AI Slop: A Manifesto",
+    "url": "https://www.slopmanifesto.com/",
+    "note": "the manifesto and its signatures"
+   },
+   {
+    "title": "No AI Slop Manifesto (ThePrimeagen, video)",
+    "url": "https://www.youtube.com/watch?v=i1IbHVstmH4",
+    "note": "November 24, 2026"
+   },
+   {
+    "title": "The Joy of Coding Is Gone (Prime Reacts, video)",
+    "url": "https://www.youtube.com/watch?v=z8Up6gLL3k8",
+    "note": "reaction to Michael Hoff, November 24, 2026"
+   },
+   {
+    "title": "Hypothesis documentation",
+    "url": "https://hypothesis.readthedocs.io/en/latest/",
+    "note": "property-based testing for Python"
+   },
+   {
+    "title": "QuickCheck",
+    "url": "https://www.cse.chalmers.se/~rjmh/QuickCheck/",
+    "note": "the original property-based testing tool, Claessen and Hughes"
+   },
+   {
+    "title": "Lean",
+    "url": "https://lean-lang.org/",
+    "note": "programming language and proof assistant"
+   },
+   {
+    "title": "Formalizing the proof of PFR in Lean4 using Blueprint (Terence Tao)",
+    "url": "https://terrytao.wordpress.com/2023/11/18/formalizing-the-proof-of-pfr-in-lean4-using-blueprint-a-short-tour/",
+    "note": "November 2023"
+   },
+   {
+    "title": "AI achieves silver-medal standard solving International Mathematical Olympiad problems (Google DeepMind)",
+    "url": "https://deepmind.google/discover/blog/ai-solves-imo-problems-at-silver-medal-level/",
+    "note": "AlphaProof, July 2024"
+   }
+  ]
+ },
+ "quiz": [
+  {
+   "id": "slop",
+   "q": "By the manifesto's definition, when is something slop?",
+   "choices": [
+    "Whenever an AI model wrote any part of it",
+    "When less effort went into making it than its reader has to spend understanding it",
+    "When it has no tests",
+    "When it is longer than a page"
+   ],
+   "answer": 1,
+   "why": "The manifesto defines slop by the effort gap between maker and reader, and says plainly that using AI doesn't make something slop on its own."
+  },
+  {
+   "id": "sort-props",
+   "q": "Which pair of properties is enough to show a function `sort(xs)` is correct on an input?",
+   "choices": [
+    "`sort([3, 1, 2]) == [1, 2, 3]`",
+    "The output is in order, and it contains exactly the same items as the input",
+    "The output has the same length as the input",
+    "It runs in under a millisecond"
+   ],
+   "answer": 1,
+   "why": "Order alone would accept returning `[]`; same length alone would accept the input unchanged. Order plus same-items pins down sorting exactly."
+  },
+  {
+   "id": "shrink",
+   "q": "Hypothesis finds a 40-item list that breaks your function. What does it do next?",
+   "choices": [
+    "Retries until the test passes",
+    "Shrinks the input to the smallest example that still fails",
+    "Rewrites your function",
+    "Marks the test as flaky"
+   ],
+   "answer": 1,
+   "why": "Shrinking is what makes property-based failures readable: the minimal example usually points straight at the bug."
+  },
+  {
+   "id": "proof",
+   "q": "What does a Lean proof give you that 10,000 passing random tests don't?",
+   "choices": [
+    "Faster code",
+    "A guarantee for every input the theorem covers, checked step by step",
+    "Better error messages",
+    "Nothing; they're equivalent"
+   ],
+   "answer": 1,
+   "why": "Random tests sample the input space. A checked proof covers all of it, which is why it's trusted for machine-assisted math."
+  }
+ ],
+ "judgment": {
+  "scenario": "It's 4:40 pm. An agent opened a 1,200-line pull request that adds a caching layer to a data sync your team depends on. CI is green and the agent wrote tests for its own code. A teammate asks you to approve it so it ships tonight.",
+  "options": [
+   {
+    "text": "Approve it. CI is green and there are tests.",
+    "verdict": "poor",
+    "why": "The tests came from the same agent as the code, so they share its blind spots. A green check here says the code agrees with itself, not that the cache is safe."
+   },
+   {
+    "text": "Read all 1,200 lines tonight before deciding.",
+    "verdict": "ok",
+    "why": "Careful, but tired line-by-line reading misses exactly the subtle bugs caching causes, and it doesn't scale to the next PR."
+   },
+   {
+    "text": "Ask for the intent in a paragraph and a split into the cache and its wiring. Before approving, write two properties for the risky part: a cached read never returns data older than the last write, and every write path invalidates.",
+    "verdict": "best",
+    "why": "This spends your attention where the risk is, gives you checks that keep working on the next change, and keeps ownership with a person, which is the manifesto's point."
+   },
+   {
+    "text": "Reject it because agents wrote it.",
+    "verdict": "poor",
+    "why": "Who wrote it isn't the problem. Unreviewed output is. The manifesto says outright that using AI doesn't make something slop."
+   }
+  ]
+ },
+ "build": {
+  "title": "Catch the agent's merge bug",
+  "brief": "`agent_merge` merges overlapping **closed** intervals, so `(1, 2)` and `(2, 3)` touch and must become `(1, 3)`. It passes its docstring example, and it has two bugs.\n\n- Write `violations(intervals, merged)`: return a list of problems, or `[]` when `merged` is correct.\n- Write `find_counterexample(fn)`: try random inputs and return one that breaks `fn`.\n- Write `merge(intervals)` and make it pass your own checks.",
+  "language": "python",
+  "starter": "# Today: check code you didn't write.\n# An agent wrote agent_merge below. It passes the example in its docstring.\n# Write checks that catch it when it's wrong, then a merge that passes them. No AI for this part.\n\ndef agent_merge(intervals):\n    \"\"\"Merge overlapping closed intervals, e.g. [(1, 3), (2, 6), (8, 10)] -> [(1, 6), (8, 10)].\"\"\"\n    intervals = sorted(intervals)\n    merged = [list(intervals[0])]\n    for start, end in intervals[1:]:\n        if start < merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], end)\n        else:\n            merged.append([start, end])\n    return [tuple(pair) for pair in merged]\n\n\ndef violations(intervals, merged):\n    \"\"\"Return a list of problems with `merged` as a merge of `intervals`; [] means it's correct.\n\n    Intervals are closed: (2, 3) includes 2 and 3, so (1, 2) and (2, 3) touch and must become (1, 3).\n    Check at least:\n      - every pair is (start, end) with start <= end\n      - pairs are sorted\n      - no two pairs overlap or touch\n      - merged covers exactly the same points as intervals (careful: between integers counts too)\n    \"\"\"\n    raise NotImplementedError\n\n\ndef find_counterexample(fn, trials=500, seed=0):\n    \"\"\"Try random inputs. Return the first input list where fn raises or violations() finds a problem,\n    or None if every trial passes. Use random.Random(seed) so a failure can be replayed.\"\"\"\n    raise NotImplementedError\n\n\ndef merge(intervals):\n    \"\"\"Your own correct merge. Don't change the caller's list.\"\"\"\n    raise NotImplementedError\n",
+  "tests": [
+   {
+    "name": "violations() accepts correct merges",
+    "code": "cases = [([(1, 3), (2, 6), (8, 10)], [(1, 6), (8, 10)]),\n         ([(1, 2), (2, 3)], [(1, 3)]),\n         ([], []),\n         ([(5, 5)], [(5, 5)]),\n         ([(4, 7), (1, 2)], [(1, 2), (4, 7)])]\nfor intervals, merged in cases:\n    found = violations(intervals, merged)\n    assert found == [], f\"violations({intervals}, {merged}) should be [] but returned {found}\"\n"
+   },
+   {
+    "name": "violations() catches broken merges",
+    "code": "wrong = [([(1, 2), (2, 3)], [(1, 2), (2, 3)], \"touching pairs left unmerged\"),\n         ([(1, 3), (2, 6)], [(1, 3), (2, 6)], \"an overlap left in\"),\n         ([(1, 6)], [(1, 5)], \"lost coverage\"),\n         ([(1, 2), (3, 4)], [(1, 4)], \"coverage added between 2 and 3\"),\n         ([(1, 2), (5, 6)], [(5, 6), (1, 2)], \"pairs out of order\"),\n         ([(1, 4)], [(4, 1)], \"start after end\")]\nfor intervals, merged, what in wrong:\n    assert violations(intervals, merged), f\"missed {what}: violations({intervals}, {merged}) returned []\"\n"
+   },
+   {
+    "name": "find_counterexample() catches the agent",
+    "code": "def buggy(intervals):\n    intervals = sorted(intervals)\n    merged = [list(intervals[0])]\n    for start, end in intervals[1:]:\n        if start < merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], end)\n        else:\n            merged.append([start, end])\n    return [tuple(p) for p in merged]\n\nexample = find_counterexample(buggy)\nassert example is not None, \"found nothing, but agent_merge has two bugs\"\ntry:\n    problems = violations(example, buggy(example))\nexcept Exception as e:\n    problems = [f\"raises {type(e).__name__}\"]\nassert problems, f\"{example} is not a counterexample: the agent's code handles it correctly\"\nprint(\"counterexample:\", example, \"->\", problems[0])\n"
+   },
+   {
+    "name": "your merge() passes your own checks",
+    "code": "example = find_counterexample(merge)\nassert example is None, f\"your checks found a problem with your merge: {example}\"\n"
+   },
+   {
+    "name": "merge() agrees with a reference on 400 random inputs",
+    "code": "import random\n\ndef reference(intervals):\n    out = []\n    for s, e in sorted(intervals):\n        if out and s <= out[-1][1]:\n            out[-1][1] = max(out[-1][1], e)\n        else:\n            out.append([s, e])\n    return [tuple(p) for p in out]\n\nrng = random.Random(42)\nfor _ in range(400):\n    xs = []\n    for _ in range(rng.randint(0, 7)):\n        a = rng.randint(0, 20)\n        xs.append((a, a + rng.randint(0, 6)))\n    got = merge(list(xs))\n    assert got == reference(xs), f\"merge({xs}) returned {got}, expected {reference(xs)}\"\n"
+   },
+   {
+    "name": "merge() leaves its input alone",
+    "code": "xs = [(3, 4), (1, 2)]\nmerge(xs)\nassert xs == [(3, 4), (1, 2)], f\"merge() changed its input to {xs}\"\n"
+   }
+  ],
+  "hints": [
+   "For coverage, intervals have integer endpoints, so checking every half step (2.0, 2.5, 3.0, …) from the smallest endpoint to the largest finds any difference.",
+   "Generate small numbers (0 to 12) and short lists (0 to 6 intervals). Small spaces hit edge cases like touching intervals and the empty list far more often.",
+   "One bug is the comparison `start < merged[-1][1]`. The other shows up when the list is empty."
+  ]
+ },
+ "explain": {
+  "prompt": "In about four sentences, the way you'd say it in an interview: how do you review a large change you didn't write, whether a teammate or an agent wrote it?",
+  "coachFocus": "whether the answer names concrete checks (properties, invariants, splitting the change, tests the author didn't write) and who owns the outcome"
+ },
+ "disclosure": "Each episode is written by Claude, an AI model, from the sources it lists, then checked automatically before it's published: every source link must resolve, every quiz answer must point at a real choice, and the exercise's reference solution must pass its tests while the starter fails them. That's the review this game asks of you, applied to itself.\n\nYour progress, code and answers stay in this browser. The coach is optional and runs on your own GPU through [Evolve LLM](https://www.evolvetech.dev/play/evolve-llm/)."
+}
