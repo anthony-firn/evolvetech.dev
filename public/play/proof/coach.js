@@ -1,22 +1,29 @@
-// Optional coach: a small model running on this device through the Evolve LLM SDK. It reads your answer
-// after you've written it and asks the next question; it does not write the answer for you.
-// Models download once from Hugging Face inside Evolve LLM's own worker and are shared with /play/evolve-llm/.
+// Optional coach: a small model running on this device through the Evolve LLM SDK. It reviews what you already
+// wrote, the way a direct senior engineer would in code review, and asks the next question. It never writes the
+// design or the note for you. Models download once from Hugging Face inside Evolve LLM's own worker and are shared
+// with /play/evolve-llm/.
 
 export const MODELS = [
   {id: 'qwen2.5-coder-1.5b', label: 'Qwen2.5 Coder 1.5B (about 1 GB, better feedback)'},
   {id: 'qwen2.5-0.5b', label: 'Qwen2.5 0.5B (about 0.5 GB, faster, weaker)'},
 ];
 
-const SYSTEM = `You are a demanding but kind technical interviewer. The candidate wrote the answer below in their own words.
-Do not rewrite it or give a model answer. In at most 120 words:
-1. Name the strongest specific point.
-2. Name the most important thing that is missing, vague or wrong.
-3. Ask one follow-up question an interviewer would ask next.`;
+const ROLE = {
+  design: 'a staff engineer reviewing a short system design before anyone writes code',
+  ship: 'a senior engineer reading a pull request description who has thirty seconds',
+};
+
+const system = (task, focus) => `You are ${ROLE[task]}. Be direct. No praise padding and no rewriting their work.
+In at most 110 words:
+1. The biggest problem, stated plainly. If it would break in production, say how.
+2. One thing that's right and should stay.
+3. One question they must answer before this ships.${focus ? `\nCheck especially: ${focus}` : ''}`;
 
 let engine = null;
 let loadedId = null;
 
-export async function coach({model, prompt, focus, answer, onStatus, onToken, signal}) {
+export async function coach({task, model, prompt, focus, answer, onStatus, onToken, signal}) {
+  if (!ROLE[task]) throw new Error(`Unknown coach task ${task}`);
   if (!('gpu' in navigator)) throw new Error('The coach needs WebGPU (recent Chrome or Edge). Your answer is saved either way.');
   const {createEngine} = await import('../evolve-llm/sdk.mjs');
   if (!engine) {
@@ -33,13 +40,13 @@ export async function coach({model, prompt, focus, answer, onStatus, onToken, si
     }});
     loadedId = model;
   }
-  onStatus('Reading your answer…');
+  onStatus('Reading it…');
   const messages = [
-    {role: 'system', content: SYSTEM + (focus ? `\nPay particular attention to: ${focus}` : '')},
-    {role: 'user', content: `Question: ${prompt}\n\nMy answer: ${answer}`},
+    {role: 'system', content: system(task, focus)},
+    {role: 'user', content: `Task: ${prompt}\n\nWhat I wrote:\n${answer}`},
   ];
   try {
-    for await (const event of engine.generate(messages, {maxTokens: 220, temperature: 0.4, signal})) {
+    for await (const event of engine.generate(messages, {maxTokens: 220, temperature: 0.3, signal})) {
       if (event.type === 'token') onToken(event.text);
     }
   } catch (error) {
