@@ -145,6 +145,11 @@ python3 tools/test_proof.py <date>             # plays the episode in Chromium u
 node --test tools/test_proof_state.mjs         # streak, XP and review rules
 ```
 
+A daily cloud routine writes each episode and pushes it to a `proof/episode-<date>` branch. The **Publish Proof
+episode** workflow re-runs both checks there. Only if they pass, and only if the branch touches nothing outside
+`public/play/proof/episodes/`, does it squash-merge into `main` and dispatch a deploy. A failed run leaves `main`
+alone; GitHub's failed-workflow email is the alert.
+
 `harness.py` runs exercises the same way in the browser (Pyodide) and in `check_proof.py`. The game reuses
 `/play/symmetry-forge/pyodide/`; `check_proof.py` fails if that copy moves. No extra CSP is needed: exercises run in
 WebAssembly, and the coach's model downloads happen inside Evolve LLM's own worker.

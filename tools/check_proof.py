@@ -10,6 +10,7 @@
 import json
 import subprocess
 import sys
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -61,6 +62,7 @@ def check_episode(meta, online):
     need(3 <= len(ids) <= 8 and len(set(ids)) == len(ids), f"{where}: 3–8 quiz questions with unique ids")
     for q in ep["quiz"]:
         need(2 <= len(q["choices"]) <= 6 and 0 <= q["answer"] < len(q["choices"]) and q.get("why"), f"{where}: quiz {q['id']} is malformed")
+    need(len({q["answer"] for q in ep["quiz"]}) > 1, f"{where}: every quiz answer is in the same position; vary them")
     verdicts = [o["verdict"] for o in ep["judgment"]["options"]]
     need(verdicts.count("best") == 1 and set(verdicts) <= {"best", "ok", "poor"}, f"{where}: judgment needs exactly one best option")
     b = ep["build"]
@@ -80,6 +82,12 @@ def check_episode(meta, online):
                 req = urllib.request.Request(s["url"], headers={"User-Agent": "evolvetech-proof-check"})
                 with urllib.request.urlopen(req, timeout=20) as res:
                     need(200 <= res.status < 400, f"{where}: {s['url']} answered {res.status}")
+            except urllib.error.HTTPError as e:
+                # The server answered: the page exists but turns robots away. Missing or broken pages still fail.
+                if e.code in (401, 403, 429):
+                    print(f"note: {s['url']} answered {e.code} to the checker; treated as reachable")
+                else:
+                    errors.append(f"{where}: {s['url']} answered {e.code}")
             except Exception as e:
                 errors.append(f"{where}: {s['url']} unreachable ({e})")
 

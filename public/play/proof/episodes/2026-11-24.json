@@ -179,12 +179,12 @@
    "id": "sort-props",
    "q": "Which pair of properties is enough to show a function `sort(xs)` is correct on an input?",
    "choices": [
-    "`sort([3, 1, 2]) == [1, 2, 3]`",
     "The output is in order, and it contains exactly the same items as the input",
+    "`sort([3, 1, 2]) == [1, 2, 3]`",
     "The output has the same length as the input",
     "It runs in under a millisecond"
    ],
-   "answer": 1,
+   "answer": 0,
    "why": "Order alone would accept returning `[]`; same length alone would accept the input unchanged. Order plus same-items pins down sorting exactly."
   },
   {
@@ -192,11 +192,11 @@
    "q": "Hypothesis finds a 40-item list that breaks your function. What does it do next?",
    "choices": [
     "Retries until the test passes",
-    "Shrinks the input to the smallest example that still fails",
     "Rewrites your function",
-    "Marks the test as flaky"
+    "Marks the test as flaky",
+    "Shrinks the input to the smallest example that still fails"
    ],
-   "answer": 1,
+   "answer": 3,
    "why": "Shrinking is what makes property-based failures readable: the minimal example usually points straight at the bug."
   },
   {
@@ -204,11 +204,11 @@
    "q": "What does a Lean proof give you that 10,000 passing random tests don't?",
    "choices": [
     "Faster code",
-    "A guarantee for every input the theorem covers, checked step by step",
     "Better error messages",
+    "A guarantee for every input the theorem covers, checked step by step",
     "Nothing; they're equivalent"
    ],
-   "answer": 1,
+   "answer": 2,
    "why": "Random tests sample the input space. A checked proof covers all of it, which is why it's trusted for machine-assisted math."
   }
  ],
