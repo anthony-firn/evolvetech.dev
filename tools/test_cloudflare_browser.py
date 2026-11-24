@@ -2,9 +2,10 @@
 
 Run after tools/build_cloudflare.py; requires Python Playwright and Chromium.
 """
+import argparse
 import fnmatch
 import functools
-import hashlib
+import gzip
 import http.server
 import json
 import threading
@@ -34,9 +35,25 @@ def effective_headers(text, path):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--origin', help='Test a running Wrangler Pages server or authenticated preview URL instead of the local header model')
+    args = parser.parse_args()
     header_text = (PUBLIC / '_headers').read_text()
+    manifest = json.loads((PUBLIC / MARKER).read_text())
+    encoded = {a['path']: a for a in manifest['encodedAssets']}
     class Handler(http.server.SimpleHTTPRequestHandler):
         extensions_map = {**http.server.SimpleHTTPRequestHandler.extensions_map, '.mjs': 'text/javascript', '.wasm': 'application/wasm'}
+        def do_GET(self):
+            asset = encoded.get(self.path.split('?', 1)[0])
+            if asset:
+                body = gzip.decompress((PUBLIC / asset['storedPath'].lstrip('/')).read_bytes())
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/wasm')
+                self.send_header('Content-Length', str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            else:
+                super().do_GET()
         def end_headers(self):
             for name, value in effective_headers(header_text, self.path.split('?', 1)[0]).items():
                 # SimpleHTTPRequestHandler already derives MIME from the .wasm path.
@@ -44,8 +61,10 @@ def main():
                     self.send_header(name, value)
             super().end_headers()
         def log_message(self, *_): pass
-    server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Handler, directory=str(PUBLIC)))
-    threading.Thread(target=server.serve_forever, daemon=True).start()
+    server = None
+    if not args.origin:
+        server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Handler, directory=str(PUBLIC)))
+        threading.Thread(target=server.serve_forever, daemon=True).start()
     errors = []
     try:
         with sync_playwright() as p:
@@ -53,7 +72,7 @@ def main():
             page = browser.new_page(viewport={'width': 1200, 'height': 900})
             page.on('pageerror', lambda e: errors.append(str(e)))
             page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
-            origin = f'http://127.0.0.1:{server.server_port}'
+            origin = args.origin.rstrip('/') if args.origin else f'http://127.0.0.1:{server.server_port}'
             page.goto(origin + '/play/proof/')
             expect(page.locator('.stage-card')).to_have_count(7)
             manifest = json.loads((PUBLIC / MARKER).read_text())
@@ -66,10 +85,11 @@ def main():
                         bytes: bytes.length, validWasm: WebAssembly.validate(bytes),
                         sha: Array.from(new Uint8Array(sha), b => b.toString(16).padStart(2, '0')).join('')};
                 }''', asset['path'])
-                assert result == dict(status=200, encoding='gzip', bytes=asset['originalBytes'], validWasm=True, sha=asset['decodedSha256']), result
+                assert result['status'] == 200 and result['bytes'] == asset['originalBytes'] and result['validWasm'] and result['sha'] == asset['decodedSha256'], result
             browser.close()
     finally:
-        server.shutdown(); server.server_close()
+        if server:
+            server.shutdown(); server.server_close()
     assert not errors, errors
     print('Cloudflare browser smoke passed: Proof renders; WASM decodes, matches source and validates under the effective CSP.')
 

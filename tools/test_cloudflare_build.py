@@ -4,7 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from build_cloudflare import build, headers_for_cloudflare, MARKER
+from build_cloudflare import build, headers_for_cloudflare, redirects_for_cloudflare, MARKER
 
 
 class PagesBuild(unittest.TestCase):
@@ -18,12 +18,15 @@ class PagesBuild(unittest.TestCase):
             (src / 'index.html').write_text('<h1>Game</h1>')
             (src / '_headers').write_text('/*\n  Content-Security-Policy: default-src \'self\'\n\n/play/*\n  Content-Security-Policy: script-src \'self\' \'wasm-unsafe-eval\'\n')
             assets = build(src, root / 'out', limit=1024)
-            self.assertEqual(gzip.decompress((root / 'out/game.wasm').read_bytes()), wasm)
+            self.assertEqual(gzip.decompress((root / 'out/game.wasm.gz').read_bytes()), wasm)
             self.assertEqual((src / 'game.wasm').read_bytes(), wasm)
-            self.assertLess((root / 'out/game.wasm').stat().st_size, 1024)
+            self.assertLess((root / 'out/game.wasm.gz').stat().st_size, 1024)
             headers = (root / 'out/_headers').read_text()
-            self.assertIn('/game.wasm\n  ! Content-Encoding\n  Content-Encoding: gzip', headers)
-            self.assertIn('Content-Type: application/wasm', headers)
+            self.assertFalse((root / 'out/game.wasm').exists())
+            self.assertEqual(assets[0]['storedPath'], '/game.wasm.gz')
+            self.assertIn('/game.wasm', (root / 'out/_worker.js').read_text())
+            self.assertEqual(json.loads((root / 'out/_routes.json').read_text())['include'], ['/game.wasm'])
+            self.assertNotIn('Content-Encoding: gzip', headers)
             self.assertEqual(headers.count('! Content-Security-Policy'), 2)
             self.assertEqual(json.loads((root / 'out' / MARKER).read_text())['encodedAssets'], assets)
             # Rebuilding replaces only managed output, including removing old assets.
@@ -49,6 +52,14 @@ class PagesBuild(unittest.TestCase):
             with self.assertRaises(ValueError): build(src, src / 'out')
             out = root / 'out'; out.mkdir()
             with self.assertRaisesRegex(ValueError, 'unmanaged'): build(src, out)
+
+    def test_only_the_unmatched_netlify_host_rule_is_removed(self):
+        text = 'https://evolvetech.dev/* https://www.evolvetech.dev/:splat 301!\n/old /new 301\n'
+        self.assertEqual(redirects_for_cloudflare(text), '/old /new 301\n')
+        with self.assertRaises(ValueError):
+            redirects_for_cloudflare('https://other.example/* /new 301')
+        with self.assertRaises(ValueError):
+            redirects_for_cloudflare('/old /new 301!')
 
     def test_detaches_only_declared_headers_and_keeps_comments(self):
         text = '# rules\n/*\n  X-Frame-Options: DENY\n  ! Cache-Control\n\n/play/*\n  Content-Security-Policy: script-src \'self\'\n'

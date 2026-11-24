@@ -31,5 +31,6 @@ jobs:
       - run: python3 -m unittest discover -s tools/bootstrap-miner/host -p 'test_*.py'
       - run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
       - run: python3 -m unittest discover -s tools -p 'test_cloudflare_build.py'
+      - run: node --test tools/test_cloudflare_worker.mjs tools/test_cloudflare_install.mjs
       - run: python3 tools/verify_portfolio.py
       - run: python3 tools/test_legal.py

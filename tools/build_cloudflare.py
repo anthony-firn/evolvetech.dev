@@ -1,7 +1,7 @@
 """Prepare Cloudflare Pages assets without changing the Bunny/Netlify source tree.
 
 Cloudflare project: build command `python3 tools/build_cloudflare.py`, output `.cloudflare/public`.
-Large WASM files are gzip encoded at their existing URLs. Custom encoding headers make browsers decode them.
+Large WASM files are stored as gzip assets and stream-decoded by a Pages route at their original URLs.
 """
 import argparse
 import gzip
@@ -24,6 +24,19 @@ def headers_for_cloudflare(text):
         if line[:1].isspace() and ':' in stripped and not stripped.startswith(('#', '!')):
             name = stripped.split(':', 1)[0]
             lines.append(f'  ! {name}')
+        lines.append(line)
+    return '\n'.join(lines).rstrip() + '\n'
+
+
+def redirects_for_cloudflare(text):
+    """The Netlify apex-host redirect cannot match a Pages preview hostname."""
+    lines = []
+    for line in text.splitlines():
+        fields = line.split()
+        if fields == ['https://evolvetech.dev/*', 'https://www.evolvetech.dev/:splat', '301!']:
+            continue
+        if fields and not line.lstrip().startswith('#') and (fields[0].startswith(('http:', 'https:')) or fields[-1].endswith('!')):
+            raise ValueError('Unsupported Netlify-specific redirect; translate it explicitly for Pages.')
         lines.append(line)
     return '\n'.join(lines).rstrip() + '\n'
 
@@ -53,16 +66,23 @@ def build(source, output, limit=LIMIT):
                 compressed = gzip.compress(original, compresslevel=9, mtime=0)
                 if len(compressed) > limit:
                     raise ValueError(f'{relative} still exceeds the Pages limit after gzip.')
+                target = target.with_name(target.name + '.gz')
                 target.write_bytes(compressed)
-                encoded.append({'path': '/' + relative.as_posix(), 'originalBytes': len(original),
+                encoded.append({'path': '/' + relative.as_posix(), 'storedPath': '/' + relative.as_posix() + '.gz', 'originalBytes': len(original),
                                 'encodedBytes': len(compressed), 'decodedSha256': hashlib.sha256(original).hexdigest()})
             else:
                 shutil.copy2(path, target)
+        redirects = staging / '_redirects'
+        if redirects.exists():
+            redirects.write_text(redirects_for_cloudflare(redirects.read_text()))
         headers = staging / '_headers'
         text = headers_for_cloudflare(headers.read_text() if headers.exists() else '')
-        for asset in encoded:
-            text += (f"\n{asset['path']}\n  ! Content-Encoding\n  Content-Encoding: gzip\n"
-                     "  ! Content-Type\n  Content-Type: application/wasm\n")
+        if encoded:
+            if (staging / '_worker.js').exists() or (staging / '_routes.json').exists():
+                raise ValueError('Existing Pages worker/routes must be integrated explicitly.')
+            template = (ROOT / 'tools/cloudflare-wasm-worker.mjs').read_text()
+            (staging / '_worker.js').write_text('const ASSETS = ' + json.dumps({a['path']: a['storedPath'] for a in encoded}) + ';\n' + template)
+            (staging / '_routes.json').write_text(json.dumps({'version': 1, 'include': [a['path'] for a in encoded], 'exclude': []}, indent=2) + '\n')
         headers.write_text(text)
         (staging / MARKER).write_text(json.dumps({'version': 1, 'encodedAssets': encoded}, indent=2) + '\n')
         if output.exists():
@@ -83,7 +103,7 @@ def main():
     encoded = build(args.source, args.output)
     print(f'Cloudflare assets ready: {args.output}')
     for a in encoded:
-        print(f"{a['path']}: {a['originalBytes']:,} → {a['encodedBytes']:,} bytes; gzip with original URL")
+        print(f"{a['path']}: {a['originalBytes']:,} → {a['encodedBytes']:,} bytes; stored gzip, streamed at original URL")
 
 
 if __name__ == '__main__':

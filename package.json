@@ -5,5 +5,8 @@
   "type": "module",
   "dependencies": {
     "@netlify/blobs": "^11.1.6"
+  },
+  "scripts": {
+    "postinstall": "node tools/cloudflare-install.mjs"
   }
 }

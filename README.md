@@ -130,9 +130,11 @@ Bunny Storage serves unknown extensions as `application/octet-stream`, so a furt
 
 ## Cloudflare Pages preview build
 
-Cloudflare previews use `python3 tools/build_cloudflare.py` with build output `.cloudflare/public`.
-The helper copies the static source, gzip-encodes oversized WASM assets at their existing URLs, and adds
-`Content-Encoding: gzip` plus the WASM MIME type. Emberwake's 39.5 MB module becomes about 10.1 MB,
+Cloudflare previews retain the existing `public/` output setting. A guarded npm postinstall hook
+uses Cloudflare’s build identity variables to run `python3 tools/build_cloudflare.py`, preserves the
+original source in `.cloudflare/source-public`, and promotes `.cloudflare/public` into that ephemeral
+build’s `public/` directory. Ordinary installs do nothing. The helper copies the static source and stores oversized WASM modules as gzip files. A narrow Pages
+route stream-decodes each module at its original URL and returns the WASM MIME type. Emberwake's 39.5 MB module becomes about 10.1 MB,
 below Pages' 25 MiB per-file limit. The browser receives the original decoded bytes. Bunny and Netlify
 continue to use `public/` directly.
 
@@ -142,6 +144,7 @@ ignored. Unknown oversized formats fail the build rather than being omitted. Reg
 
 ```sh
 python3 -m unittest discover -s tools -p test_cloudflare_build.py
+node --test tools/test_cloudflare_worker.mjs
 python3 tools/build_cloudflare.py
 python3 tools/test_cloudflare_browser.py
 ```
