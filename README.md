@@ -298,3 +298,9 @@ cross-platform plan. The live page permits only its fixed loopback HTTP endpoint
 at `127.0.0.1:8791`; no SSH server or public tunnel is deployed.
 `public/play/evolve-llm/LOCAL_BUILD.json` records this overlay separately from the
 unchanged model engine and browser builds. Never commit pairing links or local files.
+
+## Engineering case studies
+
+The [campaign-data case study](https://www.evolvetech.dev/projects/campaign-data/) describes a dated production incident without publishing private implementation or customer records. Its [small replay](examples/campaign-freshness.py) is synthetic. The [website delivery case study](https://www.evolvetech.dev/projects/site-delivery/) links public failure records and verification checks.
+
+From a clean checkout, `python3 tools/verify_portfolio.py` checks internal links, metadata, routing and delivery regressions, and the replay using only the Python standard library. `python3 tools/check_delivery.py --live` additionally probes each CDN over HTTPS without credentials or DNS mutations. New case-study pages are rendered with `python3 tools/build_evidence_pages.py`, preserving the site's existing legal navigation. `python3 tools/record_portfolio_checks.py` records local check timings; they are not cloud deployment timings or evidence of a performance improvement.
