@@ -16,3 +16,5 @@ __pycache__/
 !public/play/evolve-hosting/example/__evolve/publisher.pub.pem
 
 .cache/proof-video/
+
+.cloudflare/

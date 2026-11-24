@@ -128,6 +128,27 @@ host (`https:`) and a local Ollama, and images and video from `https:`. It needs
 Bunny Storage serves unknown extensions as `application/octet-stream`, so a further edge rule sets `text/javascript` for
 `*.mjs` (Pyodide's modules); browsers refuse to run module scripts with any other type.
 
+## Cloudflare Pages preview build
+
+Cloudflare previews use `python3 tools/build_cloudflare.py` with build output `.cloudflare/public`.
+The helper copies the static source, gzip-encodes oversized WASM assets at their existing URLs, and adds
+`Content-Encoding: gzip` plus the WASM MIME type. Emberwake's 39.5 MB module becomes about 10.1 MB,
+below Pages' 25 MiB per-file limit. The browser receives the original decoded bytes. Bunny and Netlify
+continue to use `public/` directly.
+
+The helper also adds explicit detach directives before header overrides: Pages concatenates matching
+header values, so a broad CSP must be removed before a game-specific CSP is set. Generated output stays
+ignored. Unknown oversized formats fail the build rather than being omitted. Regression checks:
+
+```sh
+python3 -m unittest discover -s tools -p test_cloudflare_build.py
+python3 tools/build_cloudflare.py
+python3 tools/test_cloudflare_browser.py
+```
+
+The last command needs Python Playwright/Chromium and checks browser decoding, the source checksum,
+WASM validation and Proof rendering under the effective preview headers.
+
 ## Proof (daily engineering practice)
 
 `/play/proof/` trains problem choice, cost, primary-source research, design, agent review, implementation

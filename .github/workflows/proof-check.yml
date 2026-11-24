@@ -3,7 +3,7 @@ on:
   push:
     branches: ['proof-v2']
   pull_request:
-    paths: ['public/play/proof/**', 'tools/*proof*', 'docs/proof*', '.github/workflows/proof*']
+    paths: ['public/play/proof/**', 'tools/*proof*', 'tools/*cloudflare*', 'docs/proof*', '.github/workflows/proof*']
 permissions:
   contents: read
 jobs:
@@ -26,3 +26,5 @@ jobs:
       - run: python3 -m playwright install --with-deps chromium
       - run: python3 tools/test_proof.py 2026-11-24
       - run: python3 tools/test_proof.py 2026-11-24-project
+      - run: python3 tools/build_cloudflare.py
+      - run: python3 tools/test_cloudflare_browser.py
