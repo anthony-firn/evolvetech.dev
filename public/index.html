@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Anthony Firn — Lead Software Engineer</title>
-  <meta name="description" content="Anthony Firn, lead software engineer: web products, data pipelines and cloud infrastructure at work, plus open-source projects you can try in the browser, including a GPU language-model engine and encrypted health records.">
+  <meta name="description" content="Anthony Firn, lead software engineer at True Native Media, a podcast advertising company. Two write-ups from production systems, and open-source projects you can run in the browser.">
   <link rel="canonical" href="https://www.evolvetech.dev/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Anthony Firn — Lead Software Engineer">
-  <meta property="og:description" content="Lead software engineer. Open-source projects you can try in the browser, with their source, tests and limits.">
+  <meta property="og:description" content="Lead software engineer at a podcast advertising company. Production write-ups and open-source projects you can run in the browser.">
   <meta property="og:url" content="https://www.evolvetech.dev/">
   <meta property="og:image" content="https://www.evolvetech.dev/assets/media/og.png">
   <meta name="twitter:card" content="summary_large_image">
@@ -43,7 +43,7 @@
         <div>
           <span class="status"><span class="pulse-dot" aria-hidden="true"></span>Lead Engineer · open to remote roles</span>
           <h1 id="hero-title">I build and run <em>web and data systems.</em></h1>
-          <p class="lede">I’m <strong>Anthony Firn</strong>. Since 2022 I’ve led engineering at True Native Media, building the web apps, data pipelines and Google Cloud infrastructure behind a podcast advertising business. On my own time I build open-source software, from a GPU language-model engine to encrypted health records.</p>
+          <p class="lede">I’m <strong>Anthony Firn</strong>. Since 2022 I’ve been the lead engineer at True Native Media, a podcast advertising company, where I built and still run most of the software the business depends on. Outside work I build open-source tools. The biggest one runs language models on your own GPU, straight from a web page.</p>
           <div class="btn-row">
             <a class="btn primary" href="#work">See the work <span class="arrow" aria-hidden="true">→</span></a>
             <a class="btn" href="/resume/">Résumé</a>
@@ -59,17 +59,17 @@
       <div class="shell">
         <div class="section-head reveal">
           <div><p class="label">Experience</p><h2 id="exp-title">Where I’ve worked.</h2></div>
-          <p>I lead engineering at a podcast advertising company: its customer-facing web apps, the data platform behind them and the cloud infrastructure they run on. I built most of it myself and am now training a second engineer.</p>
+          <p>I built most of the software True Native Media runs on, and I still maintain it. I’m now training a second engineer to share the load.</p>
         </div>
 <ol class="timeline reveal">
           <li>
             <p class="when">OCT 2022 — PRESENT</p>
             <h3>Lead Engineer · <span class="org">True Native Media</span></h3>
             <ul>
-              <li>Primary engineer for the company’s software, 130+ repositories, now training a second engineer. Lead development of AdVero, the web workspace podcast shows, advertisers and staff use to run campaigns, approve ad reads and report issues.</li>
-              <li>Built the campaign-planning data platform: Cloud Run jobs that measure downloads and ad positions for about 200 podcasts daily from Megaphone, ART19 and Spotify, plus quoting and sync orchestration with audited production changes.</li>
-              <li>Keep 35 Airtable tables (about 88,000 records) in step with Firestore every 30 minutes, with BigQuery write-back and schema-drift detection, and manage Google Cloud as code with Terraform.</li>
-              <li>Stood up a support desk, per-user AI agent workspaces with approval controls, and an engineering intake desk that has taken 470+ requests and bug reports since September 2026, closing 270+.</li>
+              <li>Lead developer of AdVero, the web app where podcast shows, advertisers and our staff run campaigns and approve ad reads. Primary engineer across the company’s 130+ repositories.</li>
+              <li>Built the campaign-planning data platform. Daily Cloud Run jobs measure downloads and ad positions for about 200 podcasts from Megaphone, ART19 and Spotify data, and the same platform handles quoting and sync, with an audit trail for production data changes.</li>
+              <li>Keep 35 Airtable tables, about 88,000 records, mirrored into Firestore every 30 minutes, with schema-drift detection and BigQuery write-back. Google Cloud is managed in Terraform.</li>
+              <li>Set up the engineering intake desk, which has taken 470+ requests and bug reports since September 2026 and closed 270+. Also built a support desk and per-user AI agent workspaces with approval controls.</li>
             </ul>
           </li>
           <li>
@@ -77,8 +77,8 @@
             <h3>Systems Engineer · <span class="org">MedSpark</span></h3>
             <p>Medical product development, San Luis Obispo, California. Previously Electrical Engineering Intern, Jun 2018 – Apr 2020.</p>
             <ul>
-              <li>Worked across the whole product system: hardware design, firmware, software and the servers behind them.</li>
-              <li>Ran precision manufacturing, including wire EDM machining, to turn designs into working parts.</li>
+              <li>Worked on every layer of the products, from hardware design and firmware up to the software and the servers behind it.</li>
+              <li>Ran wire EDM and other precision machining to turn designs into working parts.</li>
             </ul>
           </li>
           <li>
@@ -92,21 +92,21 @@
     <section class="section" id="work" aria-labelledby="work-title">
       <div class="shell">
         <div class="section-head reveal">
-          <div><p class="label">Selected work</p><h2 id="work-title">Production systems and open-source work.</h2></div>
-          <p>Two case studies from systems I operate, followed by a browser inference project. Each separates what was observed from what remains unverified.</p>
+          <div><p class="label">Selected work</p><h2 id="work-title">Work I can show you.</h2></div>
+          <p>Two write-ups from systems I run, then the open-source project I’ve put the most into. The production code is private, so the first write-up comes with a small replay instead.</p>
         </div>
 
         <article class="case reveal" aria-labelledby="case-campaign-data">
-          <div class="case-media"><figure class="evidence-diagram"><figcaption>A campaign needs every referenced record.</figcaption><ol class="evidence-flow"><li>Airtable<br><small>source records</small></li><li>Workers<br><small>scan and repair</small></li><li>Firestore<br><small>operational mirror</small></li><li>BigQuery<br><small>exports and views</small></li></ol><p>Missing children trigger repair even when the parent is unchanged. Incomplete campaigns remain blocked.</p></figure></div>
+          <div class="case-media"><figure class="evidence-diagram"><figcaption>A campaign can’t confirm until all of its records arrive.</figcaption><ol class="evidence-flow"><li>Airtable<br><small>source records</small></li><li>Workers<br><small>scan and repair</small></li><li>Firestore<br><small>operational mirror</small></li><li>BigQuery<br><small>exports and views</small></li></ol><p>A missing child record now gets repaired even when its parent hasn’t changed. Until then, the campaign stays blocked.</p></figure></div>
           <div class="case-body"><p class="label">Production · TypeScript · Google Cloud</p><h3 id="case-campaign-data">Keeping campaign data complete</h3>
-            <p class="pitch">The data integrations behind True Native Media’s campaign workspace. A source record can exist while the operational mirror is still missing it; the confirmation path has to detect that gap.</p><ul class="case-points"><li>Dated incident: missing child records, a bounded urgent queue and verification after repair.</li><li>Public synthetic replay; production implementation and customer data remain private.</li></ul>
+            <p class="pitch">A campaign refused to confirm in October, even with every record in Airtable. New child records were still in the sync queue, and nothing re-checked them because the parent hadn’t changed. The write-up covers the fix and how I confirmed it.</p><ul class="case-points"><li>The fix re-checks children even when the parent is unchanged, and reserves 8 of every 32 worker slots for urgent repairs.</li><li>Comes with a short Python replay you can run. Production code and customer data stay private.</li></ul>
             <div class="btn-row"><a class="btn primary" href="/projects/campaign-data/">Read the case study <span aria-hidden="true">→</span></a></div>
           </div>
         </article>
         <article class="case reveal" aria-labelledby="case-site-delivery">
-          <div class="case-media"><figure class="evidence-diagram"><figcaption>Identical files were not enough.</figcaption><ol class="evidence-flow"><li>GitHub Actions<br><small>publish and verify</small></li><li>Two CDNs<br><small>separate origins</small></li><li>HTTPS checks<br><small>per provider</small></li><li>DNS routing<br><small>failover and recovery</small></li></ol><p>A module MIME mismatch and a stale homepage check each broke a different part of delivery. The case study includes both fixes.</p></figure></div>
+          <div class="case-media"><figure class="evidence-diagram"><figcaption>Same files on two CDNs, and two bugs anyway.</figcaption><ol class="evidence-flow"><li>GitHub Actions<br><small>publish and verify</small></li><li>Two CDNs<br><small>separate origins</small></li><li>HTTPS checks<br><small>per provider</small></li><li>DNS routing<br><small>failover and recovery</small></li></ol><p>Bunny served JavaScript modules with the wrong content type, and a homepage redesign broke the health check. Both now have a check that catches them.</p></figure></div>
           <div class="case-body"><p class="label">Delivery engineering · Python · GitHub Actions</p><h3 id="case-site-delivery">Shipping to two independent CDNs</h3>
-            <p class="pitch">This website has independent Netlify and Bunny copies, with separate health monitoring, DNS failover and certificate renewal. Two actual deployment failures explain the checks it needs.</p><ul class="case-points"><li>Deployment notes for the module content-type bug, and a source diff for the broken health check.</li><li>A recorded failover drill, local regression checks and read-only verification of both providers.</li></ul>
+            <p class="pitch">This site is deployed separately to Netlify and Bunny, and DNS fails over between them. Setting it up broke in two ways I didn’t see coming. The write-up covers both and what catches them now.</p><ul class="case-points"><li>Commit links for both fixes.</li><li>A live failover drill from October 22, and one command that re-runs every check.</li></ul>
             <div class="btn-row"><a class="btn primary" href="/projects/site-delivery/">Read the case study <span aria-hidden="true">→</span></a></div>
           </div>
         </article>
@@ -121,7 +121,7 @@
           <div class="case-body">
             <p class="label">AI inference · Rust · WebGPU</p>
             <h3 id="case-evolve-llm">Evolve LLM</h3>
-            <p class="pitch">Run open language models on your own GPU from a web page, including models larger than the GPU’s memory. A Rust engine compiled to WebAssembly computes every token in WebGPU shaders and reads the parts of the model each token needs from storage.</p>
+            <p class="pitch">Runs open language models on your own GPU from a web page, including models bigger than the GPU’s memory. It’s a Rust engine compiled to WebAssembly. Every token is computed in WebGPU shaders, and weights that don’t fit on the GPU are read from browser storage as each token needs them.</p>
             <ul class="case-points"><li>No machine-learning framework: its own GGUF loader, 25 weight formats, WGSL kernels and tokenizers.</li><li>Output checked against Hugging Face transformers on the same weights; browser replies match the native build word for word.</li></ul>
             <ul class="chips" aria-label="Built with"><li>Rust</li><li>WebGPU / WGSL</li><li>WebAssembly</li></ul>
             <div class="btn-row"><a class="btn primary" href="/play/evolve-llm/">Open the chat <span class="arrow" aria-hidden="true">→</span></a><a class="btn" href="/projects/evolve-llm/">Case study</a><a class="btn" href="https://github.com/anthony-firn/evolve-llm">Source ↗</a></div>
@@ -133,13 +133,13 @@
     <section class="section tight" id="how-i-build" aria-labelledby="how-title">
       <div class="shell">
         <div class="section-head reveal">
-          <div><p class="label">How I build</p><h2 id="how-title">Built with AI coding agents.</h2></div>
-          <p>Most of the code in my open-source projects is written by AI coding agents, mainly Claude Code and Codex. Here is who does what.</p>
+          <div><p class="label">How I build</p><h2 id="how-title">I build with AI coding agents.</h2></div>
+          <p>Claude Code and Codex write most of the code in my open-source projects. I’m responsible for what ships.</p>
         </div>
         <div class="how reveal">
-          <div><h3>What I do</h3><p>Choose the problem, set the requirements and what a project must never do, steer the design, and decide what ships.</p></div>
-          <div><h3>What the agents do</h3><p>Write most of the implementation and tests. I review the changes, investigate failures and decide what to keep.</p></div>
-          <div><h3>How it’s checked</h3><p>Reference comparisons for inference output, concurrent-delivery and interrupted-write checks for Inbox, and a recorded hosting failover drill. Case studies state which paths were exercised and which were not.</p></div>
+          <div><h3>What I do</h3><p>Pick the problem and write the requirements, including what a project must never do. I make the design calls and decide when something is ready.</p></div>
+          <div><h3>What the agents do</h3><p>Most of the implementation and tests. I read the diffs, dig into failures and throw out what doesn’t hold up.</p></div>
+          <div><h3>How it’s checked</h3><p>Against something outside the code itself where I can. Evolve LLM’s replies are compared with a reference implementation, and the hosting failover was drilled on the live site.</p></div>
         </div>
       </div>
     </section>
@@ -175,7 +175,7 @@
             <div><dt>Recovery</dt><dd>Ten minutes of healthy probes before returning</dd></div>
             <div><dt>Certificates</dt><dd>DNS-validated in both zones, installed on both CDNs</dd></div>
           </dl>
-          <p><a href="/projects/site-delivery/">Deployment bugs, source diffs and verification →</a></p>
+          <p><a href="/projects/site-delivery/">The two bugs this setup hit, and their fixes →</a></p>
           <p class="served">Right now you're being served by <b id="served-by">…</b></p>
         </div>
       </div>
@@ -183,13 +183,13 @@
 
     <section class="section" aria-labelledby="more-title">
       <div class="shell">
-        <div class="section-head reveal"><div><p class="label">More work</p><h2 id="more-title">Working tools and experiments.</h2></div><p>Email storage, encrypted health records and smaller research projects. Each page documents its current scope.</p></div>
+        <div class="section-head reveal"><div><p class="label">More work</p><h2 id="more-title">Working tools and experiments.</h2></div><p>Smaller projects. Each one has something you can open in the browser.</p></div>
         <div class="experiments reveal">
-          <a class="exp" href="/projects/evolve-health/"><span class="tag">Health records · Web Crypto</span><h3>Evolve Health</h3><p>Encrypted household health records, with a fictional demo, sharing controls and documented verification limits.</p></a>
+          <a class="exp" href="/projects/evolve-health/"><span class="tag">Health records · Web Crypto</span><h3>Evolve Health</h3><p>Encrypted health records for a household, pets included, with sharing for caregivers and doctors. The demo uses made-up records.</p></a>
           <a class="exp" href="/projects/retirement/"><span class="tag">Simulation · Python · PyTorch</span><h3>Retirement Research</h3><p>GPU-based withdrawal simulations, with published scenarios and an explorer. Research, not financial advice.</p></a>
           <a class="exp" href="/projects/emergence/"><span class="tag">Simulation · Rust · CUDA</span><h3>Emergence</h3><p>Physics models that report their own error and switch to a finer model when it grows too large, with a browser CAD workspace built on them.</p></a>
           <a class="exp" href="/projects/fairground/"><span class="tag">Social · TypeScript · Nostr</span><h3>Fairground</h3><p>A social app with no company in the middle: creators are paid directly, and your feed is ranked on your own device.</p></a>
-          <a class="exp" href="/projects/evolve-inbox/"><span class="tag">Email · Serverless</span><h3>Evolve Inbox</h3><p>The receiving inbox behind this domain. An optional PostgreSQL backend adds atomic message storage, tested with concurrent deliveries and a terminated database connection. The live mailbox still uses Blobs.</p></a>
+          <a class="exp" href="/projects/evolve-inbox/"><span class="tag">Email · Serverless</span><h3>Evolve Inbox</h3><p>The inbox that receives mail for this domain. It now has an optional PostgreSQL backend that saves each message and its index in one transaction.</p></a>
           <a class="exp" href="/projects/emberwake/"><span class="tag">Games · Godot 4 · Blender</span><h3>Emberwake</h3><p>A 3D action roguelike with seeded rooms and Blender-scripted characters, playable in a browser tab.</p></a>
           <a class="exp" href="/projects/open-case-law/"><span class="tag">Legal research · Python</span><h3>Open Case Law</h3><p>Search U.S. court opinions and save exact passages, in the browser or from a command line.</p></a>
           <a class="exp" href="/play/probate/"><span class="tag">Practical tools</span><h3>California probate forms</h3><p>Plain-language, step-by-step help with California probate court forms. Answers stay in your browser.</p></a>
