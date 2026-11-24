@@ -128,31 +128,33 @@ host (`https:`) and a local Ollama, and images and video from `https:`. It needs
 Bunny Storage serves unknown extensions as `application/octet-stream`, so a further edge rule sets `text/javascript` for
 `*.mjs` (Pyodide's modules); browsers refuse to run module scripts with any other type.
 
-## Proof (daily practice game)
+## Proof (daily engineering practice)
 
-`/play/proof/` is a daily practice game for staying technically sharp. Each episode has six stages: a narrated
-scene player (browser speech, captions always on), a reading with sources, a quiz answered without AI, a judgment
-call, a Python exercise that runs in the browser, and an answer in your own words. A small model on your own GPU
-can coach the answer, but only after you've saved it. Streaks, XP and spaced review (1, 3, 7, 14 and 30 days) live
-in localStorage.
+`/play/proof/` trains problem choice, cost, primary-source research, design, agent review, implementation
+by hand and concise communication. A daily mission takes about 60 minutes. Each stage opens after the
+previous one is submitted; source reference answers and the optional local coach follow the learner's
+own work. The separate weekly project applies the practice to a real repository. XP and spaced recall
+(1, 3, 7, 14 and 30 days) stay in localStorage. Version 1 progress remains stored under its original key;
+v2 starts its own record because the activities and scoring changed.
 
-An episode is `public/play/proof/episodes/<date>.json`, plus `<date>.solution.py` and an entry in `episodes/index.json`.
-The newest episode dated on or before the visitor's local date is "today". Publish one only after this passes:
+Codex and Claude follow [the same authoring contract](docs/proof-authoring.md), including a shared
+video renderer, pinned Kokoro voice, fonts, palette, captions and 1080p MP4 format. Daily content uses
+schema v2 in `public/play/proof/episodes/`; rendered media lives in `public/play/proof/media/`.
+[The daily prompt](docs/proof-daily-prompt.md) is provider-neutral. The original Claude routine remains
+disabled until v2 and its first reviewed MP4 ship; its existing ID is recorded in the authoring contract.
 
 ```sh
-python3 tools/check_proof.py --online <date>   # structure, starter fails, reference passes, voice, live sources
-python3 tools/test_proof.py <date>             # plays the episode in Chromium under the /play CSP
-node --test tools/test_proof_state.mjs         # streak, XP and review rules
+python3 tools/check_proof.py                       # schema, behavioral exercise and prose
+node --test tools/test_proof_state.mjs             # scoring, streak and recall
+python3 tools/test_proof.py 2026-11-24             # browser, CSP and Pyodide
+python3 tools/render_proof_video.py 2026-11-24 --voice-site /path/to/evolve-voice/dist
+python3 tools/check_proof.py --online --require-video 2026-11-24
 ```
 
-A daily cloud routine writes each episode and pushes it to a `proof/episode-<date>` branch. The **Publish Proof
-episode** workflow re-runs both checks there. Only if they pass, and only if the branch touches nothing outside
-`public/play/proof/episodes/`, does it squash-merge into `main` and dispatch a deploy. A failed run leaves `main`
-alone; GitHub's failed-workflow email is the alert.
-
-`harness.py` runs exercises the same way in the browser (Pyodide) and in `check_proof.py`. The game reuses
-`/play/symmetry-forge/pyodide/`; `check_proof.py` fails if that copy moves. No extra CSP is needed: exercises run in
-WebAssembly, and the coach's model downloads happen inside Evolve LLM's own worker.
+The existing episode workflow accepts content/media branches only and checks them before merging and
+deploying. General engine changes require a normal PR. Exercises reuse Symmetry Forge's Pyodide and
+the existing Evolve LLM coach SDK. Job-demand data publishes aggregate counts from an explicitly dated
+curated sample, with its selection rules shown; it is not a labor-market or pay forecast.
 
 ## Evolve LLM
 

@@ -1,0 +1,18 @@
+:root { color-scheme: dark; --bg: #0b0d12; --panel: #12161f; --text: #e8ebf2; --accent: #ff7a3d; --cyan: #5cc8ff; }
+body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+main.video-frame { display: block; max-width: none; margin: 0; padding: 64px 96px; width: 1920px; height: 1080px; }
+.video-brand { display: flex; justify-content: space-between; align-items: center; font-size: 28px; color: #b7bfcf; }
+.video-brand h1 { margin: 0; font: 700 48px 'Space Grotesk'; color: var(--accent); }
+#video-scene { margin-top: 32px; width: 1728px; height: 650px; min-height: 0; aspect-ratio: auto; padding: 70px; }
+.scene, .v-bullets li, .v-compare li, .v-flow li { animation: none; }
+.v-title h3 { font-size: 88px; }
+.v-title .kicker, .scene-n { font-size: 24px; }
+.v-statement .big { font-size: 64px; }
+.v-statement .sub { font-size: 36px; }
+.v-bullets, .v-compare ul { font-size: 38px; gap: 24px; }
+.v-compare { gap: 80px; }
+.v-compare h4 { font-size: 38px; }
+.v-flow li { font-size: 30px; }
+.v-code { font-size: 28px; }
+#video-caption { height: 130px; margin: 26px auto 0; max-width: 1600px; font-size: 34px; line-height: 1.45; text-align: center; color: var(--text); }
+.video-frame footer { text-align: right; font-size: 22px; color: #8590a6; }

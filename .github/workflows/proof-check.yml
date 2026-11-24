@@ -1,0 +1,27 @@
+name: Check Proof v2
+on:
+  push:
+    branches: ['proof-v2']
+  pull_request:
+    paths: ['public/play/proof/**', 'tools/*proof*', 'docs/proof*', '.github/workflows/proof*']
+permissions:
+  contents: read
+jobs:
+  practice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 tools/check_proof.py
+      - run: node --test tools/test_proof_state.mjs
+      - run: python3 -m unittest discover -s tools -p 'test_proof_content.py'
+      - run: python3 -m pip install playwright
+      - run: python3 -m playwright install --with-deps chromium
+      - run: python3 tools/test_proof.py 2026-11-24
+      - run: python3 tools/test_proof.py 2026-11-24-project

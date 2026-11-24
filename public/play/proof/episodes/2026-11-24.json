@@ -1,282 +1,345 @@
 {
- "version": 1,
- "id": "2026-11-24",
- "date": "2026-11-24",
- "title": "Prove it: checking code you didn't write",
- "tracks": [
-  "verification",
-  "ai-engineering",
-  "math"
- ],
- "minutes": 45,
- "hook": "Agents can write a thousand lines in a minute. Reading them still takes as long as it always did. Today: the checks that scale, from example tests to property tests to machine-checked proofs.",
- "scenes": [
-  {
-   "title": "Prove it",
-   "visual": {
-    "type": "title",
-    "kicker": "Day 1 · Verification",
-    "text": "Prove it"
-   },
-   "narration": "Today's idea is the one the rest of this game depends on: how to check code you didn't write. An agent can produce a thousand lines in a minute. Reading them still takes you as long as it always did."
-  },
-  {
-   "title": "Slop, defined",
-   "visual": {
-    "type": "statement",
-    "text": "Slop is when making it took less effort than understanding it will.",
-    "sub": "Paraphrased from the No AI Slop manifesto"
-   },
-   "narration": "A manifesto ThePrimeagen covered today puts the problem plainly. Something is slop when less effort went into making it than its reader has to spend understanding it. Using AI isn't the problem. Passing output along without owning it is."
-  },
-  {
-   "title": "What scales",
-   "visual": {
-    "type": "compare",
-    "left": {
-     "title": "Reading every line",
-     "items": [
-      "Cost grows with the diff",
-      "Tired eyes miss boundary bugs",
-      "Can't keep up with agents"
-     ]
-    },
-    "right": {
-     "title": "Checking properties",
-     "items": [
-      "Cost grows with the risk",
-      "A machine tries thousands of inputs",
-      "Works on code from anyone"
-     ]
-    }
-   },
-   "narration": "You can't read your way out of that. What scales is deciding what must always be true, then letting a machine try hard to break it."
-  },
-  {
-   "title": "Two properties of sort",
-   "visual": {
-    "type": "code",
-    "highlight": [
-     5,
-     6
-    ],
-    "code": "from collections import Counter\n\ndef check_sort(sort, xs):\n    out = sort(xs)\n    assert all(a <= b for a, b in zip(out, out[1:]))  # in order\n    assert Counter(out) == Counter(xs)                 # same items"
-   },
-   "narration": "Take sorting. You don't need the right answer for every list. You need two properties: the output is in order, and it holds exactly the same items. Any function that passes both on every input is a correct sort."
-  },
-  {
-   "title": "Property-based testing",
-   "visual": {
-    "type": "flow",
-    "steps": [
-     "Generate random inputs",
-     "Check the properties",
-     "Shrink a failure to its smallest case",
-     "Keep it as a regression test"
+  "version": 2,
+  "id": "2026-11-24",
+  "date": "2026-11-24",
+  "kind": "daily",
+  "title": "Keep the build moving",
+  "minutes": 60,
+  "tracks": [
+    "scheduling",
+    "system-design",
+    "agent-review"
+  ],
+  "hook": "Your agents fit on the machine. Your build never starts. Decide what deserves capacity, then write and inspect the scheduler yourself.",
+  "briefing": {
+    "scenes": [
+      {
+        "title": "A useful machine, a stuck build",
+        "narration": "A developer runs browser agents and builds on the same machine. Small agent tasks keep finding spare capacity, while a build waits for enough CPU and memory together. Buying another machine might hide the problem. First work out who is waiting and what guarantee they actually need.",
+        "visual": {
+          "type": "title",
+          "kicker": "Proof / Mission 01",
+          "text": "Keep the build moving"
+        }
+      },
+      {
+        "title": "Start with the person waiting",
+        "narration": "In his reaction to Michael Hoff, ThePrimeagen describes researching Slurm and Kubernetes before designing local and global job queues. Hoff describes the shift toward supervising agents. Both leave you with a practical question: can you explain why the work an agent produced deserves to run?",
+        "visual": {
+          "type": "compare",
+          "left": {
+            "title": "The user needs",
+            "items": [
+              "A build that starts predictably",
+              "A machine that stays useful"
+            ]
+          },
+          "right": {
+            "title": "You must decide",
+            "items": [
+              "Which work waits",
+              "What capacity stays available"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Read before you design",
+        "narration": "Open the scheduling documents and look for how a waiting job gets a future start time. Find the difference between deciding what fits and deciding what wins. Write your own answers before revealing the reference. Today uses one machine so the decision is small enough to inspect.",
+        "visual": {
+          "type": "flow",
+          "steps": [
+            "Choose the problem",
+            "Read primary sources",
+            "Design your policy",
+            "Review the agent",
+            "Build and inspect"
+          ]
+        }
+      },
+      {
+        "title": "Make a claim you can break",
+        "narration": "You will review an intentionally flawed proposal, then implement a deterministic scheduler with CPU and memory accounting. Export its real inputs and decision as JSON. Your final note should give another engineer a short way to reproduce the behavior. The weekly project asks whether this policy helps a real workload.",
+        "visual": {
+          "type": "bullets",
+          "items": [
+            "A reservation with a reason",
+            "Tests that expose starvation",
+            "A state snapshot from the real code"
+          ]
+        }
+      }
     ]
-   },
-   "narration": "Property-based testing automates this. QuickCheck started it in Haskell around the year 2000, and Hypothesis does it in Python. It generates inputs and checks your properties. When one fails, it shrinks the input to the smallest example that still breaks, which is usually the bug in plain sight."
   },
-  {
-   "title": "From tests to proofs",
-   "visual": {
-    "type": "statement",
-    "text": "Tests try many inputs. A proof covers all of them.",
-    "sub": "Lean checks every step of a proof mechanically"
-   },
-   "narration": "Proofs go one step further. In the Lean proof assistant, a theorem is checked step by step for every input it covers. Mathematicians and AI labs use it to check machine-assisted math. In 2023 Terence Tao's group formalized a new proof in about three weeks. In 2024 DeepMind's AlphaProof, which writes its proofs in Lean, helped reach silver-medal level at the International Mathematical Olympiad."
+  "problem": {
+    "context": "You share a 4-CPU, 8-GB worker between browser agents and builds. A build needs all 4 CPUs for 5 minutes. A stream of 1-CPU agents keeps arriving. The build has waited 40 minutes; developers cannot test their change.",
+    "question": "What is the best first problem to solve?",
+    "options": [
+      {
+        "text": "Rewrite the worker in Rust to reduce process overhead.",
+        "verdict": "poor",
+        "why": "Lower overhead might help later. It gives the waiting build no start-time guarantee."
+      },
+      {
+        "text": "Measure build wait time and add a capacity reservation before expanding the system.",
+        "verdict": "best",
+        "why": "This targets the developer delay and gives you a behavior you can test on the current machine."
+      },
+      {
+        "text": "Buy a dedicated build worker immediately.",
+        "verdict": "ok",
+        "why": "Isolation can be a good choice if delays cost more than a worker. First measure that tradeoff and check your budget."
+      }
+    ],
+    "cost": {
+      "q": "Assume a worker costs $40/day. A scheduler change costs 3 engineer-hours at $80/hour and saves 20 engineer-minutes each workday. Ignoring maintenance, when does the change repay its engineering cost?",
+      "choices": [
+        "After 3 workdays",
+        "After 9 workdays",
+        "After 40 workdays"
+      ],
+      "answer": 1,
+      "why": "$240 divided by $26.67 saved per workday is about 9 workdays. The dedicated worker would cost more per day than this measured saving."
+    }
   },
-  {
-   "title": "Your turn",
-   "visual": {
-    "type": "title",
-    "kicker": "Today's build",
-    "text": "Catch the agent's bug"
-   },
-   "narration": "Today's build: an agent wrote a function that merges overlapping intervals, and it passes its own example. You'll write the properties, a small random tester that finds where it breaks, and then a merge that survives your own checks. By hand."
-  }
- ],
- "read": {
-  "sections": [
-   {
-    "heading": "What happened",
-    "body": "ThePrimeagen's video today walks through **No AI Slop: A Manifesto**, written by speakers and attendees of the AIE Code Summit 2026. More than a thousand engineers had signed it when this episode was written. It borrows the Agile Manifesto's form: outcomes over output, understanding over speed, your own thinking over a model's first draft.\n\nIts working definition is useful: something is slop when less effort went into making it than its reader has to spend understanding it. Using AI doesn't make something slop. Passing the output along without taking responsibility for it does. It also commits its signers to say when an agent wrote something they send, and to check the parts that matter before it goes out.\n\nA second video today reacts to Michael Hoff's piece on AI agents and the joy of coding, and asks whether engineers are moving from craftsmen to system architects. One answer, and the bet this game makes: the craft moves into judgment. Deciding what must be true, and noticing when it isn't."
-   },
-   {
-    "heading": "Why it matters",
-    "body": "Everyone has the same models now. What separates engineers is whether they can tell when output is wrong, cheaply, and explain how they know.\n\n\"I wrote properties for the risky part and let a tester try to break them\" is a concrete answer to the review question you'll get in interviews. It's also the habit that stops a codebase from compounding slop, which the manifesto warns about: the next agent reads and copies whatever is already there."
-   },
-   {
-    "heading": "Properties in practice",
-    "body": "A property is a statement that must hold for every input. A few patterns cover most code:\n\n- **Invariants:** a sorted list is in order, a balance is never negative.\n- **Round trips:** `decode(encode(x)) == x`.\n- **Idempotence:** `merge(merge(x)) == merge(x)`.\n- **Agreement with a slow, obvious version:** a clever function returns what a brute-force one does.\n\nIn Python, [Hypothesis](https://hypothesis.readthedocs.io/en/latest/) generates the inputs and shrinks failures for you. Today you'll write a tiny version by hand, so you know what it's doing."
-   },
-   {
-    "heading": "From tests to proofs",
-    "body": "Tests, even thousands of random ones, sample the input space. A proof covers all of it. [Lean](https://lean-lang.org/) is a programming language and proof assistant: you state a theorem, write a proof, and Lean checks every step.\n\nThat's why it has become the checker for machine-assisted mathematics. In late 2023 Terence Tao led a group that formalized the proof of the polynomial Freiman–Ruzsa conjecture in Lean in about three weeks. In 2024 Google DeepMind's AlphaProof, which writes its proofs in Lean, and AlphaGeometry 2 together solved four of the six International Mathematical Olympiad problems, silver-medal standard.\n\nMost code doesn't need a proof. The ladder still helps you choose: example tests for behavior, property tests for whole input spaces, proofs for the few things that must never break."
-   },
-   {
-    "heading": "Today's build",
-    "body": "The starter holds `agent_merge`, which merges overlapping closed intervals. It has two bugs, and its own example doesn't show either one. Write `violations()` to list what's wrong with a claimed merge, `find_counterexample()` to hunt with random inputs, and your own `merge()`. Then make your merge pass your own checks."
-   }
+  "research": {
+    "sources": [
+      {
+        "title": "Slurm scheduling configuration",
+        "url": "https://slurm.schedmd.com/sched_config.html",
+        "note": "Read Overview and Backfill Scheduling; focus on the reservation rule.",
+        "minutes": 5
+      },
+      {
+        "title": "Slurm multifactor priority",
+        "url": "https://slurm.schedmd.com/priority_multifactor.html",
+        "note": "Read the priority formula and Age Factor. Which waiting time counts?",
+        "minutes": 4
+      },
+      {
+        "title": "Kubernetes scheduler",
+        "url": "https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/",
+        "note": "Read Node selection: distinguish filtering from scoring.",
+        "minutes": 3
+      }
+    ],
+    "guide": "Read the named sections yourself. Trace a running job, a waiting large job and a short new job. Write down which event frees both CPU and memory. Do not ask a model to summarize the pages before you try.",
+    "questions": [
+      {
+        "id": "backfill",
+        "q": "What must remain true when Slurm starts lower-priority work, and why does its estimate depend on runtime information?",
+        "answer": "Starting the smaller job must preserve the expected start of higher-priority work. The scheduler needs a credible view of when occupied resources become free. A task that runs past its declared duration can break that prediction.",
+        "points": [
+          "Preserve higher-priority expected starts.",
+          "Runtime estimates affect whether a reservation can be honored."
+        ]
+      },
+      {
+        "id": "age",
+        "q": "Which waiting time increases the Slurm age factor? Does merely submitting a job make its age grow?",
+        "answer": "Age tracks time spent eligible to run. Waiting on an unfinished dependency does not increase it. The exercise below uses a simpler unbounded score based on submitted time; that is a teaching policy, not Slurm’s complete priority calculation.",
+        "points": [
+          "Eligible waiting time differs from dependency waiting.",
+          "Our exercise policy is a simplification of the real scheduler."
+        ]
+      },
+      {
+        "id": "filter",
+        "q": "Why does Kubernetes filter before scoring? What happens if a high-scoring candidate cannot satisfy the resource request?",
+        "answer": "Filtering removes nodes that cannot run the pod. Scoring ranks the remaining feasible nodes. A preferred node without sufficient resources cannot become valid through a higher score; if no candidate survives filtering, the pod stays unscheduled.",
+        "points": [
+          "Feasibility must be established before preference."
+        ]
+      }
+    ]
+  },
+  "design": {
+    "prompt": "Design one scheduling tick for this worker. In at most 150 words explain capacity, fairness, the reservation and observable state. Include your state transitions. Keep the distributed claim/retry problem as a separate next step.",
+    "wordLimit": 150,
+    "fields": [
+      {
+        "id": "policy",
+        "label": "Capacity and ordering",
+        "hint": "What fits? How does waiting affect priority?"
+      },
+      {
+        "id": "states",
+        "label": "States and transitions",
+        "hint": "queued → reserved or running → finished; what happens on failure?"
+      },
+      {
+        "id": "evidence",
+        "label": "Evidence and failure boundary",
+        "hint": "What snapshot and test would convince you?"
+      }
+    ],
+    "coachFocus": "Resource accounting; reservations; duplicate execution after a worker crash. Distinguish this single-machine policy from distributed execution.",
+    "reference": "Filter impossible requests and leave future arrivals out. Order eligible jobs by the stated age-adjusted priority. Account for CPU and RAM across running tasks and every task started this tick. Reserve the first blocked job at the earliest release event where both resources fit; accept later tasks only when they finish by that reservation. Emit the inputs and the real plan as JSON. A real worker also needs atomic claims, leases, idempotent side effects and a runtime-overrun policy.",
+    "rubric": [
+      "Both CPU and RAM are accounted for cumulatively.",
+      "The first blocked job gets a reservation that backfill cannot move.",
+      "Waiting affects priority; tie-breaking is deterministic.",
+      "The snapshot is produced by the same code that makes the decision.",
+      "Distributed claims and overruns are stated as additional work."
+    ]
+  },
+  "review": {
+    "intro": "This is a planted review exercise. An agent proposes the following design for multiple workers. Decide which claims need correction before it can ship.",
+    "artifact": {
+      "format": "code",
+      "title": "Agent proposal",
+      "body": "for job in sorted(queue, key=lambda j: -j.priority):\n    if job.cpu <= free_cpu:\n        start(job)  # each worker independently reads the global queue\n\n# No reservations: any small job that fits should run.\n# Jobs are trusted to finish on time; there is no runtime enforcement.\n# Debug UI draws a separate, hard-coded \"healthy\" queue diagram.\n# Start with a single worker before adding global coordination."
+    },
+    "issues": [
+      {
+        "text": "It checks CPU but ignores memory and capacity consumed by jobs started during the tick.",
+        "real": true,
+        "why": "Concurrent starts can exceed both the remaining CPU budget and the memory budget."
+      },
+      {
+        "text": "Static priority and unlimited backfill can keep the build waiting.",
+        "real": true,
+        "why": "A reservation and an explicit fairness policy give the blocked work a future opportunity."
+      },
+      {
+        "text": "Independent readers can claim the same global job.",
+        "real": true,
+        "why": "Reading is not ownership. A real distributed queue needs atomic claims and a recovery rule."
+      },
+      {
+        "text": "Runtime estimates without enforcement can invalidate the reservation.",
+        "real": true,
+        "why": "Choose whether to stop overruns, reschedule reservations or isolate capacity; surface the breach."
+      },
+      {
+        "text": "The diagram can show healthy state while the real queue is stuck.",
+        "real": true,
+        "why": "Generate observations from the actual decision and workload state."
+      },
+      {
+        "text": "Beginning with one worker is itself a correctness bug.",
+        "real": false,
+        "why": "A single worker is a sensible bounded first step. Be clear about what it cannot prove."
+      }
+    ]
+  },
+  "build": {
+    "language": "python",
+    "title": "A scheduler you can explain",
+    "brief": "Implement `select_jobs(now, capacity, running, pending)` and `visualize(...)`. All times are integer minutes; CPU and RAM are positive integers. IDs are unique. Running jobs have `cpu`, `ram`, and `end`; pending jobs have `id`, `cpu`, `ram`, `duration`, `priority`, and `submitted`. Running usage fits capacity. Durations are positive. Inputs follow this contract.\n\nReject jobs exceeding total capacity, returning their IDs sorted. Ignore future arrivals. Sort eligible jobs by descending `priority + (now - submitted) // 10`, then ascending submitted time, then ID. Completed jobs (`end <= now`) consume nothing. Start jobs that fit, subtracting CPU and RAM cumulatively.\n\nReserve only the first job that cannot start: find the earliest running-job end time at which it fits. Later jobs may start only if they fit now AND finish at or before that reservation. This is conservative EASY-style backfill protecting one head job, not Slurm’s complete algorithm. Return `{\"start\": [ids in start order], \"reserved\": {\"id\": id, \"at\": time} or None, \"rejected\": [ids]}`. Never mutate inputs.\n\n`visualize` returns a JSON string with `now`, `capacity`, `running`, `pending`, and `plan`, calling your real scheduler to get the plan. The final test prints this snapshot. Inspect it against the expected resource releases.",
+    "starter": "import json\n\n\ndef select_jobs(now, capacity, running, pending):\n    # Account for both resources; protect the first blocked job.\n    return {\"start\": [], \"reserved\": None, \"rejected\": []}\n\n\ndef visualize(now, capacity, running, pending):\n    # Export the actual input state and decision, not a mock diagram.\n    return json.dumps({})\n",
+    "tests": [
+      {
+        "name": "Empty queue",
+        "code": "assert select_jobs(0, {\"cpu\": 4, \"ram\": 8}, [], []) == {\"start\": [], \"reserved\": None, \"rejected\": []}"
+      },
+      {
+        "name": "Cumulative CPU and RAM",
+        "code": "def job(id, cpu=1, ram=1, duration=2, priority=0, submitted=0):\n    return dict(id=id, cpu=cpu, ram=ram, duration=duration, priority=priority, submitted=submitted)\ncap = {\"cpu\": 4, \"ram\": 8}\np = select_jobs(0, cap, [], [job(\"a\", 2, 5), job(\"b\", 2, 4), job(\"c\", 1, 3, duration=1)])\nassert p[\"start\"] == [\"a\", \"c\"], p\nassert p[\"reserved\"] == {\"id\": \"b\", \"at\": 2}, p"
+      },
+      {
+        "name": "Backfill at reservation boundary",
+        "code": "def job(id, cpu=1, ram=1, duration=2, priority=0, submitted=0):\n    return dict(id=id, cpu=cpu, ram=ram, duration=duration, priority=priority, submitted=submitted)\ncap = {\"cpu\": 4, \"ram\": 8}\nr = [{\"cpu\": 2, \"ram\": 2, \"end\": 5}]\np = select_jobs(0, cap, r, [job(\"build\", 4, priority=10), job(\"short\", 1, duration=5)])\nassert p[\"start\"] == [\"short\"] and p[\"reserved\"] == {\"id\": \"build\", \"at\": 5}, p"
+      },
+      {
+        "name": "Long backfill must wait",
+        "code": "def job(id, cpu=1, ram=1, duration=2, priority=0, submitted=0):\n    return dict(id=id, cpu=cpu, ram=ram, duration=duration, priority=priority, submitted=submitted)\ncap = {\"cpu\": 4, \"ram\": 8}\nr = [{\"cpu\": 2, \"ram\": 2, \"end\": 5}]\np = select_jobs(0, cap, r, [job(\"build\", 4, priority=10), job(\"long\", 1, duration=6)])\nassert p[\"start\"] == [] and p[\"reserved\"][\"at\"] == 5, p"
+      },
+      {
+        "name": "Reservation uses both resources",
+        "code": "def job(id, cpu=1, ram=1, duration=2, priority=0, submitted=0):\n    return dict(id=id, cpu=cpu, ram=ram, duration=duration, priority=priority, submitted=submitted)\ncap = {\"cpu\": 4, \"ram\": 8}\nr = [{\"cpu\": 1, \"ram\": 6, \"end\": 7}, {\"cpu\": 2, \"ram\": 1, \"end\": 3}]\np = select_jobs(0, cap, r, [job(\"head\", 3, 4)])\nassert p[\"reserved\"] == {\"id\": \"head\", \"at\": 7}, p"
+      },
+      {
+        "name": "Aging and stable ties",
+        "code": "def job(id, cpu=1, ram=1, duration=2, priority=0, submitted=0):\n    return dict(id=id, cpu=cpu, ram=ram, duration=duration, priority=priority, submitted=submitted)\ncap = {\"cpu\": 4, \"ram\": 8}\np = select_jobs(30, {\"cpu\": 1, \"ram\": 1}, [], [job(\"new\", priority=2, submitted=30), job(\"old\", submitted=0)])\nassert p[\"start\"] == [\"old\"], p\np = select_jobs(0, cap, [], [job(\"z\", 4), job(\"a\", 4)])\nassert p[\"start\"] == [\"a\"], p"
+      },
+      {
+        "name": "Impossible requests do not block",
+        "code": "def job(id, cpu=1, ram=1, duration=2, priority=0, submitted=0):\n    return dict(id=id, cpu=cpu, ram=ram, duration=duration, priority=priority, submitted=submitted)\ncap = {\"cpu\": 4, \"ram\": 8}\np = select_jobs(0, cap, [], [job(\"too-big\", ram=9, priority=100), job(\"ok\")])\nassert p[\"start\"] == [\"ok\"] and p[\"rejected\"] == [\"too-big\"], p"
+      },
+      {
+        "name": "Finished jobs release capacity; future jobs wait",
+        "code": "def job(id, cpu=1, ram=1, duration=2, priority=0, submitted=0):\n    return dict(id=id, cpu=cpu, ram=ram, duration=duration, priority=priority, submitted=submitted)\ncap = {\"cpu\": 4, \"ram\": 8}\np = select_jobs(5, cap, [{\"cpu\": 4, \"ram\": 8, \"end\": 5}], [job(\"ready\", 4, 8), job(\"future\", submitted=6, priority=100)])\nassert p[\"start\"] == [\"ready\"] and p[\"reserved\"] is None, p"
+      },
+      {
+        "name": "Inputs are preserved and decisions repeat",
+        "code": "def job(id, cpu=1, ram=1, duration=2, priority=0, submitted=0):\n    return dict(id=id, cpu=cpu, ram=ram, duration=duration, priority=priority, submitted=submitted)\ncap = {\"cpu\": 4, \"ram\": 8}\nimport copy\nr = [{\"cpu\": 2, \"ram\": 2, \"end\": 5}]\nq = [job(\"b\", 4, priority=10), job(\"s\")]\nbefore = copy.deepcopy([cap, r, q])\na = select_jobs(0, cap, r, q)\nassert a == select_jobs(0, cap, r, q)\nassert [cap, r, q] == before"
+      },
+      {
+        "name": "Visualization reflects the real decision",
+        "code": "def job(id, cpu=1, ram=1, duration=2, priority=0, submitted=0):\n    return dict(id=id, cpu=cpu, ram=ram, duration=duration, priority=priority, submitted=submitted)\ncap = {\"cpu\": 4, \"ram\": 8}\nimport json\nr = [{\"cpu\": 2, \"ram\": 2, \"end\": 5}]\nq = [job(\"build\", 4, priority=10), job(\"quick\")]\nv = json.loads(visualize(0, cap, r, q))\nassert v == {\"now\": 0, \"capacity\": cap, \"running\": r, \"pending\": q, \"plan\": select_jobs(0, cap, r, q)}\nprint(json.dumps(v, indent=2))"
+      }
+    ],
+    "hints": [
+      "Write fits(job, at): count only allocations whose end is greater than at. Include jobs started in this tick.",
+      "Sort with a tuple: negative effective priority, submitted time, ID. Reject impossible jobs before making any reservation.",
+      "The reservation time must be one of the active job end times. Once set, allow later jobs only when now + duration <= reserved time."
+    ]
+  },
+  "ship": {
+    "prompt": "Write two lines: what changed and why, then the command or case a reviewer should run. Keep it to 60 words.",
+    "wordLimit": 60,
+    "coachFocus": "Concrete behavior and reproducible evidence; mention the single-worker scope.",
+    "example": "Reserve capacity for the waiting build while short jobs use the gap on one worker.\nTest a 4-CPU build blocked until minute 5: the 5-minute agent starts, the 6-minute agent waits."
+  },
+  "recall": [
+    {
+      "id": "reservation",
+      "q": "A backfill task fits now but finishes after the head reservation. Under our conservative rule, what happens?",
+      "choices": [
+        "Start it because CPU is free",
+        "Leave it queued",
+        "Erase the reservation"
+      ],
+      "answer": 1,
+      "why": "Protect the head job’s promised start. Our conservative exercise requires backfill to finish by that time."
+    },
+    {
+      "id": "ownership",
+      "q": "Two workers both read an available job. What prevents duplicate ownership?",
+      "choices": [
+        "An atomic claim with a recovery protocol",
+        "An updated diagram",
+        "A higher priority score"
+      ],
+      "answer": 0,
+      "why": "Reading an entry does not acquire it. Execution needs a claim, a lease/recovery rule and idempotent effects."
+    }
   ],
   "sources": [
-   {
-    "title": "No AI Slop: A Manifesto",
-    "url": "https://www.slopmanifesto.com/",
-    "note": "the manifesto and its signatures"
-   },
-   {
-    "title": "No AI Slop Manifesto (ThePrimeagen, video)",
-    "url": "https://www.youtube.com/watch?v=i1IbHVstmH4",
-    "note": "November 24, 2026"
-   },
-   {
-    "title": "The Joy of Coding Is Gone (Prime Reacts, video)",
-    "url": "https://www.youtube.com/watch?v=z8Up6gLL3k8",
-    "note": "reaction to Michael Hoff, November 24, 2026"
-   },
-   {
-    "title": "Hypothesis documentation",
-    "url": "https://hypothesis.readthedocs.io/en/latest/",
-    "note": "property-based testing for Python"
-   },
-   {
-    "title": "QuickCheck",
-    "url": "https://www.cse.chalmers.se/~rjmh/QuickCheck/",
-    "note": "the original property-based testing tool, Claessen and Hughes"
-   },
-   {
-    "title": "Lean",
-    "url": "https://lean-lang.org/",
-    "note": "programming language and proof assistant"
-   },
-   {
-    "title": "Formalizing the proof of PFR in Lean4 using Blueprint (Terence Tao)",
-    "url": "https://terrytao.wordpress.com/2023/11/18/formalizing-the-proof-of-pfr-in-lean4-using-blueprint-a-short-tour/",
-    "note": "November 2023"
-   },
-   {
-    "title": "AI achieves silver-medal standard solving International Mathematical Olympiad problems (Google DeepMind)",
-    "url": "https://deepmind.google/discover/blog/ai-solves-imo-problems-at-silver-medal-level/",
-    "note": "AlphaProof, July 2024"
-   }
-  ]
- },
- "quiz": [
-  {
-   "id": "slop",
-   "q": "By the manifesto's definition, when is something slop?",
-   "choices": [
-    "Whenever an AI model wrote any part of it",
-    "When less effort went into making it than its reader has to spend understanding it",
-    "When it has no tests",
-    "When it is longer than a page"
-   ],
-   "answer": 1,
-   "why": "The manifesto defines slop by the effort gap between maker and reader, and says plainly that using AI doesn't make something slop on its own."
-  },
-  {
-   "id": "sort-props",
-   "q": "Which pair of properties is enough to show a function `sort(xs)` is correct on an input?",
-   "choices": [
-    "The output is in order, and it contains exactly the same items as the input",
-    "`sort([3, 1, 2]) == [1, 2, 3]`",
-    "The output has the same length as the input",
-    "It runs in under a millisecond"
-   ],
-   "answer": 0,
-   "why": "Order alone would accept returning `[]`; same length alone would accept the input unchanged. Order plus same-items pins down sorting exactly."
-  },
-  {
-   "id": "shrink",
-   "q": "Hypothesis finds a 40-item list that breaks your function. What does it do next?",
-   "choices": [
-    "Retries until the test passes",
-    "Rewrites your function",
-    "Marks the test as flaky",
-    "Shrinks the input to the smallest example that still fails"
-   ],
-   "answer": 3,
-   "why": "Shrinking is what makes property-based failures readable: the minimal example usually points straight at the bug."
-  },
-  {
-   "id": "proof",
-   "q": "What does a Lean proof give you that 10,000 passing random tests don't?",
-   "choices": [
-    "Faster code",
-    "Better error messages",
-    "A guarantee for every input the theorem covers, checked step by step",
-    "Nothing; they're equivalent"
-   ],
-   "answer": 2,
-   "why": "Random tests sample the input space. A checked proof covers all of it, which is why it's trusted for machine-assisted math."
-  }
- ],
- "judgment": {
-  "scenario": "It's 4:40 pm. An agent opened a 1,200-line pull request that adds a caching layer to a data sync your team depends on. CI is green and the agent wrote tests for its own code. A teammate asks you to approve it so it ships tonight.",
-  "options": [
-   {
-    "text": "Approve it. CI is green and there are tests.",
-    "verdict": "poor",
-    "why": "The tests came from the same agent as the code, so they share its blind spots. A green check here says the code agrees with itself, not that the cache is safe."
-   },
-   {
-    "text": "Read all 1,200 lines tonight before deciding.",
-    "verdict": "ok",
-    "why": "Careful, but tired line-by-line reading misses exactly the subtle bugs caching causes, and it doesn't scale to the next PR."
-   },
-   {
-    "text": "Ask for the intent in a paragraph and a split into the cache and its wiring. Before approving, write two properties for the risky part: a cached read never returns data older than the last write, and every write path invalidates.",
-    "verdict": "best",
-    "why": "This spends your attention where the risk is, gives you checks that keep working on the next change, and keeps ownership with a person, which is the manifesto's point."
-   },
-   {
-    "text": "Reject it because agents wrote it.",
-    "verdict": "poor",
-    "why": "Who wrote it isn't the problem. Unreviewed output is. The manifesto says outright that using AI doesn't make something slop."
-   }
-  ]
- },
- "build": {
-  "title": "Catch the agent's merge bug",
-  "brief": "`agent_merge` merges overlapping **closed** intervals, so `(1, 2)` and `(2, 3)` touch and must become `(1, 3)`. It passes its docstring example, and it has two bugs.\n\n- Write `violations(intervals, merged)`: return a list of problems, or `[]` when `merged` is correct.\n- Write `find_counterexample(fn)`: try random inputs and return one that breaks `fn`.\n- Write `merge(intervals)` and make it pass your own checks.",
-  "language": "python",
-  "starter": "# Today: check code you didn't write.\n# An agent wrote agent_merge below. It passes the example in its docstring.\n# Write checks that catch it when it's wrong, then a merge that passes them. No AI for this part.\n\ndef agent_merge(intervals):\n    \"\"\"Merge overlapping closed intervals, e.g. [(1, 3), (2, 6), (8, 10)] -> [(1, 6), (8, 10)].\"\"\"\n    intervals = sorted(intervals)\n    merged = [list(intervals[0])]\n    for start, end in intervals[1:]:\n        if start < merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], end)\n        else:\n            merged.append([start, end])\n    return [tuple(pair) for pair in merged]\n\n\ndef violations(intervals, merged):\n    \"\"\"Return a list of problems with `merged` as a merge of `intervals`; [] means it's correct.\n\n    Intervals are closed: (2, 3) includes 2 and 3, so (1, 2) and (2, 3) touch and must become (1, 3).\n    Check at least:\n      - every pair is (start, end) with start <= end\n      - pairs are sorted\n      - no two pairs overlap or touch\n      - merged covers exactly the same points as intervals (careful: between integers counts too)\n    \"\"\"\n    raise NotImplementedError\n\n\ndef find_counterexample(fn, trials=500, seed=0):\n    \"\"\"Try random inputs. Return the first input list where fn raises or violations() finds a problem,\n    or None if every trial passes. Use random.Random(seed) so a failure can be replayed.\"\"\"\n    raise NotImplementedError\n\n\ndef merge(intervals):\n    \"\"\"Your own correct merge. Don't change the caller's list.\"\"\"\n    raise NotImplementedError\n",
-  "tests": [
-   {
-    "name": "violations() accepts correct merges",
-    "code": "cases = [([(1, 3), (2, 6), (8, 10)], [(1, 6), (8, 10)]),\n         ([(1, 2), (2, 3)], [(1, 3)]),\n         ([], []),\n         ([(5, 5)], [(5, 5)]),\n         ([(4, 7), (1, 2)], [(1, 2), (4, 7)])]\nfor intervals, merged in cases:\n    found = violations(intervals, merged)\n    assert found == [], f\"violations({intervals}, {merged}) should be [] but returned {found}\"\n"
-   },
-   {
-    "name": "violations() catches broken merges",
-    "code": "wrong = [([(1, 2), (2, 3)], [(1, 2), (2, 3)], \"touching pairs left unmerged\"),\n         ([(1, 3), (2, 6)], [(1, 3), (2, 6)], \"an overlap left in\"),\n         ([(1, 6)], [(1, 5)], \"lost coverage\"),\n         ([(1, 2), (3, 4)], [(1, 4)], \"coverage added between 2 and 3\"),\n         ([(1, 2), (5, 6)], [(5, 6), (1, 2)], \"pairs out of order\"),\n         ([(1, 4)], [(4, 1)], \"start after end\")]\nfor intervals, merged, what in wrong:\n    assert violations(intervals, merged), f\"missed {what}: violations({intervals}, {merged}) returned []\"\n"
-   },
-   {
-    "name": "find_counterexample() catches the agent",
-    "code": "def buggy(intervals):\n    intervals = sorted(intervals)\n    merged = [list(intervals[0])]\n    for start, end in intervals[1:]:\n        if start < merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], end)\n        else:\n            merged.append([start, end])\n    return [tuple(p) for p in merged]\n\nexample = find_counterexample(buggy)\nassert example is not None, \"found nothing, but agent_merge has two bugs\"\ntry:\n    problems = violations(example, buggy(example))\nexcept Exception as e:\n    problems = [f\"raises {type(e).__name__}\"]\nassert problems, f\"{example} is not a counterexample: the agent's code handles it correctly\"\nprint(\"counterexample:\", example, \"->\", problems[0])\n"
-   },
-   {
-    "name": "your merge() passes your own checks",
-    "code": "example = find_counterexample(merge)\nassert example is None, f\"your checks found a problem with your merge: {example}\"\n"
-   },
-   {
-    "name": "merge() agrees with a reference on 400 random inputs",
-    "code": "import random\n\ndef reference(intervals):\n    out = []\n    for s, e in sorted(intervals):\n        if out and s <= out[-1][1]:\n            out[-1][1] = max(out[-1][1], e)\n        else:\n            out.append([s, e])\n    return [tuple(p) for p in out]\n\nrng = random.Random(42)\nfor _ in range(400):\n    xs = []\n    for _ in range(rng.randint(0, 7)):\n        a = rng.randint(0, 20)\n        xs.append((a, a + rng.randint(0, 6)))\n    got = merge(list(xs))\n    assert got == reference(xs), f\"merge({xs}) returned {got}, expected {reference(xs)}\"\n"
-   },
-   {
-    "name": "merge() leaves its input alone",
-    "code": "xs = [(3, 4), (1, 2)]\nmerge(xs)\nassert xs == [(3, 4), (1, 2)], f\"merge() changed its input to {xs}\"\n"
-   }
+    {
+      "title": "Slurm scheduling configuration",
+      "url": "https://slurm.schedmd.com/sched_config.html",
+      "note": "Read Overview and Backfill Scheduling; focus on the reservation rule.",
+      "minutes": 5
+    },
+    {
+      "title": "Slurm multifactor priority",
+      "url": "https://slurm.schedmd.com/priority_multifactor.html",
+      "note": "Read the priority formula and Age Factor. Which waiting time counts?",
+      "minutes": 4
+    },
+    {
+      "title": "Kubernetes scheduler",
+      "url": "https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/",
+      "note": "Read Node selection: distinguish filtering from scoring.",
+      "minutes": 3
+    },
+    {
+      "title": "ThePrimeagen: No AI Slop manifesto reaction",
+      "url": "https://www.youtube.com/watch?v=i1IbHVstmH4",
+      "note": "Primary video; local transcript read in full."
+    },
+    {
+      "title": "ThePrimeagen: The joy of coding reaction",
+      "url": "https://www.youtube.com/watch?v=z8Up6gLL3k8",
+      "note": "Primary video; scheduler and visualization discussion."
+    },
+    {
+      "title": "Michael Hoff: The joy of coding is gone",
+      "url": "https://www.youtube.com/watch?v=gIvVjepvdMg",
+      "note": "Original argument; transcript read in full."
+    }
   ],
-  "hints": [
-   "For coverage, intervals have integer endpoints, so checking every half step (2.0, 2.5, 3.0, …) from the smallest endpoint to the largest finds any difference.",
-   "Generate small numbers (0 to 12) and short lists (0 to 6 intervals). Small spaces hit edge cases like touching intervals and the empty list far more often.",
-   "One bug is the comparison `start < merged[-1][1]`. The other shows up when the list is empty."
-  ]
- },
- "explain": {
-  "prompt": "In about four sentences, the way you'd say it in an interview: how do you review a large change you didn't write, whether a teammate or an agent wrote it?",
-  "coachFocus": "whether the answer names concrete checks (properties, invariants, splitting the change, tests the author didn't write) and who owns the outcome"
- },
- "disclosure": "Each episode is written by Claude, an AI model, from the sources it lists, then checked automatically before it's published: every source link must resolve, every quiz answer must point at a real choice, and the exercise's reference solution must pass its tests while the starter fails them. That's the review this game asks of you, applied to itself.\n\nYour progress, code and answers stay in this browser. The coach is optional and runs on your own GPU through [Evolve LLM](https://www.evolvetech.dev/play/evolve-llm/)."
+  "disclosure": "This is an authored exercise based on three video transcripts and the linked primary scheduling documents. The agent proposal contains deliberate mistakes. The scheduler is a single-machine teaching model; claims, retries and runtime enforcement belong in a real worker. Reading and design use self-assessment; test results measure only the cases shown. XP records practice, not job readiness or likely pay.\n\nThe briefing uses the same versioned visual system as every Proof mission. The optional local coach can be wrong. Your drafts and progress stay in this browser; opening sources and downloading Python or model assets makes network requests."
 }

@@ -48,10 +48,10 @@ main > *, .player > *, .scene { min-width: 0; }
 .skill small { color: var(--muted); text-align: right; }
 @media (max-width: 680px) { .stats { grid-template-columns: 1fr 1fr; } .skills { grid-column: 1 / -1; justify-self: stretch; } }
 
-.review, .hero, .stage-card, .archive, .about { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.2rem; }
-.review.quiet { padding: 0.7rem 1.2rem; color: var(--muted); font-size: 0.92rem; }
-.review.quiet p { margin: 0; }
-.review h2, .archive h2, .about h2 { margin: 0 0 0.4rem; font-size: 1.25rem; }
+.review-deck, .hero, .stage-card, .archive, .about { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.2rem; }
+.review-deck.quiet { padding: 0.7rem 1.2rem; color: var(--muted); font-size: 0.92rem; }
+.review-deck.quiet p { margin: 0; }
+.review-deck h2, .archive h2, .about h2 { margin: 0 0 0.4rem; font-size: 1.25rem; }
 .card { border-top: 1px solid var(--line); padding: 0.8rem 0; }
 .choices { display: grid; gap: 0.4rem; }
 .choice { text-align: left; }
@@ -136,3 +136,31 @@ textarea.prose-input { width: 100%; resize: vertical; font: inherit; color: var(
 .archive li.current a { font-weight: 700; }
 .archive time { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .scene, .v-bullets li, .v-compare li, .v-flow li { animation: none; } }
+
+/* Shared mission layouts; video styles and fonts come from this file too. */
+[hidden] { display: none !important; }
+.field { display: grid; gap: .4rem; margin: .8rem 0; }
+.qa { margin: 1.2rem 0; }
+.reveal, .artifact { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 1rem; margin: 1rem 0; }
+pre.artifact { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .85rem; }
+.ref + .ref { border-top: 1px solid var(--line); }
+.over, .lint, .missed, .false-alarm { color: var(--bad); }
+.caught, .fine { color: var(--good); }
+.issue { flex-wrap: wrap; border-bottom: 1px solid var(--line); padding: .7rem 0; }
+.issue > .why { flex-basis: 100%; }
+.issue > span:first-of-type { flex: 1; min-width: 0; }
+.link-input { min-width: 0; width: 100%; background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: .7rem; font: inherit; }
+.demand { margin-top: 1rem; border-top: 1px solid var(--line); padding-top: .7rem; }
+.demand ul { list-style: none; padding: 0; }
+.demand li { display: grid; grid-template-columns: minmax(0, 1fr) 100px 40px; gap: .6rem; align-items: center; }
+.demand meter { width: 100%; }
+.sources a, .about a, .score a { overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .stage-card header { flex-wrap: wrap; }
+  .stage-card h2 { font-size: 1.15rem; min-width: 0; }
+  .stage-card header .meta { margin-left: 2.7rem; flex-basis: 100%; }
+  .skills { min-width: 0; }
+  .skill { grid-template-columns: 110px minmax(0, 1fr) 30px; }
+}
+
+.stage-body video { width: 100%; border-radius: 12px; background: #0b0d12; }

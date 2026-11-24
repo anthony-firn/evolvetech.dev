@@ -4,7 +4,8 @@ import {createPlayer} from './player.js';
 import {runPython} from './runner.js';
 import {coach, MODELS} from './coach.js';
 
-const store = window.localStorage;
+let store;
+try { store = window.localStorage; } catch { store = {getItem: () => null, setItem: () => { throw new Error('Storage unavailable'); }}; }
 const app = document.querySelector('#app');
 const status = document.querySelector('#status');
 let state = S.load(store);
@@ -34,6 +35,13 @@ function finish(stage, earned, detail) {
     card.classList.add('done');
     card.querySelector('.meta').textContent = `Done · +${gained} XP`;
     card.querySelectorAll('[data-hide-when-done]').forEach(n => n.remove());
+  }
+  const stages = S.stagesOf(mission);
+  const next = stages[stages.indexOf(stage) + 1];
+  if (next) {
+    const nextCard = document.getElementById(`stage-${next}`);
+    nextCard?.querySelector('.stage-body')?.removeAttribute('hidden');
+    nextCard?.querySelector('.locked-note')?.remove();
   }
   document.querySelector('.stats')?.replaceWith(stats());
   const finished = state.missions[mission.id]?.doneOn === today();
@@ -79,15 +87,22 @@ const MINUTES = {briefing: 3, problem: 3, research: 15, design: 10, review: 7, b
 
 function stageCard(stage, n, body) {
   const done = state.missions[mission.id]?.stages[stage];
+  const locked = n > 1 && !S.stageDone(state, mission.id, S.stagesOf(mission)[n - 2]);
   return el('section', {class: `stage-card${done ? ' done' : ''}`, id: `stage-${stage}`, 'aria-labelledby': `h-${stage}`},
     el('header', {}, el('span', {class: 'step'}, String(n)), el('h2', {id: `h-${stage}`}, TITLES[stage]),
       el('span', {class: 'meta'}, done ? `Done · +${done.xp} XP` : `${MINUTES[stage]} min`)),
-    body);
+    locked ? el('p', {class: 'locked-note muted'}, 'Finish the previous stage to continue.') : null,
+    el('div', {class: 'stage-body', hidden: locked}, body));
 }
 
 function briefing() {
   if (!player) player = createPlayer(mission.briefing.scenes, {onFinish: () => finish('briefing', {research: 5})});
-  return el('div', {}, player.root,
+  const video = mission.briefing.video;
+  const recorded = video ? el('video', {controls: true, preload: 'metadata', poster: video.poster, 'aria-label': 'Daily briefing video', onended: () => finish('briefing', {research: 5})},
+    el('source', {src: video.src, type: 'video/mp4'}),
+    el('track', {kind: 'captions', src: video.captions, srclang: 'en', label: 'English'})) : null;
+  return el('div', {}, recorded,
+    video ? el('details', {}, el('summary', {}, 'Interactive scenes and browser narration'), player.root) : player.root,
     el('details', {}, el('summary', {}, 'Read the script instead'), mission.briefing.scenes.map(s => el('p', {}, el('strong', {}, `${s.title}. `), ...inline(s.narration)))),
     S.stageDone(state, mission.id, 'briefing') ? null : el('button', {type: 'button', 'data-hide-when-done': true, onclick: () => finish('briefing', {research: 5})}, 'Mark as watched'));
 }
@@ -146,6 +161,7 @@ function research() {
   const areas = r.questions.map(q => {
     const a = el('textarea', {class: 'prose-input', rows: 4, 'aria-label': q.q});
     a.value = note(`research:${q.id}`) ?? '';
+    a.readOnly = Boolean(prior || note('research-submitted'));
     a.addEventListener('input', () => setNote(`research:${q.id}`, a.value));
     return a;
   });
@@ -158,10 +174,11 @@ function research() {
   const submit = el('button', {type: 'button', class: 'primary', hidden: !reveal.hidden, onclick: () => {
     const short = r.questions.filter((q, i) => words(areas[i].value) < 12);
     if (short.length) { say(`Answer every question from the source in your own words (12+ words each). ${short.length} to go.`); return; }
+    areas.forEach(a => { a.readOnly = true; });
     setNote('research-submitted', true); submit.hidden = true; reveal.hidden = false; fill();
   }}, 'Lock in my answers');
   return el('div', {class: 'reading'},
-    el('p', {class: 'muted'}, 'No summary here on purpose. Open the source and read it; the reference answers unlock after you write yours.'),
+    el('p', {class: 'muted'}, 'Open the source and read the named sections. Submit your own answers before seeing the references.'),
     el('ul', {class: 'sources primary'}, r.sources.map(s => el('li', {},
       el('a', {href: s.url, target: '_blank', rel: 'noopener noreferrer'}, s.title), ` · ${s.note}${s.minutes ? ` · about ${s.minutes} min` : ''}`))),
     el('h3', {}, 'What to look for'), prose(r.guide),
@@ -196,6 +213,7 @@ function design() {
   const areas = d.fields.map(f => {
     const a = el('textarea', {class: 'prose-input', rows: 3, 'aria-label': f.label, placeholder: f.hint || ''});
     a.value = note(`design:${f.id}`) ?? '';
+    a.readOnly = submitted;
     a.addEventListener('input', () => { setNote(`design:${f.id}`, a.value); count(); });
     return a;
   });
@@ -211,6 +229,7 @@ function design() {
   const submit = el('button', {type: 'button', class: 'primary', hidden: submitted, onclick: () => {
     if (areas.some(a => !a.value.trim())) { say('Fill in every part before submitting.'); return; }
     if (total() > d.wordLimit) { say(`Cut it to ${d.wordLimit} words. Short designs are reviewed; long ones are skimmed.`); return; }
+    areas.forEach(a => { a.readOnly = true; });
     setNote('design-submitted', true); submit.hidden = true; reveal.hidden = false; fill(); panel.unlock();
   }}, 'Submit my design');
   count();
@@ -270,11 +289,13 @@ function build() {
     } catch { solution.querySelector('code').textContent = 'Could not load the reference solution.'; }
   });
   const hints = el('ol', {class: 'hints'});
-  let shown = 0;
+  let shown = note('hints') || 0;
+  b.hints.slice(0, shown).forEach(h => hints.append(el('li', {}, inline(h))));
   const hintBtn = el('button', {type: 'button', onclick: () => {
-    if (shown < b.hints.length) hints.append(el('li', {}, inline(b.hints[shown++])));
+    if (shown < b.hints.length) { hints.append(el('li', {}, inline(b.hints[shown++]))); setNote('hints', shown); }
     if (shown >= b.hints.length) hintBtn.disabled = true;
   }}, 'Show a hint');
+  hintBtn.disabled = shown >= b.hints.length;
   const run = el('button', {type: 'button', class: 'primary', onclick: async () => {
     run.disabled = true;
     setNote('code', editor.value); setNote('ran', true);
@@ -317,10 +338,11 @@ function ship() {
   const example = el('details', {class: 'example', open: Boolean(prior), hidden: !prior}, el('summary', {}, 'One way to write it'), prose(s.example));
   const submit = el('button', {type: 'button', class: 'primary', 'data-hide-when-done': true, onclick: () => {
     const r = check();
-    if (!r.words) { say('Write it first.'); return; }
+    if (!r.clean) { say('Revise the note using the feedback before shipping.'); return; }
     finish('ship', {communication: r.clean ? 12 : 5}, {clean: r.clean});
-    example.hidden = false; example.open = true; panel.unlock();
+    area.readOnly = true; example.hidden = false; example.open = true; panel.unlock();
   }}, prior ? 'Shipped' : 'Ship it');
+  area.readOnly = Boolean(prior);
   if (prior) submit.disabled = true;
   check();
   return el('div', {}, el('p', {class: 'prompt'}, inline(s.prompt)),
@@ -347,7 +369,7 @@ const RENDER = {briefing, problem, research, design, review: reviewStage, build,
 
 function demandPanel() {
   if (!demand?.skills?.length) return null;
-  return el('details', {class: 'demand'}, el('summary', {}, `What the best-paying roles ask for (${demand.listings} postings, ${demand.asOf})`),
+  return el('details', {class: 'demand'}, el('summary', {}, `Skills in the selected job postings (${demand.listings} postings, ${demand.asOf})`),
     el('p', {class: 'muted'}, inline(demand.basis)),
     el('ul', {}, demand.skills.slice(0, 12).map(s => el('li', {}, el('span', {}, s.skill), el('meter', {min: 0, max: 1, value: s.share}), el('small', {}, `${Math.round(100 * s.share)}%`)))));
 }
@@ -361,7 +383,7 @@ function archive() {
 
 function render() {
   player?.pause(); player = null;
-  const latest = S.pick(index, today());
+  const latest = S.pick(index.filter(e => e.kind !== 'project'), today());
   const isToday = latest && mission.id === latest.id;
   const stages = S.stagesOf(mission);
   app.replaceChildren(
@@ -381,8 +403,12 @@ function render() {
     el('section', {class: 'about'}, el('h2', {}, 'How this works'), prose(mission.disclosure)));
 }
 
+let openRequest = 0;
 async function open(id) {
-  mission = await getJSON(`./episodes/${id}.json`);
+  const request = ++openRequest;
+  const loaded = await getJSON(`./episodes/${encodeURIComponent(id)}.json`);
+  if (request !== openRequest) return;
+  mission = loaded;
   document.title = `${mission.title} · Proof`;
   render();
   window.scrollTo({top: 0});
@@ -393,7 +419,7 @@ async function main() {
     index = (await getJSON('./episodes/index.json')).episodes;
     demand = await getJSON('./demand.json').catch(() => null);
     const wanted = location.hash.replace(/^#\//, '');
-    const choice = index.find(e => e.id === wanted) || S.pick(index, today()) || index[0];
+    const choice = index.find(e => e.id === wanted) || S.pick(index.filter(e => e.kind !== 'project'), today()) || index[0];
     if (!choice) { say('No missions yet.'); return; }
     await open(choice.id);
     say('');

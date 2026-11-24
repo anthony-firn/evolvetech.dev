@@ -17,7 +17,11 @@ export const empty = () => ({version: 2, missions: {}, cards: {}, xp: 0, skills:
 export function load(storage) {
   try {
     const s = JSON.parse(storage.getItem(KEY));
-    return s?.version === 2 ? {...empty(), ...s} : empty();
+    if (s?.version !== 2) return empty();
+    for (const key of ['missions', 'cards', 'skills', 'notes']) {
+      if (s[key] !== undefined && (!s[key] || typeof s[key] !== 'object' || Array.isArray(s[key]))) return empty();
+    }
+    return {...empty(), ...s};
   } catch {
     return empty();
   }
@@ -41,9 +45,12 @@ export const stagesOf = mission => STAGES.filter(s => mission[s]);
 
 // Records a finished stage once and credits XP to skills, e.g. {wisdom: 15, cost: 10}. Returns the XP gained.
 export function complete(state, mission, stage, today, earned = {}, detail = {}) {
-  if (!STAGES.includes(stage)) throw new Error(`Unknown stage ${stage}`);
+  if (!stagesOf(mission).includes(stage)) throw new Error(`Unknown stage ${stage}`);
+  if (state.missions[mission.id]?.stages[stage]) return 0;
+  for (const [skill, xp] of Object.entries(earned)) {
+    if (!SKILLS.includes(skill) || !Number.isFinite(xp)) throw new Error(`Invalid skill award ${skill}`);
+  }
   const m = state.missions[mission.id] ||= {stages: {}};
-  if (m.stages[stage]) return 0;
   let gained = 0;
   for (const [skill, xp] of Object.entries(earned)) {
     if (!SKILLS.includes(skill)) throw new Error(`Unknown skill ${skill}`);
@@ -51,7 +58,7 @@ export function complete(state, mission, stage, today, earned = {}, detail = {})
     state.skills[skill] = (state.skills[skill] || 0) + n;
     gained += n;
   }
-  m.stages[stage] = {on: today, xp: gained, ...detail};
+  m.stages[stage] = {...detail, on: today, xp: gained};
   state.xp += gained;
   if (!m.doneOn && stagesOf(mission).every(s => m.stages[s])) {
     m.doneOn = today;
@@ -83,8 +90,8 @@ export function dueCards(state, today, limit = 6) {
 
 export function review(state, cardId, correct, today) {
   const card = state.cards[cardId];
-  if (!card) return 0;
-  const box = correct ? Math.min(card.box + 1, BOXES.length - 1) : 0;
+  if (!card || card.due > today) return 0;
+  const box = correct ? Math.min(Math.max(0, card.box) + 1, BOXES.length - 1) : 0;
   state.cards[cardId] = {...card, box, due: addDays(today, BOXES[box]), seen: card.seen + 1};
   if (!correct) return 0;
   state.xp += REVIEW_XP;
@@ -118,6 +125,7 @@ export function lintShipNote(text, wordLimit) {
   const stock = [...new Set((text.match(STOCK) || []).map(s => s.toLowerCase()))];
   if (stock.length) problems.push(`Stock phrases: ${stock.join(', ')}.`);
   if (!/verif|test|run|check|repro|try/i.test(text)) problems.push('Say how a reviewer can verify it.');
+  if (text.trim().split(/\n/).filter(l => l.trim()).length !== 2) problems.push('Use exactly two non-empty lines.');
   if ((text.match(/—/g) || []).length > 1) problems.push('More than one em dash.');
   return {words, problems, clean: problems.length === 0};
 }

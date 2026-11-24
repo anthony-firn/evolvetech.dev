@@ -1,17 +1,31 @@
 {
- "version": 1,
- "episodes": [
-  {
-   "id": "2026-11-24",
-   "date": "2026-11-24",
-   "title": "Prove it: checking code you didn't write",
-   "tracks": [
-    "verification",
-    "ai-engineering",
-    "math"
-   ],
-   "minutes": 45,
-   "hook": "Agents can write a thousand lines in a minute. Reading them still takes as long as it always did. Today: the checks that scale, from example tests to property tests to machine-checked proofs."
-  }
- ]
+  "version": 2,
+  "episodes": [
+    {
+      "id": "2026-11-24",
+      "date": "2026-11-24",
+      "kind": "daily",
+      "title": "Keep the build moving",
+      "tracks": [
+        "scheduling",
+        "system-design",
+        "agent-review"
+      ],
+      "minutes": 60,
+      "hook": "Your agents fit on the machine. Your build never starts. Decide what deserves capacity, then write and inspect the scheduler yourself."
+    },
+    {
+      "id": "2026-11-24-project",
+      "date": "2026-11-24",
+      "kind": "project",
+      "title": "Make one real workload observable",
+      "tracks": [
+        "applied-engineering",
+        "impact",
+        "cost"
+      ],
+      "minutes": 120,
+      "hook": "Take the week\u2019s practice into a tool someone actually uses. Show the decision and measure whether it helps."
+    }
+  ]
 }
